@@ -1,33 +1,30 @@
 package io.snowdrop.github.issues;
 
-import java.util.Set;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
+import javax.inject.Inject;
 
 import org.eclipse.egit.github.core.client.GitHubClient;
 import org.eclipse.egit.github.core.service.IssueService;
 import org.eclipse.egit.github.core.service.LabelService;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+
+import io.snowdrop.github.Github;
 
 @ApplicationScoped
 public class GithubIssueBridgeFactory {
 
-  @ConfigProperty(name="github.source.repo")
-  String sourceRepository;
-
-  @ConfigProperty(name="github.target.repo")
-  String targetRepository;
-
-  @ConfigProperty(name="github.target.terminal.label")
-  String terminalLabel;
-
-  @ConfigProperty(name="github.users")
-  Set<String> users;
+  @Inject
+  BridgeConfig bridgeConfig;
 
   @Produces
-  public GithubIssueBridge createIssueBridge(GitHubClient client, IssueService issueService, LabelService labelService) {
-    return new GithubIssueBridge(client, issueService, labelService, sourceRepository, targetRepository, terminalLabel, users);
+  public List<GithubIssueBridge> createIssueBridge(GitHubClient client, IssueService issueService, LabelService labelService) {
+    return bridgeConfig.getSourceRepos()
+      .stream()
+      .map(r -> new GithubIssueBridge(client, issueService, labelService, r, bridgeConfig.getTargetOrganization() + "/" + Github.repo(r), bridgeConfig.getTerminalLabel(), bridgeConfig.getUsers()))
+      .collect(Collectors.toList());
   }
 
 }

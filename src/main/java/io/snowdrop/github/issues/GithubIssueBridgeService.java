@@ -1,6 +1,8 @@
 package io.snowdrop.github.issues;
 
 
+import java.util.List;
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
@@ -27,14 +29,16 @@ public class GithubIssueBridgeService {
   UserService userService;
 
   @Inject
-  GithubIssueBridge bridge;
+  List<GithubIssueBridge> bridges;
   
   @Scheduled(every="10m")
   void minutely() {
-    bridge.refresh();
-    bridge.assignTeamIssues();
-    bridge.closeTeamIssues();
-    bridge.cloneTeamIssues();
+    bridges.forEach(b -> {
+        b.refresh();
+        b.assignTeamIssues();
+        b.closeTeamIssues();
+        b.cloneTeamIssues();
+      });
   }
 
 }
