@@ -7,27 +7,9 @@ import io.quarkus.arc.config.ConfigProperties;
 @ConfigProperties(prefix = "github.bridge")
 public class BridgeConfig {
 
-  private Set<String> users;
   private Set<String> sourceRepos;
   private String targetOrganization;
   private String terminalLabel;
-
-
-  @Override
-  public String toString() {
-    return "BridgeConfig [sourceRepos=" + sourceRepos + ", targetOrganization=" + targetOrganization
-      + ", terminalLabel=" + terminalLabel + ", users=" + users + "]";
-  }
-
-
-  public Set<String> getUsers() {
-    return users;
-  }
-
-
-  public void setUsers(Set<String> users) {
-    this.users = users;
-  }
 
 
   public Set<String> getSourceRepos() {

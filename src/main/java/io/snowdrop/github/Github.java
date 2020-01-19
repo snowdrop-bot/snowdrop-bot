@@ -64,6 +64,10 @@ public class Github {
       return new ParamBuilder(creator, assignee, state, since);
     }
 
+    public ParamBuilder state(String state) {
+      return new ParamBuilder(creator, assignee, state , since);
+    }
+
     public ParamBuilder closed() {
       return new ParamBuilder(creator, assignee, STATE_CLOSED , since);
     }
@@ -74,6 +78,9 @@ public class Github {
     }
 
     public ParamBuilder thisWeek() {
+      ZonedDateTime.now().with(DayOfWeek.THURSDAY);
+      ZonedDateTime.now().minusWeeks(1).with(DayOfWeek.THURSDAY).withHour(0);
+
       return new ParamBuilder(creator, assignee, state,
                               ZonedDateTime.now().with(DayOfWeek.MONDAY).format(DateTimeFormatter.ofPattern(GITHUB_DATE_FORMAT_PATTERN)));
     }
