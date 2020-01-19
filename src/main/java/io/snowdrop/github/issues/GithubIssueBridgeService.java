@@ -31,7 +31,7 @@ public class GithubIssueBridgeService {
   @Inject
   List<GithubIssueBridge> bridges;
   
-  @Scheduled(every="10m")
+  //@Scheduled(every="10m")
   void minutely() {
     bridges.forEach(b -> {
         b.refresh();
