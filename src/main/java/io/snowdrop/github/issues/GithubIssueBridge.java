@@ -66,7 +66,7 @@ public class GithubIssueBridge {
   }
 
   public synchronized void refresh() {
-    LOGGER.info("Refershing.");
+    LOGGER.info("Refershing bridge: {} -> {}.", sourceRepository, targetRepository);
     downstreamOpenIssues().stream().forEach(i -> downstreamIssues.put(i.getNumber(), i));
 
     teamOpenIssues().stream().forEach(i -> openIssues.put(i.getNumber(), i));
@@ -74,7 +74,7 @@ public class GithubIssueBridge {
   }
 
   public List<Issue> cloneTeamIssues() {
-    LOGGER.info("Cloning team issues.");
+    LOGGER.info("Cloning team issues from {}.", sourceRepository);
     return openIssues.values().stream()
        .filter(i -> !findDownstreamIssue(i).isPresent())
        .map(i -> cloneIssue(i, targetRepository))
@@ -82,7 +82,7 @@ public class GithubIssueBridge {
   }
 
   public void assignTeamIssues() {
-    LOGGER.info("Assigning team issues.");
+    LOGGER.info("Assigning team issues in {}.", targetRepository);
     downstreamIssues.values().stream()
       .map(i -> new AbstractMap.SimpleEntry<>(i, findUpstreamIssue(i)))
       .filter(e -> e.getValue().isPresent())
@@ -90,7 +90,7 @@ public class GithubIssueBridge {
   }
 
    public List<Issue> closeTeamIssues() {
-     LOGGER.info("Closing team issues.");
+    LOGGER.info("Closing team issues from {}.", sourceRepository);
     return closedIssues.values()
       .stream()
       .map(i -> findDownstreamIssue(i))
