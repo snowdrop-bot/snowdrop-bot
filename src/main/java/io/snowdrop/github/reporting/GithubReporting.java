@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
-**/
+ **/
 
 package io.snowdrop.github.reporting;
 
 import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -66,17 +67,11 @@ public class GithubReporting {
   private final Date minEndTime;
 
   private final Map<String, Set<Repository>> repositories = new HashMap<>();
-
-  private final Map<String, Set<PullRequestDTO>> openPullRequests = new HashMap<>();
-  private final Map<String, Set<PullRequestDTO>> closedPullRequests = new HashMap<>();
   private final Map<String, Set<PullRequestDTO>> pullRequests = new HashMap<>();
-
-  private final Map<String, Set<IssueDTO>> openIssues = new HashMap<>();
-  private final Map<String, Set<IssueDTO>> closedIssues = new HashMap<>();
   private final Map<String, Set<IssueDTO>> issues = new HashMap<>();
 
   public GithubReporting(RepositoryService repositoryService, PullRequestService pullRequestService,
-      IssueService issueService, int reportingDay, int reportingHour, Set<String> users, Set<String> organizations) {
+                         IssueService issueService, int reportingDay, int reportingHour, Set<String> users, Set<String> organizations) {
     this.repositoryService = repositoryService;
     this.pullRequestService = pullRequestService;
     this.issueService = issueService;
@@ -95,61 +90,42 @@ public class GithubReporting {
 
   public void init() {
     users.stream().forEach(u -> {
-      repositories.put(u, new HashSet<>());
-
-      pullRequests.put(u, new HashSet<>());
-      openPullRequests.put(u, new HashSet<>());
-      closedPullRequests.put(u, new HashSet<>());
-
-      issues.put(u, new HashSet<>());
-      openIssues.put(u, new HashSet<>());
-      closedIssues.put(u, new HashSet<>());
-    });
+        repositories.put(u, new HashSet<>());
+        pullRequests.put(u, new HashSet<>());
+        issues.put(u, new HashSet<>());
+      });
   }
+
 
   public synchronized void refresh() {
-    LOGGER.info("Refreshing report data.");
-    users.stream().forEach(u -> {
-      LOGGER.info("Getting forks for user: {}.", u);
-      Set<Repository> forks = userForks(u);
-      repositories.get(u).addAll(forks);
-      LOGGER.info("User: {} forks: [{}].", u, forks.stream().map(r -> r.getName()).collect(Collectors.joining(",")));
-    });
-
-    repositories.values().stream().flatMap(s -> s.stream()).distinct().forEach(r -> {
-        openPullRequests.putAll(teamPullRequests(r, "open"));
-        pullRequests.putAll(openPullRequests);
-        closedPullRequests.putAll(teamPullRequests(r, "closed"));
-        pullRequests.putAll(closedPullRequests);
-
-        openIssues.putAll(teamIssues(r, "open"));
-        issues.putAll(openIssues);
-        closedIssues.putAll(teamIssues(r, "closed"));
-        issues.putAll(closedIssues);
-    });
-
-
-    /*
-     * Works but not the most efficient approach
-     *
-    repositories.entrySet().stream().forEach(e -> {
-      e.getValue().stream().forEach(r -> {
-
-        LOGGER.info("Getting pull requests for user: {}.", e.getKey());
-        openPullRequests.get(e.getKey()).addAll(userPullRequests(e.getKey(), r, "open"));
-        closedPullRequests.get(e.getKey()).addAll(userPullRequests(e.getKey(), r, "closed"));
-        pullRequests.get(e.getKey()).addAll(openPullRequests.get(e.getKey()));
-        pullRequests.get(e.getKey()).addAll(closedPullRequests.get(e.getKey()));
-
-        LOGGER.info("Getting issues for user: {}.", e.getKey());
-        openIssues.get(e.getKey()).addAll(userIssues(e.getKey(), r, "open"));
-        closedIssues.get(e.getKey()).addAll(userIssues(e.getKey(), r, "closed"));
-        issues.get(e.getKey()).addAll(openIssues.get(e.getKey()));
-        issues.get(e.getKey()).addAll(closedIssues.get(e.getKey()));
-      });
-    });
-    */
+    LOGGER.info("Refreshing reporting data.");
+    collectForks();
+    collectIssues();
+    collectPullRequests();
   }
+
+  public synchronized void collectForks() {
+    users.stream().forEach(u -> {
+        LOGGER.info("Getting forks for user: {}.", u);
+        Set<Repository> forks = userForks(u);
+        repositories.get(u).addAll(forks);
+        LOGGER.info("User: {} forks: [{}].", u, forks.stream().map(r -> r.getName()).collect(Collectors.joining(",")));
+      });
+    }
+
+
+    public void collectIssues() {
+      repositories.values().stream().flatMap(s -> s.stream()).distinct().forEach(r -> {
+          issues.putAll(teamIssues(r, "all"));
+        });
+    }
+
+   public void collectPullRequests() {
+      repositories.values().stream().flatMap(s -> s.stream()).distinct().forEach(r -> {
+          pullRequests.putAll(teamPullRequests(r, "all"));
+        });
+   }
+
 
   /**
    * Get all the repositories of the specified user.
@@ -160,8 +136,8 @@ public class GithubReporting {
   public Set<Repository> userForks(final String user) {
     try {
       return repositoryService.getRepositories(user).stream().filter(r -> r.isFork())
-          .map(r -> repository(user, r.getName()))
-          .filter(r -> organizations.contains(r.getParent().getOwner().getLogin())).collect(Collectors.toSet());
+        .map(r -> repository(user, r.getName()))
+        .filter(r -> organizations.contains(r.getParent().getOwner().getLogin())).collect(Collectors.toSet());
     } catch (final IOException e) {
       throw BotException.launderThrowable(e);
     }
@@ -181,12 +157,12 @@ public class GithubReporting {
       String id = actual.getOwner().getLogin() + "/" + actual.getName();
       LOGGER.info("Getting {} pull requests for repository: {}", state, id);
       return pullRequestService.getPullRequests(() -> id, state)
-            .stream()
-            .filter(p -> users.contains(p.getUser().getLogin()))
-            .map(p -> PullRequestDTO.create(id, p))
-            .filter(p -> p.isActiveDuring(minStartTime, minEndTime))
-            .map(GithubReporting::log)
-            .collect(Collectors.groupingBy(PullRequestDTO::getCreator, Collectors.toSet()));
+        .stream()
+        .filter(p -> users.contains(p.getUser().getLogin()))
+        .map(p -> PullRequestDTO.create(id, p))
+        .filter(p -> p.isActiveDuring(minStartTime, minEndTime))
+        .map(GithubReporting::log)
+        .collect(Collectors.groupingBy(PullRequestDTO::getCreator, Collectors.toSet()));
     } catch (IOException e) {
       throw BotException.launderThrowable(e);
     }
@@ -198,12 +174,12 @@ public class GithubReporting {
       String id = actual.getOwner().getLogin() + "/" + actual.getName();
       LOGGER.info("Getting {} pull requests for repository: {}", state, id);
       return pullRequestService.getPullRequests(() -> id, state)
-            .stream()
-            .filter(p -> p.getUser().getLogin().equals(user))
-            .map(p -> PullRequestDTO.create(id, p))
-            .filter(i -> i.isActiveDuring(minStartTime, minEndTime))
-            .map(GithubReporting::log)
-            .collect(Collectors.toSet());
+        .stream()
+        .filter(p -> p.getUser().getLogin().equals(user))
+        .map(p -> PullRequestDTO.create(id, p))
+        .filter(i -> i.isActiveDuring(minStartTime, minEndTime))
+        .map(GithubReporting::log)
+        .collect(Collectors.toSet());
     } catch (IOException e) {
       throw BotException.launderThrowable(e);
     }
@@ -215,11 +191,11 @@ public class GithubReporting {
       String id = actual.getOwner().getLogin() + "/" + actual.getName();
       LOGGER.info("Getting {} issues for repository: {}", state, repository.getName());
       return issueService.getIssues(actual.getOwner().getLogin(), actual.getName(), Github.params().state(state).build())
-          .stream()
-          .map(i -> IssueDTO.create(id, i))
-          .filter(i -> i.getCreatedAt().before(minEndTime))
-          .map(GithubReporting::log)
-          .collect(Collectors.toSet());
+        .stream()
+        .map(i -> IssueDTO.create(id, i))
+        .filter(i -> i.getCreatedAt().before(minEndTime))
+        .map(GithubReporting::log)
+        .collect(Collectors.toSet());
     } catch (IOException e) {
       throw BotException.launderThrowable(e);
     }
@@ -231,12 +207,12 @@ public class GithubReporting {
       String id = actual.getOwner().getLogin() + "/" + actual.getName();
       LOGGER.info("Getting {} issues for repository: {}", state, repository.getName());
       return issueService.getIssues(actual.getOwner().getLogin(), actual.getName(), Github.params().state(state).build())
-          .stream()
-          .filter(i -> i.getAssignee() != null && users.contains(i.getAssignee().getLogin()))
-          .map(i -> IssueDTO.create(id, i))
-          .filter(i -> i.isActiveDuring(minStartTime, minEndTime))
-          .map(GithubReporting::log)
-          .collect(Collectors.groupingBy(IssueDTO::getCreator, Collectors.toSet()));
+        .stream()
+        .filter(i -> i.getAssignee() != null && users.contains(i.getAssignee().getLogin()))
+        .map(i -> IssueDTO.create(id, i))
+        .filter(i -> i.isActiveDuring(minStartTime, minEndTime))
+        .map(GithubReporting::log)
+        .collect(Collectors.groupingBy(IssueDTO::getCreator, Collectors.toSet()));
     } catch (IOException e) {
       throw BotException.launderThrowable(e);
     }
@@ -271,22 +247,6 @@ public class GithubReporting {
 
   public Map<String, Set<Repository>> getRepositories() {
     return repositories;
-  }
-
-  public Map<String, Set<PullRequestDTO>> getOpenPullRequests() {
-    return openPullRequests;
-  }
-
-  public Map<String, Set<PullRequestDTO>> getClosedPullRequests() {
-    return closedPullRequests;
-  }
-
-  public Map<String, Set<IssueDTO>> getOpenIssues() {
-    return openIssues;
-  }
-
-  public Map<String, Set<IssueDTO>> getClosedIssues() {
-    return closedIssues;
   }
 
   public Map<String, Set<PullRequestDTO>> getPullRequests() {
