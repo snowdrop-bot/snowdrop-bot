@@ -2,10 +2,17 @@ package io.snowdrop.github.reporting.model;
 
 import java.util.Date;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
+
 import org.eclipse.egit.github.core.PullRequest;
 
-public class PullRequestDTO {
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 
+@Entity
+public class PullRequestDTO extends PanacheEntityBase {
+
+  @Id
   String url;
   String repository;
   int number;
@@ -14,10 +21,15 @@ public class PullRequestDTO {
   String assignee;
   boolean open;
   Date createdAt;
+  Date updatedAt;
   Date closedAt;
 
+  public PullRequestDTO() {
+
+  }
+
   public PullRequestDTO(String url, String repository, int number, String title, String creator, String assignee,
-      boolean open, Date createdAt, Date closedAt) {
+      boolean open, Date createdAt, Date updatedAt, Date closedAt) {
     this.url = url;
     this.repository = repository;
     this.number = number;
@@ -26,24 +38,26 @@ public class PullRequestDTO {
     this.assignee = assignee;
     this.open = open;
     this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
     this.closedAt = closedAt;
   }
 
   public static PullRequestDTO create(String repository, PullRequest pr) {
     return new PullRequestDTO(pr.getUrl(), repository, pr.getNumber(), pr.getTitle(), pr.getUser().getLogin(), null,
-        pr.getState().equals("open"), pr.getCreatedAt(), pr.getClosedAt());
+        pr.getState().equals("open"), pr.getCreatedAt(), pr.getUpdatedAt(), pr.getClosedAt());
   }
 
-
-public boolean isActiveDuring(Date start, Date end) {
+  public boolean isActiveDuring(Date start, Date end) {
     if (createdAt.after(end)) {
       return false;
     }
     if (closedAt == null) {
       return true;
     }
-
-    return createdAt.before(end) && closedAt.after(start);
+    if (closedAt.before(start)) {
+      return false;
+    }
+    return true;
   }
 
   public String getUrl() {
@@ -100,6 +114,14 @@ public boolean isActiveDuring(Date start, Date end) {
 
   public void setCreatedAt(Date createdAt) {
     this.createdAt = createdAt;
+  }
+
+  public Date getUpdatedAt() {
+    return updatedAt;
+  }
+
+  public void setUpdatedAt(Date updatedAt) {
+    this.updatedAt = updatedAt;
   }
 
   public Date getClosedAt() {

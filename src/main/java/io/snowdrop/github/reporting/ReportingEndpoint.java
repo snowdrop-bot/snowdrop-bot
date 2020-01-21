@@ -39,6 +39,7 @@ import org.eclipse.egit.github.core.Repository;
 
 import io.snowdrop.github.reporting.model.IssueDTO;
 import io.snowdrop.github.reporting.model.PullRequestDTO;
+import io.snowdrop.github.reporting.model.RepositoryDTO;
 
 @Path("/reporting")
 public class ReportingEndpoint {
@@ -64,14 +65,14 @@ public class ReportingEndpoint {
     @GET
     @Path("/repositories")
     @Produces(MediaType.APPLICATION_JSON)
-    public Map<String, Set<Repository>> repositories() {
+    public Map<String, Set<RepositoryDTO>> repositories() {
         return service.getReporting().getRepositories();
     }
 
     @GET
     @Path("/repositories/{user}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Set<Repository> repositories(@PathParam("user") String user) {
+    public Set<RepositoryDTO> repositories(@PathParam("user") String user) {
         return service.getReporting().getRepositories().get(user);
     }
 
@@ -106,22 +107,6 @@ public class ReportingEndpoint {
     public Set<PullRequestDTO> pullRequests(@PathParam("user") String user) {
         return service.getReporting().getPullRequests().get(user);
     }
-
-    @GET
-    @Path("/data/pr/{user}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Map<String, Set<PullRequestDTO>> pullRequestData(@PathParam("user") String user) {
-        Map<String, Set<PullRequestDTO>> map = new HashMap<>();
-        Date startTime = Date.from(service.getReporting().getStartTime().toInstant());
-        Date endTime = Date.from(service.getReporting().getEndTime().toInstant());
-        Set<PullRequestDTO> pullRequests = service.getReporting().getPullRequests().get(user)
-            .stream()
-            .filter(p -> p.isActiveDuring(startTime, endTime))
-            .collect(Collectors.toSet());
-        map.put("data", pullRequests);
-        return map;
-    }
-
 
     @GET
     @Path("/issues")

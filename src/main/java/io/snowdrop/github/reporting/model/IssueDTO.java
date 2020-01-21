@@ -2,10 +2,16 @@ package io.snowdrop.github.reporting.model;
 
 import java.util.Date;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
+
 import org.eclipse.egit.github.core.Issue;
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 
-public class IssueDTO {
+@Entity
+public class IssueDTO extends PanacheEntityBase {
 
+  @Id
   String url;
   String repository;
   int number;
@@ -15,6 +21,9 @@ public class IssueDTO {
   boolean open;
   Date createdAt;
   Date closedAt;
+
+  public IssueDTO() {
+  }
 
   public IssueDTO(String url, String repository, int number, String title, String creator, String assignee,
       boolean open, Date createdAt, Date closedAt) {
@@ -44,7 +53,11 @@ public class IssueDTO {
       return true;
     }
 
-    return createdAt.before(end) && closedAt.after(start);
+    if (closedAt.before(start)) {
+      return false;
+    }
+
+    return true;
   }
 
   public String getUrl() {
