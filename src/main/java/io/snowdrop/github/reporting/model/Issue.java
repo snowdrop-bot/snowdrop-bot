@@ -2,10 +2,15 @@ package io.snowdrop.github.reporting.model;
 
 import java.util.Date;
 
-import org.eclipse.egit.github.core.PullRequest;
+import javax.persistence.Entity;
+import javax.persistence.Id;
 
-public class PullRequestDTO {
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 
+@Entity
+public class Issue extends PanacheEntityBase {
+
+  @Id
   String url;
   String repository;
   int number;
@@ -16,7 +21,10 @@ public class PullRequestDTO {
   Date createdAt;
   Date closedAt;
 
-  public PullRequestDTO(String url, String repository, int number, String title, String creator, String assignee,
+  public Issue() {
+  }
+
+  public Issue(String url, String repository, int number, String title, String creator, String assignee,
       boolean open, Date createdAt, Date closedAt) {
     this.url = url;
     this.repository = repository;
@@ -29,13 +37,14 @@ public class PullRequestDTO {
     this.closedAt = closedAt;
   }
 
-  public static PullRequestDTO create(String repository, PullRequest pr) {
-    return new PullRequestDTO(pr.getUrl(), repository, pr.getNumber(), pr.getTitle(), pr.getUser().getLogin(), null,
-        pr.getState().equals("open"), pr.getCreatedAt(), pr.getClosedAt());
+  public static Issue create(String repository, org.eclipse.egit.github.core.Issue issue) {
+    return new Issue(issue.getUrl(), repository, issue.getNumber(), issue.getTitle(), issue.getUser().getLogin(),
+        issue.getAssignee() != null ? issue.getAssignee().getLogin() : null, issue.getState().equals("open"),
+        issue.getCreatedAt(), issue.getClosedAt());
+
   }
 
-
-public boolean isActiveDuring(Date start, Date end) {
+  public boolean isActiveDuring(Date start, Date end) {
     if (createdAt.after(end)) {
       return false;
     }
@@ -43,7 +52,11 @@ public boolean isActiveDuring(Date start, Date end) {
       return true;
     }
 
-    return createdAt.before(end) && closedAt.after(start);
+    if (closedAt.before(start)) {
+      return false;
+    }
+
+    return true;
   }
 
   public String getUrl() {
