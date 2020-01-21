@@ -14,9 +14,9 @@ import org.slf4j.LoggerFactory;
 
 import io.quarkus.runtime.StartupEvent;
 import io.quarkus.scheduler.Scheduled;
-import io.snowdrop.github.reporting.model.IssueDTO;
-import io.snowdrop.github.reporting.model.PullRequestDTO;
-import io.snowdrop.github.reporting.model.RepositoryDTO;
+import io.snowdrop.github.reporting.model.Issue;
+import io.snowdrop.github.reporting.model.PullRequest;
+import io.snowdrop.github.reporting.model.Repository;
 
 @Singleton
 public class GithubReportingService {
@@ -41,8 +41,8 @@ public class GithubReportingService {
   }
 
   @Transactional
-  public void persist(RepositoryDTO repo) {
-    RepositoryDTO existing = repo.findById(repo.getUrl());
+  public void persist(Repository repo) {
+    Repository existing = repo.findById(repo.getUrl());
     if (existing != null) {
       existing.delete();
     }
@@ -50,8 +50,8 @@ public class GithubReportingService {
   }
 
   @Transactional
-  public void persist(IssueDTO issue) {
-    IssueDTO existing = issue.findById(issue.getUrl());
+  public void persist(Issue issue) {
+    Issue existing = issue.findById(issue.getUrl());
     if (existing != null) {
       existing.delete();
     }
@@ -59,8 +59,8 @@ public class GithubReportingService {
   }
 
   @Transactional
-  public void persist(PullRequestDTO pr) {
-    PullRequestDTO existing = pr.findById(pr.getUrl());
+  public void persist(PullRequest pr) {
+    PullRequest existing = pr.findById(pr.getUrl());
     if (existing != null) {
       existing.delete();
     }
@@ -70,8 +70,8 @@ public class GithubReportingService {
   @Transactional
   public void popullateRepos() {
     LOGGER.info("Populating repositories.");
-    reporting.getRepositories().putAll(RepositoryDTO.<RepositoryDTO>streamAll()
-        .collect(Collectors.groupingBy(RepositoryDTO::getOwner, Collectors.toSet())));
+    reporting.getRepositories().putAll(Repository.<Repository>streamAll()
+        .collect(Collectors.groupingBy(Repository::getOwner, Collectors.toSet())));
 
   }
 
@@ -79,14 +79,14 @@ public class GithubReportingService {
   public void popullateIssues() {
     LOGGER.info("Populating issues.");
     reporting.getIssues().putAll(
-        IssueDTO.<IssueDTO>streamAll().collect(Collectors.groupingBy(IssueDTO::getAssignee, Collectors.toSet())));
+        Issue.<Issue>streamAll().collect(Collectors.groupingBy(Issue::getAssignee, Collectors.toSet())));
   }
 
   @Transactional
   public void popullatePullRequests() {
     LOGGER.info("Populating pull requests.");
-    reporting.getPullRequests().putAll(PullRequestDTO.<PullRequestDTO>streamAll()
-             .collect(Collectors.groupingBy(PullRequestDTO::getCreator, Collectors.toSet())));
+    reporting.getPullRequests().putAll(PullRequest.<PullRequest>streamAll()
+             .collect(Collectors.groupingBy(PullRequest::getCreator, Collectors.toSet())));
   }
 
   public GithubReporting getReporting() {

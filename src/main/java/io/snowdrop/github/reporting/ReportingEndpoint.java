@@ -34,12 +34,9 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.xml.ws.Service;
 
-import org.eclipse.egit.github.core.PullRequest;
-import org.eclipse.egit.github.core.Repository;
-
-import io.snowdrop.github.reporting.model.IssueDTO;
-import io.snowdrop.github.reporting.model.PullRequestDTO;
-import io.snowdrop.github.reporting.model.RepositoryDTO;
+import io.snowdrop.github.reporting.model.Issue;
+import io.snowdrop.github.reporting.model.PullRequest;
+import io.snowdrop.github.reporting.model.Repository;
 
 @Path("/reporting")
 public class ReportingEndpoint {
@@ -65,32 +62,32 @@ public class ReportingEndpoint {
     @GET
     @Path("/repositories")
     @Produces(MediaType.APPLICATION_JSON)
-    public Map<String, Set<RepositoryDTO>> repositories() {
+    public Map<String, Set<Repository>> repositories() {
         return service.getReporting().getRepositories();
     }
 
     @GET
     @Path("/repositories/{user}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Set<RepositoryDTO> repositories(@PathParam("user") String user) {
+    public Set<Repository> repositories(@PathParam("user") String user) {
         return service.getReporting().getRepositories().get(user);
     }
 
     @GET
     @Path("/pr")
     @Produces(MediaType.APPLICATION_JSON)
-    public Map<String, Set<PullRequestDTO>> pullRequests() {
+    public Map<String, Set<PullRequest>> pullRequests() {
         return service.getReporting().getPullRequests();
     }
 
     @GET
     @Path("/data/pr")
     @Produces(MediaType.APPLICATION_JSON)
-    public Map<String, Set<PullRequestDTO>> pullRequestData() {
-        Map<String, Set<PullRequestDTO>> map = new HashMap<>();
+    public Map<String, Set<PullRequest>> pullRequestData() {
+        Map<String, Set<PullRequest>> map = new HashMap<>();
         Date startTime = Date.from(service.getReporting().getStartTime().toInstant());
         Date endTime = Date.from(service.getReporting().getEndTime().toInstant());
-        Set<PullRequestDTO> pullRequests = service.getReporting().getPullRequests()
+        Set<PullRequest> pullRequests = service.getReporting().getPullRequests()
             .values()
             .stream()
             .flatMap(s -> s.stream())
@@ -104,25 +101,25 @@ public class ReportingEndpoint {
     @GET
     @Path("/pr/{user}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Set<PullRequestDTO> pullRequests(@PathParam("user") String user) {
+    public Set<PullRequest> pullRequests(@PathParam("user") String user) {
         return service.getReporting().getPullRequests().get(user);
     }
 
     @GET
     @Path("/issues")
     @Produces(MediaType.APPLICATION_JSON)
-    public Map<String, Set<IssueDTO>> issues() {
+    public Map<String, Set<Issue>> issues() {
         return service.getReporting().getIssues();
     }
 
     @GET
     @Path("/data/issues")
     @Produces(MediaType.APPLICATION_JSON)
-    public Map<String, Set<IssueDTO>> issueData() {
-        Map<String, Set<IssueDTO>> map = new HashMap<>();
+    public Map<String, Set<Issue>> issueData() {
+        Map<String, Set<Issue>> map = new HashMap<>();
         Date startTime = Date.from(service.getReporting().getStartTime().toInstant());
         Date endTime = Date.from(service.getReporting().getEndTime().toInstant());
-        Set<IssueDTO> issues = service.getReporting().getIssues()
+        Set<Issue> issues = service.getReporting().getIssues()
             .values()
             .stream()
             .flatMap(s -> s.stream())
@@ -135,7 +132,7 @@ public class ReportingEndpoint {
     @GET
     @Path("/issues/{user}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Set<IssueDTO> issues(@PathParam("user") String user) {
+    public Set<Issue> issues(@PathParam("user") String user) {
         return service.getReporting().getIssues().get(user);
     }
 }

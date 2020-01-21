@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.eclipse.egit.github.core.Repository;
 import org.eclipse.egit.github.core.service.IssueService;
 import org.eclipse.egit.github.core.service.PullRequestService;
 import org.eclipse.egit.github.core.service.RepositoryService;
@@ -36,9 +35,9 @@ import org.slf4j.LoggerFactory;
 
 import io.snowdrop.BotException;
 import io.snowdrop.github.Github;
-import io.snowdrop.github.reporting.model.IssueDTO;
-import io.snowdrop.github.reporting.model.PullRequestDTO;
-import io.snowdrop.github.reporting.model.RepositoryDTO;
+import io.snowdrop.github.reporting.model.Issue;
+import io.snowdrop.github.reporting.model.PullRequest;
+import io.snowdrop.github.reporting.model.Repository;
 
 public class GithubReporting {
 
@@ -61,9 +60,9 @@ public class GithubReporting {
   private final Date minStartTime;
   private final Date minEndTime;
 
-  private final Map<String, Set<RepositoryDTO>> repositories = new HashMap<>();
-  private final Map<String, Set<PullRequestDTO>> pullRequests = new HashMap<>();
-  private final Map<String, Set<IssueDTO>> issues = new HashMap<>();
+  private final Map<String, Set<Repository>> repositories = new HashMap<>();
+  private final Map<String, Set<PullRequest>> pullRequests = new HashMap<>();
+  private final Map<String, Set<Issue>> issues = new HashMap<>();
 
   public GithubReporting(RepositoryService repositoryService, PullRequestService pullRequestService,
                          IssueService issueService, int reportingDay, int reportingHour, Set<String> users, Set<String> organizations) {
@@ -99,10 +98,10 @@ public class GithubReporting {
     collectPullRequests();
   }
 
-  public synchronized Map<String, Set<RepositoryDTO>> collectForks() {
+  public synchronized Map<String, Set<Repository>> collectForks() {
     users.stream().forEach(u -> {
         LOGGER.info("Getting forks for user: {}.", u);
-        Set<RepositoryDTO> forks = userForks(u);
+        Set<Repository> forks = userForks(u);
         repositories.get(u).addAll(forks);
         LOGGER.info("User: {} forks: [{}].", u, forks.stream().map(r -> r.getName()).collect(Collectors.joining(",")));
       });
@@ -110,15 +109,15 @@ public class GithubReporting {
     }
 
 
-    public Map<String, Set<IssueDTO>> collectIssues() {
-      repositories.values().stream().flatMap(s -> s.stream()).map(RepositoryDTO::getParent).filter(r -> r != null).distinct().sorted().forEach(r -> {
+    public Map<String, Set<Issue>> collectIssues() {
+      repositories.values().stream().flatMap(s -> s.stream()).map(Repository::getParent).filter(r -> r != null).distinct().sorted().forEach(r -> {
           issues.putAll(teamIssues(r, "all"));
         });
       return issues;
     }
 
-  public Map<String, Set<PullRequestDTO>> collectPullRequests() {
-    repositories.values().stream().flatMap(s -> s.stream()).map(RepositoryDTO::getParent).filter(r -> r != null).distinct().sorted().forEach(r -> {
+  public Map<String, Set<PullRequest>> collectPullRequests() {
+    repositories.values().stream().flatMap(s -> s.stream()).map(Repository::getParent).filter(r -> r != null).distinct().sorted().forEach(r -> {
           pullRequests.putAll(teamPullRequests(r, "all"));
         });
       return pullRequests;
@@ -131,19 +130,19 @@ public class GithubReporting {
    * @param user The user
    * @return A set of {@link Repository}.
    */
-  public Set<RepositoryDTO> userForks(final String user) {
+  public Set<Repository> userForks(final String user) {
     try {
       return repositoryService.getRepositories(user).stream().filter(r -> r.isFork())
         .map(r -> repository(user, r.getName()))
         .filter(r -> organizations.contains(r.getParent().getOwner().getLogin()))
-        .map(RepositoryDTO::create)
+        .map(Repository::create)
         .collect(Collectors.toSet());
     } catch (final IOException e) {
       throw BotException.launderThrowable(e);
     }
   }
 
-  private Repository repository(String user, String name) {
+  private org.eclipse.egit.github.core.Repository repository(String user, String name) {
     try {
       return repositoryService.getRepository(user, name);
     } catch (IOException e) {
@@ -151,29 +150,29 @@ public class GithubReporting {
     }
   }
 
-  private Map<String, Set<PullRequestDTO>> teamPullRequests(final String repository, final String state) {
+  private Map<String, Set<PullRequest>> teamPullRequests(final String repository, final String state) {
     try {
       LOGGER.info("Getting {} pull requests for repository: {}", state, repository);
       return pullRequestService.getPullRequests(() -> repository, state)
         .stream()
         .filter(p -> users.contains(p.getUser().getLogin()))
-        .map(p -> PullRequestDTO.create(repository, p))
+        .map(p -> PullRequest.create(repository, p))
         .filter(p -> p.isActiveDuring(minStartTime, minEndTime))
         .map(GithubReporting::log)
-        .collect(Collectors.groupingBy(PullRequestDTO::getCreator, Collectors.toSet()));
+        .collect(Collectors.groupingBy(PullRequest::getCreator, Collectors.toSet()));
     } catch (IOException e) {
       throw BotException.launderThrowable(e);
     }
   }
 
-  private Set<PullRequestDTO> userPullRequests(final String user, final RepositoryDTO repository, final String state) {
+  private Set<PullRequest> userPullRequests(final String user, final Repository repository, final String state) {
     try {
       String id = repository.isFork() ? repository.getParent() : repository.getOwner() + "/" + repository.getName();
       LOGGER.info("Getting {} pull requests for repository: {}", state, id);
       return pullRequestService.getPullRequests(() -> id, state)
         .stream()
         .filter(p -> p.getUser().getLogin().equals(user))
-        .map(p -> PullRequestDTO.create(id, p))
+        .map(p -> PullRequest.create(id, p))
         .filter(i -> i.isActiveDuring(minStartTime, minEndTime))
         .map(GithubReporting::log)
         .collect(Collectors.toSet());
@@ -182,13 +181,13 @@ public class GithubReporting {
     }
   }
 
-  private Set<IssueDTO> userIssues(String user, RepositoryDTO repository, String state) {
+  private Set<Issue> userIssues(String user, Repository repository, String state) {
     try {
       String id = repository.isFork() ? repository.getParent() : repository.getOwner() + "/" + repository.getName();
       LOGGER.info("Getting {} issues for repository: {}", state, repository.getName());
       return issueService.getIssues(Github.user(id), Github.repo(id), Github.params().state(state).build())
         .stream()
-        .map(i -> IssueDTO.create(id, i))
+        .map(i -> Issue.create(id, i))
         .filter(i -> i.getCreatedAt().before(minEndTime))
         .map(GithubReporting::log)
         .collect(Collectors.toSet());
@@ -197,16 +196,16 @@ public class GithubReporting {
     }
   }
 
-  private Map<String, Set<IssueDTO>> teamIssues(String repository, String state) {
+  private Map<String, Set<Issue>> teamIssues(String repository, String state) {
     try {
       LOGGER.info("Getting {} issues for repository: {}", state, repository);
       return issueService.getIssues(Github.user(repository), Github.repo(repository), Github.params().state(state).build())
         .stream()
         .filter(i -> i.getAssignee() != null && users.contains(i.getAssignee().getLogin()))
-        .map(i -> IssueDTO.create(repository, i))
+        .map(i -> Issue.create(repository, i))
         .filter(i -> i.isActiveDuring(minStartTime, minEndTime))
         .map(GithubReporting::log)
-        .collect(Collectors.groupingBy(IssueDTO::getCreator, Collectors.toSet()));
+        .collect(Collectors.groupingBy(Issue::getCreator, Collectors.toSet()));
     } catch (IOException e) {
       throw BotException.launderThrowable(e);
     }
@@ -217,7 +216,7 @@ public class GithubReporting {
    * Log and return self.
    * Lambda friendly log hack.
    */
-  private static IssueDTO log(IssueDTO issue) {
+  private static Issue log(Issue issue) {
     LOGGER.info("{}: {}",issue.getNumber(),issue.getTitle());
     return issue;
   }
@@ -226,7 +225,7 @@ public class GithubReporting {
    * Log and return self.
    * Lambda friendly log hack.
    */
-  private static PullRequestDTO log(PullRequestDTO pull) {
+  private static PullRequest log(PullRequest pull) {
     LOGGER.info("{}: {}",pull.getNumber(),pull.getTitle());
     return pull;
   }
@@ -239,15 +238,15 @@ public class GithubReporting {
     return organizations;
   }
 
-  public Map<String, Set<RepositoryDTO>> getRepositories() {
+  public Map<String, Set<Repository>> getRepositories() {
     return repositories;
   }
 
-  public Map<String, Set<PullRequestDTO>> getPullRequests() {
+  public Map<String, Set<PullRequest>> getPullRequests() {
     return pullRequests;
   }
 
-  public Map<String, Set<IssueDTO>> getIssues() {
+  public Map<String, Set<Issue>> getIssues() {
     return issues;
   }
 

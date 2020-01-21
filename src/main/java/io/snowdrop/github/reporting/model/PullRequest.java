@@ -5,11 +5,10 @@ import java.util.Date;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
-import org.eclipse.egit.github.core.Issue;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 
 @Entity
-public class IssueDTO extends PanacheEntityBase {
+public class PullRequest extends PanacheEntityBase {
 
   @Id
   String url;
@@ -20,13 +19,15 @@ public class IssueDTO extends PanacheEntityBase {
   String assignee;
   boolean open;
   Date createdAt;
+  Date updatedAt;
   Date closedAt;
 
-  public IssueDTO() {
+  public PullRequest() {
+
   }
 
-  public IssueDTO(String url, String repository, int number, String title, String creator, String assignee,
-      boolean open, Date createdAt, Date closedAt) {
+  public PullRequest(String url, String repository, int number, String title, String creator, String assignee,
+      boolean open, Date createdAt, Date updatedAt, Date closedAt) {
     this.url = url;
     this.repository = repository;
     this.number = number;
@@ -35,14 +36,13 @@ public class IssueDTO extends PanacheEntityBase {
     this.assignee = assignee;
     this.open = open;
     this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
     this.closedAt = closedAt;
   }
 
-  public static IssueDTO create(String repository, Issue issue) {
-    return new IssueDTO(issue.getUrl(), repository, issue.getNumber(), issue.getTitle(), issue.getUser().getLogin(),
-        issue.getAssignee() != null ? issue.getAssignee().getLogin() : null, issue.getState().equals("open"),
-        issue.getCreatedAt(), issue.getClosedAt());
-
+  public static PullRequest create(String repository, org.eclipse.egit.github.core.PullRequest pr) {
+    return new PullRequest(pr.getUrl(), repository, pr.getNumber(), pr.getTitle(), pr.getUser().getLogin(), null,
+        pr.getState().equals("open"), pr.getCreatedAt(), pr.getUpdatedAt(), pr.getClosedAt());
   }
 
   public boolean isActiveDuring(Date start, Date end) {
@@ -52,11 +52,9 @@ public class IssueDTO extends PanacheEntityBase {
     if (closedAt == null) {
       return true;
     }
-
     if (closedAt.before(start)) {
       return false;
     }
-
     return true;
   }
 
@@ -114,6 +112,14 @@ public class IssueDTO extends PanacheEntityBase {
 
   public void setCreatedAt(Date createdAt) {
     this.createdAt = createdAt;
+  }
+
+  public Date getUpdatedAt() {
+    return updatedAt;
+  }
+
+  public void setUpdatedAt(Date updatedAt) {
+    this.updatedAt = updatedAt;
   }
 
   public Date getClosedAt() {

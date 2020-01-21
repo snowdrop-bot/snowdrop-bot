@@ -3,11 +3,10 @@ package io.snowdrop.github.reporting.model;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
-import org.eclipse.egit.github.core.Repository;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 
 @Entity
-public class RepositoryDTO extends PanacheEntityBase {
+public class Repository extends PanacheEntityBase {
 
   @Id
   private String url;
@@ -16,10 +15,10 @@ public class RepositoryDTO extends PanacheEntityBase {
   private boolean fork;
   private String parent;
 
-  public RepositoryDTO() {
+  public Repository() {
   }
 
-  public RepositoryDTO(String url, String owner, String name, boolean fork, String parent) {
+  public Repository(String url, String owner, String name, boolean fork, String parent) {
     this.url = url;
     this.owner = owner;
     this.name = name;
@@ -27,8 +26,8 @@ public class RepositoryDTO extends PanacheEntityBase {
     this.parent = parent;
   }
 
-  public static RepositoryDTO create(Repository repo) {
-    return new RepositoryDTO(repo.getUrl(), repo.getOwner().getLogin(), repo.getName(), repo.isFork(),
+  public static Repository create(org.eclipse.egit.github.core.Repository repo) {
+    return new Repository(repo.getUrl(), repo.getOwner().getLogin(), repo.getName(), repo.isFork(),
         repo.getParent() != null ? repo.getParent().getOwner().getLogin() + "/" + repo.getParent().getName() : null);
   }
 
