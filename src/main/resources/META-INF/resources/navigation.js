@@ -19,6 +19,9 @@ $(document).ready(function () {
     $("#bridge").click(function () {
         $("#includedContent").load("bridge.html");
     });
+    $("#report").click(function () {
+        $("#includedContent").load("report.html");
+    });
 
     // Make selected tab active on click
     $(".nav a").on("click", function () {
