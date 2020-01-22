@@ -49,7 +49,7 @@ Those issues, can be exported in csv, excel or pdf.
 **NOTE:** At the moment we don't track the activity of the issue in any way. In
 other words, we do not filter out `stale` issues.
 
-![issues screen](./img/issus.png "Issues Screen")
+![issues screen](./img/issues.png "Issues Screen")
 
 ## Pull Request tracking
 
