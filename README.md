@@ -6,7 +6,7 @@ A bot for automating snowdrop related tasks
 - [Issues tracking](#issue-tracking) across multiple organizations and repositories
 - [Pull request tracking](#pull-request-tracking) across multiple organization and repositories
 - [Forked repository issue bridging](#forked-repository-issue-bridging)
-- [Google Docs report genration](#google-docs-report-generation)
+- [Google Docs report generation](#google-docs-report-generation)
 
 ## Installation
 
@@ -102,4 +102,3 @@ This can be done by selecting the `Reporting` tab and clicking the `generate` bu
 
 This requires the setup mentioned in [Google APIS](#google-apis).
 The id of the target document can be specified using `google.docs.report.document-id`.
-
