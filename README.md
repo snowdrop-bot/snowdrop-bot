@@ -68,7 +68,7 @@ Those pull requests, can be exported in csv, excel or pdf.
 **NOTE:** At the moment we don't track the activity of the pull requests in any way. In
 other words, we do not filter out `stale` pull requests.
 
-## Fork repository issue bridging
+## Forked repository issue bridging
 
 When working across multiple different organizations owned by different teams
 with variable access levels, its important to be able to have an aggregated view
