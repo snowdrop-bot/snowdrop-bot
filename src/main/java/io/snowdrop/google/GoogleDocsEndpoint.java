@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import io.snowdrop.BotException;
 import io.snowdrop.github.reporting.GithubReportingService;
 import io.snowdrop.github.reporting.model.PullRequest;
+import io.snowdrop.google.dsl.DocumentBuilder;
 
 @Path("/docs")
 public class GoogleDocsEndpoint {
@@ -60,7 +61,7 @@ public class GoogleDocsEndpoint {
 
   public List<Request> createRequests(Map<String, Set<PullRequest>> pullRequests) {
     List<Request> requests = new ArrayList<>();
-    DocContentBuilder builder = new DocContentBuilder();
+    DocumentBuilder builder = new DocumentBuilder();
     pullRequests.entrySet().forEach(e -> {
       final StringBuilder sb = new StringBuilder();
       String user = e.getKey();
@@ -75,9 +76,9 @@ public class GoogleDocsEndpoint {
                   builder.tab(3).link(p.getUrl()).newline();
             });
           });
-      builder.bulletsOff();
+      builder.bulletsOff().newline();
     });
-    requests.addAll(builder.build());
+    requests.addAll(builder.getAllRequests());
     return requests;
   }
 
