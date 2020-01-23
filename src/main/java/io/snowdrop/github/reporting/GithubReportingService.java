@@ -33,7 +33,7 @@ public class GithubReportingService {
     popullatePullRequests();
   }
 
-  @Scheduled(every = "1h")
+//  @Scheduled(every = "1h")
   public void hourly() {
     reporting.collectForks().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
     reporting.collectIssues().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));

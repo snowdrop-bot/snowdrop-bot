@@ -14,11 +14,13 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.xml.ws.Response;
 
+import com.github.fge.Builder;
 import com.google.api.services.docs.v1.Docs;
 import com.google.api.services.docs.v1.model.BatchUpdateDocumentRequest;
 import com.google.api.services.docs.v1.model.BatchUpdateDocumentResponse;
 import com.google.api.services.docs.v1.model.CreateParagraphBulletsRequest;
 import com.google.api.services.docs.v1.model.Document;
+import com.google.api.services.docs.v1.model.Link;
 import com.google.api.services.docs.v1.model.Range;
 import com.google.api.services.docs.v1.model.Request;
 import com.google.api.services.docs.v1.model.TextStyle;
@@ -31,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import io.snowdrop.BotException;
 import io.snowdrop.github.reporting.GithubReportingService;
 import io.snowdrop.github.reporting.model.PullRequest;
+import io.snowdrop.google.dsl.DocumentBuilder;
 
 @Path("/docs")
 public class GoogleDocsEndpoint {
@@ -58,31 +61,24 @@ public class GoogleDocsEndpoint {
 
   public List<Request> createRequests(Map<String, Set<PullRequest>> pullRequests) {
     List<Request> requests = new ArrayList<>();
-    DocContentBuilder builder = new DocContentBuilder();
+    DocumentBuilder builder = new DocumentBuilder();
     pullRequests.entrySet().forEach(e -> {
       final StringBuilder sb = new StringBuilder();
       String user = e.getKey();
       Set<PullRequest> prs = e.getValue();
-      builder.write(user + "\n", new TextStyle().setBold(true), "bold");
+      builder.bold(user).newline().bulletsOn();
 
       prs.stream().collect(Collectors.groupingBy(PullRequest::getRepository, Collectors.toSet())).entrySet()
           .forEach(r -> {
-              builder.write("\t" + r.getKey().split("/")[1] + " [GREEN]:\n");
+              builder.tab().write(r.getKey().split("/")[1] + "[GREEN]:").newline();
               r.getValue().stream().forEach(p -> {
-                  builder.write("\t\t" + p.getTitle()+"\n");
-                  builder.write("\t\t\t" + p.getUrl()+"\n");
+                  builder.tab(2).write(p.getTitle()).newline();
+                  builder.tab(3).link(p.getUrl()).newline();
             });
-
           });
+      builder.bulletsOff().newline();
     });
-
-    requests.addAll(builder.build());
-    requests.add(new Request().setCreateParagraphBullets(
-              new CreateParagraphBulletsRequest()
-                      .setRange(new Range()
-                                .setStartIndex(builder.getStartIndex())
-                                .setEndIndex(builder.getEndIndex()))
-                      .setBulletPreset("BULLET_ARROW_DIAMOND_DISC")));
+    requests.addAll(builder.getAllRequests());
     return requests;
   }
 
