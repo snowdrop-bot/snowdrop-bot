@@ -12,19 +12,11 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import javax.xml.ws.Response;
 
-import com.github.fge.Builder;
 import com.google.api.services.docs.v1.Docs;
 import com.google.api.services.docs.v1.model.BatchUpdateDocumentRequest;
 import com.google.api.services.docs.v1.model.BatchUpdateDocumentResponse;
-import com.google.api.services.docs.v1.model.CreateParagraphBulletsRequest;
-import com.google.api.services.docs.v1.model.Document;
-import com.google.api.services.docs.v1.model.Link;
-import com.google.api.services.docs.v1.model.Range;
 import com.google.api.services.docs.v1.model.Request;
-import com.google.api.services.docs.v1.model.TextStyle;
-import com.google.api.services.docs.v1.model.UpdateTextStyleRequest;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
@@ -33,7 +25,7 @@ import org.slf4j.LoggerFactory;
 import io.snowdrop.BotException;
 import io.snowdrop.github.reporting.GithubReportingService;
 import io.snowdrop.github.reporting.model.PullRequest;
-import io.snowdrop.google.dsl.DocumentBuilder;
+import io.snowdrop.google.dsl.ContentBuilder;
 
 @Path("/docs")
 public class GoogleDocsEndpoint {
@@ -61,7 +53,7 @@ public class GoogleDocsEndpoint {
 
   public List<Request> createRequests(Map<String, Set<PullRequest>> pullRequests) {
     List<Request> requests = new ArrayList<>();
-    DocumentBuilder builder = new DocumentBuilder();
+    ContentBuilder builder = new ContentBuilder();
     pullRequests.entrySet().forEach(e -> {
       final StringBuilder sb = new StringBuilder();
       String user = e.getKey();

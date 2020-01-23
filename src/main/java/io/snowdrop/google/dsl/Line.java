@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 
 public class Line implements IText<Line>, IBullets<Line> {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(DocumentBuilder.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(Line.class);
   private static final String NEWLINE = "\n";
   private static final String TAB = "\t";
 

@@ -45,6 +45,36 @@ public class ReportingEndpoint {
     GithubReportingService service;
 
     @GET
+    @Path("/enable")
+    public void enable(){
+        service.enable();
+    }
+
+    @GET
+    @Path("/disable")
+    public void disable(){
+        service.disable();
+    }
+
+    @GET
+    @Path("/status")
+    public boolean status(){
+       return service.status();
+    }
+
+    @GET
+    @Path("/collect/issues")
+    public void collectIssues() {
+        service.collectIssues();
+    }
+
+    @GET
+    @Path("/collect/pull-requests")
+    public void collectPullRequests() {
+        service.collectPullRequests();
+    }
+
+    @GET
     @Path("/orgs")
     @Produces(MediaType.APPLICATION_JSON)
     public Set<String> organizations() {

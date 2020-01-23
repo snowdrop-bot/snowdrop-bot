@@ -1,6 +1,7 @@
 package io.snowdrop.github.reporting;
 
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.enterprise.context.control.ActivateRequestContext;
@@ -9,6 +10,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.transaction.Transactional;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +28,21 @@ public class GithubReportingService {
   @Inject
   GithubReporting reporting;
 
+  @ConfigProperty(name = "github.reporting.enabled", defaultValue = "true")
+  private boolean enabled;
+
+  public void enable() {
+    this.enabled = true;
+  }
+
+  public void disable() {
+    this.enabled = false;
+  }
+
+  public boolean status() {
+    return enabled;
+  }
+
   @ActivateRequestContext
   void onStart(@Observes StartupEvent ev) {
     popullateRepos();
@@ -33,12 +50,31 @@ public class GithubReportingService {
     popullatePullRequests();
   }
 
-//  @Scheduled(every = "1h")
-  public void hourly() {
-    reporting.collectForks().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
-    reporting.collectIssues().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
-    reporting.collectPullRequests().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
+  @Scheduled(delay=1, delayUnit = TimeUnit.HOURS, every = "3h")
+  public void executeIfEnabled() {
+    if (enabled) {
+      execute();
+    }
   }
+
+  public void execute() {
+      reporting.collectForks().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
+      reporting.collectIssues().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
+      reporting.collectPullRequests().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
+  }
+
+  public void collectIssues() {
+      reporting.collectForks().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
+      reporting.collectIssues().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
+  }
+
+  public void collectPullRequests() {
+      reporting.collectForks().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
+      reporting.collectIssues().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
+      reporting.collectPullRequests().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
+  }
+
+
 
   @Transactional
   public void persist(Repository repo) {

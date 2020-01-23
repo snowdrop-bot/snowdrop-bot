@@ -50,22 +50,22 @@ public class GithubIssueBridge {
   private final Map<Integer, Issue> closedIssues = new HashMap<>();
   private final Map<Integer, Issue> downstreamIssues = new HashMap<>();
 
-  public GithubIssueBridge(GitHubClient client, IssueService issueService, LabelService labelService, String sourceRepository, String targetRepository, String terminalLabel, Set<String> users) {
+  public GithubIssueBridge(GitHubClient client, String sourceRepository, String targetRepository, String terminalLabel, Set<String> users) {
     this.client = client;
-    this.issueService = issueService;
-    this.labelService = labelService;
+    this.issueService = new IssueService(client);
+    this.labelService = new LabelService(client);
     this.sourceRepository = sourceRepository;
     this.targetRepository = targetRepository;
     this.terminalLabel = terminalLabel;
     this.users = users;
   }
 
-  public synchronized void init() {
+  public void init() {
     LOGGER.info("Initializing.");
     refresh();
   }
 
-  public synchronized void refresh() {
+  public void refresh() {
     LOGGER.info("Refershing bridge: {} -> {}.", sourceRepository, targetRepository);
     downstreamOpenIssues().stream().forEach(i -> downstreamIssues.put(i.getNumber(), i));
 
@@ -75,49 +75,47 @@ public class GithubIssueBridge {
 
   public List<Issue> cloneTeamIssues() {
     LOGGER.info("Cloning team issues from {}.", sourceRepository);
-    return openIssues.values().stream()
-       .filter(i -> !findDownstreamIssue(i).isPresent())
-       .map(i -> cloneIssue(i, targetRepository))
-       .collect(Collectors.toList());
+    return openIssues.values().stream().filter(i -> !findDownstreamIssue(i).isPresent())
+        .map(i -> cloneIssue(i, targetRepository)).collect(Collectors.toList());
   }
 
   public void assignTeamIssues() {
     LOGGER.info("Assigning team issues in {}.", targetRepository);
-    downstreamIssues.values().stream()
-      .map(i -> new AbstractMap.SimpleEntry<>(i, findUpstreamIssue(i)))
-      .filter(e -> e.getValue().isPresent())
-      .forEach(e -> assign(client, targetRepository, e.getKey(), e.getValue().map(Issue::getAssignee).orElseThrow(IllegalStateException::new)));
+    downstreamIssues.values().stream().map(i -> new AbstractMap.SimpleEntry<>(i, findUpstreamIssue(i)))
+        .filter(e -> e.getValue().isPresent()).forEach(e -> assign(client, targetRepository, e.getKey(),
+            e.getValue().map(Issue::getAssignee).orElseThrow(IllegalStateException::new)));
   }
 
-   public List<Issue> closeTeamIssues() {
+  public List<Issue> closeTeamIssues() {
     LOGGER.info("Closing team issues from {}.", sourceRepository);
-    return closedIssues.values()
-      .stream()
-      .map(i -> findDownstreamIssue(i))
-      .filter(o -> o.isPresent())
-      .map(Optional::get)
-      .map(i -> markIssueAsClosed(i, targetRepository))
-      .collect(Collectors.toList());
+    return closedIssues.values().stream().map(i -> findDownstreamIssue(i)).filter(o -> o.isPresent()).map(Optional::get)
+        .map(i -> markIssueAsClosed(i, targetRepository)).collect(Collectors.toList());
   }
 
   /**
    * Stream all the open issues of the source repository assigned to team mebmers.
+   *
    * @return A stream of issues.
    */
   public List<Issue> teamOpenIssues() {
-    return source().filter(i -> i.getAssignee() != null && users.contains(i.getAssignee().getLogin())).collect(Collectors.toList());
+    return source().filter(i -> i.getAssignee() != null && users.contains(i.getAssignee().getLogin()))
+        .collect(Collectors.toList());
   }
 
   /**
    * Stream all the open issues of the source repository assigned to team mebmers.
+   *
    * @return A stream of issues.
    */
   public List<Issue> teamClosedIssues() {
-    return source(Github.params().closed().build()).filter(i -> i.getAssignee() != null && users.contains(i.getAssignee().getLogin())).collect(Collectors.toList());
+    return source(Github.params().closed().build())
+        .filter(i -> i.getAssignee() != null && users.contains(i.getAssignee().getLogin()))
+        .collect(Collectors.toList());
   }
 
   /**
    * Stream all the open issues of the source repository assigned to team mebmers.
+   *
    * @return A stream of issues.
    */
   public List<Issue> downstreamOpenIssues() {
@@ -126,20 +124,22 @@ public class GithubIssueBridge {
 
   /**
    * Find a downstream issue that correlates with the specified issue.
+   *
    * @param issue the issue to look up.
    * @return An optional containing the downstream issue.
    */
   private Optional<Issue> findDownstreamIssue(Issue issue) {
     LOGGER.info("Checking if downstream issue {} exists downstream.", issue.getNumber());
-    String link = UPSTREAM_REPO_PREFIX+issue.getNumber()+UPSTREAM_REPO_SUFFIX;
-     return downstreamIssues.values().stream()
-       //   .map(i -> {System.out.println(issue.getNumber() + " :" + i.getTitle()); return i;})
-       .filter(i -> i.getBody() != null && i.getBody().contains(link))
-       .findFirst();
+    String link = UPSTREAM_REPO_PREFIX + issue.getNumber() + UPSTREAM_REPO_SUFFIX;
+    return downstreamIssues.values().stream()
+        // .map(i -> {System.out.println(issue.getNumber() + " :" + i.getTitle());
+        // return i;})
+        .filter(i -> i.getBody() != null && i.getBody().contains(link)).findFirst();
   }
 
   /**
    * Find a downstream issue that correlates with the specified issue.
+   *
    * @param issue the issue to look up.
    * @return An optional containing the downstream issue.
    */
@@ -153,87 +153,96 @@ public class GithubIssueBridge {
       return Optional.empty();
     }
 
-
     Integer number = upstreamIssueNumber(issue.getBody());
-    LOGGER.info("Checking upstream for issue {}.",  number);
+    LOGGER.info("Checking upstream for issue {}.", number);
     return Optional.ofNullable(openIssues.get(number));
   }
 
-  private synchronized Label getLabel(String repo, String label) {
-    Map<String, Label> labelCache = repoLables.computeIfAbsent(repo, l -> new HashMap<String, Label>());
-    return labelCache.computeIfAbsent(label, l -> {
+  private Label getLabel(String repo, String label) {
+    synchronized (client) {
+      Map<String, Label> labelCache = repoLables.computeIfAbsent(repo, l -> new HashMap<String, Label>());
+      return labelCache.computeIfAbsent(label, l -> {
         try {
           return labelService.getLabel(Github.user(repo), Github.repo(repo), label);
         } catch (IOException e) {
           throw BotException.launderThrowable(e);
         }
       });
+    }
   }
 
   /**
    * Creates an issue to the target repository.
+   *
    * @param issue the issue to clone.
-   * @param repo the target repository.
+   * @param repo  the target repository.
    */
-  private synchronized Issue cloneIssue(Issue issue, String repo) {
-    try {
-      LOGGER.info("Cloning issue {} to repository: {}.", issue.getNumber(), repo);
-      Issue cloned = new Issue();
-      cloned.setTitle(issue.getTitle());
-      cloned.setAssignee(issue.getAssignee());
-      cloned.setBody(issue.getBody()
-                     + SEPARATOR
-                     + issue.getHtmlUrl()
-                     + SEPARATOR
-                     + UPSTREAM_REPO_PREFIX + issue.getNumber() + UPSTREAM_REPO_SUFFIX);
-      Issue created = issueService.createIssue(Github.user(repo), Github.repo(repo), cloned);
-      if (issue.getAssignee() != null && created.getAssignee() == null) {
-        LOGGER.info("Setting assignee: {} on issue: {}.", issue.getAssignee().getLogin(), created.getNumber());
-        assign(client, repo, created, issue.getUser());
-        return cloned;
+  private Issue cloneIssue(Issue issue, String repo) {
+    synchronized (client) {
+      try {
+        LOGGER.info("Cloning issue {} to repository: {}.", issue.getNumber(), repo);
+        Issue cloned = new Issue();
+        cloned.setTitle(issue.getTitle());
+        cloned.setAssignee(issue.getAssignee());
+        cloned.setBody(issue.getBody() + SEPARATOR + issue.getHtmlUrl() + SEPARATOR + UPSTREAM_REPO_PREFIX
+            + issue.getNumber() + UPSTREAM_REPO_SUFFIX);
+        Issue created = issueService.createIssue(Github.user(repo), Github.repo(repo), cloned);
+        if (issue.getAssignee() != null && created.getAssignee() == null) {
+          LOGGER.info("Setting assignee: {} on issue: {}.", issue.getAssignee().getLogin(), created.getNumber());
+          assign(client, repo, created, issue.getUser());
+          return cloned;
+        }
+        return created;
+      } catch (IOException e) {
+        throw BotException.launderThrowable(e);
       }
-      return created;
-    } catch (IOException e) {
-      throw BotException.launderThrowable(e);
     }
   }
 
   /**
    * Mark an issue as closed.
+   *
    * @param upstream the issue to clone.
-   * @param repo the target repository.
+   * @param repo     the target repository.
    */
-  private synchronized Issue markIssueAsClosed(Issue issue, String repo) {
-    try {
-      LOGGER.info("Closing issue {} to repository: {}.", issue.getNumber(), repo);
-      List<Label> labels = new ArrayList<>(issue.getLabels());
-      labels.add(getLabel(repo, terminalLabel));
-      issue.setLabels(labels);
-      return issueService.editIssue(Github.user(repo), Github.user(repo), issue);
-    } catch (IOException e) {
-      throw BotException.launderThrowable(e);
+  private Issue markIssueAsClosed(Issue issue, String repo) {
+    synchronized (client) {
+      try {
+        LOGGER.info("Closing issue {} to repository: {}.", issue.getNumber(), repo);
+        List<Label> labels = new ArrayList<>(issue.getLabels());
+        labels.add(getLabel(repo, terminalLabel));
+        issue.setLabels(labels);
+        return issueService.editIssue(Github.user(repo), Github.user(repo), issue);
+      } catch (IOException e) {
+        throw BotException.launderThrowable(e);
+      }
     }
   }
 
   /**
    * Find an issue by number in the target repository.
-   * @param repo the target repository
+   *
+   * @param repo   the target repository
    * @param number the issue number
    * @return An optional of the issue.
    */
-  private synchronized Optional<Issue> findIssue(String repo, String number) {
-    try {
-      return Optional.of(issueService.getIssue(Github.user(repo), Github.repo(repo) , number)); 
-    } catch (IOException e) {
-      throw new BotException(e);
+  private Optional<Issue> findIssue(String repo, String number) {
+    synchronized (client) {
+      try {
+        return Optional.of(issueService.getIssue(Github.user(repo), Github.repo(repo), number));
+      } catch (IOException e) {
+        throw new BotException(e);
+      }
     }
   }
 
-  private synchronized Stream<Issue> stream(String repo, Map<String, String> params) {
-    try {
-      return issueService.getIssues(Github.user(repo), Github.repo(repo), params).stream();
-    } catch (IOException e) {
-      throw new BotException(e);
+  private Stream<Issue> stream(String repo, Map<String, String> params) {
+    synchronized (client) {
+      try {
+        return issueService.getIssues(Github.user(repo), Github.repo(repo), params).stream();
+      } catch (IOException e) {
+        throw new BotException(e);
+      }
     }
   }
 
@@ -258,31 +267,33 @@ public class GithubIssueBridge {
   //
 
   private synchronized static User assign(GitHubClient client, String repo, Issue issue, User user) {
-		if (issue == null)
-			throw new IllegalArgumentException("Issue cannot be null"); //$NON-NLS-1$
-		if (user == null)
-			throw new IllegalArgumentException("Issue user cannot be null"); //$NON-NLS-1$
+    synchronized (client) {
+      if (issue == null)
+        throw new IllegalArgumentException("Issue cannot be null"); //$NON-NLS-1$
+      if (user == null)
+        throw new IllegalArgumentException("Issue user cannot be null"); //$NON-NLS-1$
 
-		StringBuilder uri = new StringBuilder(IGitHubConstants.SEGMENT_REPOS);
-		uri.append('/').append(Github.user(repo));
-		uri.append('/').append(Github.repo(repo));
-		uri.append(IGitHubConstants.SEGMENT_ISSUES);
-		uri.append('/').append(issue.getNumber());
-		uri.append('/').append(ASSIGNEES);
-		GitHubRequest request = new GitHubRequest();
-		request.setUri(uri);
-                try {
-                  return client.post(uri.toString(), new Assignees(user.getLogin()).toMap(), User.class);
-                } catch (IOException e) {
-                  throw BotException.launderThrowable(e);
-                }
+      StringBuilder uri = new StringBuilder(IGitHubConstants.SEGMENT_REPOS);
+      uri.append('/').append(Github.user(repo));
+      uri.append('/').append(Github.repo(repo));
+      uri.append(IGitHubConstants.SEGMENT_ISSUES);
+      uri.append('/').append(issue.getNumber());
+      uri.append('/').append(ASSIGNEES);
+      GitHubRequest request = new GitHubRequest();
+      request.setUri(uri);
+      try {
+        return client.post(uri.toString(), new Assignees(user.getLogin()).toMap(), User.class);
+      } catch (IOException e) {
+        throw BotException.launderThrowable(e);
+      }
+    }
   }
 
   private static Integer upstreamIssueNumber(String body) {
-    if  (body == null || body.isEmpty()) {
+    if (body == null || body.isEmpty()) {
       throw new IllegalStateException("Issue body should not be null or empty.");
     }
-    if  (body.contains(UPSTREAM_REPO_PREFIX)) {
+    if (body.contains(UPSTREAM_REPO_PREFIX)) {
       int start = body.lastIndexOf(UPSTREAM_REPO_PREFIX);
       int end = body.lastIndexOf(UPSTREAM_REPO_SUFFIX);
       if (end < start) {
@@ -290,7 +301,7 @@ public class GithubIssueBridge {
       }
       return Integer.parseInt(body.substring(start + UPSTREAM_REPO_PREFIX.length(), end));
     }
-    throw new IllegalStateException("Issue body should contain correlation info."); 
+    throw new IllegalStateException("Issue body should contain correlation info.");
   }
 
 }

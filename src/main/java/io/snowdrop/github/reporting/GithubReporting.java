@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.eclipse.egit.github.core.client.GitHubClient;
 import org.eclipse.egit.github.core.service.IssueService;
 import org.eclipse.egit.github.core.service.PullRequestService;
 import org.eclipse.egit.github.core.service.RepositoryService;
@@ -43,6 +44,7 @@ public class GithubReporting {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(GithubReporting.class);
 
+  private final GitHubClient client;
   private final RepositoryService repositoryService;
   private final PullRequestService pullRequestService;
   private final IssueService issueService;
@@ -64,11 +66,11 @@ public class GithubReporting {
   private final Map<String, Set<PullRequest>> pullRequests = new HashMap<>();
   private final Map<String, Set<Issue>> issues = new HashMap<>();
 
-  public GithubReporting(RepositoryService repositoryService, PullRequestService pullRequestService,
-                         IssueService issueService, int reportingDay, int reportingHour, Set<String> users, Set<String> organizations) {
-    this.repositoryService = repositoryService;
-    this.pullRequestService = pullRequestService;
-    this.issueService = issueService;
+  public GithubReporting(GitHubClient client, int reportingDay, int reportingHour, Set<String> users, Set<String> organizations) {
+    this.client = client;
+    this.repositoryService = new RepositoryService(client);
+    this.pullRequestService = new PullRequestService(client);
+    this.issueService = new IssueService(client);
     this.reportingDay = reportingDay;
     this.reportingHour = reportingHour;
     this.users = users;
