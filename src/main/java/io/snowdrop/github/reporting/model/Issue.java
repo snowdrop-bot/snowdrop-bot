@@ -40,7 +40,7 @@ public class Issue extends PanacheEntityBase implements WithDates {
   }
 
   public static Issue create(String repository, org.eclipse.egit.github.core.Issue issue) {
-    return new Issue(issue.getUrl(), repository, issue.getNumber(), issue.getTitle(), issue.getUser().getLogin(),
+    return new Issue(issue.getHtmlUrl(), repository, issue.getNumber(), issue.getTitle(), issue.getUser().getLogin(),
         issue.getAssignee() != null ? issue.getAssignee().getLogin() : null, issue.getState().equals("open"),
         issue.getCreatedAt(), issue.getUpdatedAt(), issue.getClosedAt());
   }

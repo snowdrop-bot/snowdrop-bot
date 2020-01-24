@@ -41,7 +41,7 @@ public class PullRequest extends PanacheEntityBase implements WithDates {
   }
 
   public static PullRequest create(String repository, org.eclipse.egit.github.core.PullRequest pr) {
-    return new PullRequest(pr.getUrl(), repository, pr.getNumber(), pr.getTitle(), pr.getUser().getLogin(), null,
+    return new PullRequest(pr.getHtmlUrl(), repository, pr.getNumber(), pr.getTitle(), pr.getUser().getLogin(), null,
         pr.getState().equals("open"), pr.getCreatedAt(), pr.getUpdatedAt(), pr.getClosedAt());
   }
 
