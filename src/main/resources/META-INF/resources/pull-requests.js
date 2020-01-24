@@ -32,7 +32,7 @@ var dataTablesRenderDate = function (data, type, row) {
     }
     if ( type === 'display' || type === 'filter' ) {
         var d = new Date( data );
-        return d.getDay() + '/' + (d.getMonth()+1) + '/' + d.getFullYear();
+        return d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear();
     }
 
     // Otherwise the data type requested (`type`) is type detection or
