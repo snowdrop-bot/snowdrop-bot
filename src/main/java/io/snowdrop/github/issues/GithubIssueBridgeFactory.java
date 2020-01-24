@@ -28,7 +28,7 @@ public class GithubIssueBridgeFactory {
   public List<GithubIssueBridge> createIssueBridge(GitHubClient client, IssueService issueService, LabelService labelService) {
     return bridgeConfig.getSourceRepos()
       .stream()
-      .map(r -> new GithubIssueBridge(client, issueService, labelService, r, bridgeConfig.getTargetOrganization() + "/" + Github.repo(r), bridgeConfig.getTerminalLabel(), users))
+      .map(r -> new GithubIssueBridge(client, r, bridgeConfig.getTargetOrganization() + "/" + Github.repo(r), bridgeConfig.getTerminalLabel(), users))
       .collect(Collectors.toList());
   }
 

@@ -6,12 +6,8 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
-import org.eclipse.egit.github.core.service.IssueService;
-import org.eclipse.egit.github.core.service.PullRequestService;
-import org.eclipse.egit.github.core.service.RepositoryService;
+import org.eclipse.egit.github.core.client.GitHubClient;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-
-import io.snowdrop.github.Github;
 
 @ApplicationScoped
 public class GithubReportingFactory {
@@ -29,18 +25,11 @@ public class GithubReportingFactory {
   int reportingHours;
 
   @Inject
-  PullRequestService pullRequestService;
-
-  @Inject
-  RepositoryService repositoryService;
-
-  @Inject
-  IssueService issueService;
-
+  GitHubClient client;
 
   @Produces
   public GithubReporting createGithubReporting() {
-    return new GithubReporting(repositoryService, pullRequestService, issueService, reportingDayOfWeek, reportingHours, users, organizations);
+    return new GithubReporting(client, reportingDayOfWeek, reportingHours, users, organizations);
   }
 
 }

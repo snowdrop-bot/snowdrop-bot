@@ -1,3 +1,30 @@
+$.ajax({url: "/reporting/status"}).then(function(data) {
+  if (data) {
+    $("#report-enable").attr("disabled", true);
+    $("#report-disable").attr("disabled", false);
+  }
+});
+
+$("#report-enable").click(function() {
+  $.get("/reporting/enable", function(data, status) {
+    $("#report-enable").attr("disabled", true);
+    $("#report-disable").attr("disabled", false);
+  });
+});
+
+$("#report-disable").click(function() {
+  $.get("/reporting/disable", function(data, status) {
+    $("#report-enable").attr("disabled", false);
+    $("#report-disable").attr("disabled", true);
+  });
+});
+
+$("#report-pull-request-collect").click(function() {
+  $.get("/reporting/collect/pull-requests", function(data, status) {
+  });
+});
+
+//DataTables
 var dataTablesRenderDate = function (data, type, row) {
     // If display or filter data is requested, format the date
     if (data == null) {
