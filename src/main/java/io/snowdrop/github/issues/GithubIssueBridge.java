@@ -212,7 +212,7 @@ public class GithubIssueBridge {
         List<Label> labels = new ArrayList<>(issue.getLabels());
         labels.add(getLabel(repo, terminalLabel));
         issue.setLabels(labels);
-        return issueService.editIssue(Github.user(repo), Github.user(repo), issue);
+        return issueService.editIssue(Github.user(repo), Github.repo(repo), issue);
       } catch (IOException e) {
         throw BotException.launderThrowable(e);
       }
