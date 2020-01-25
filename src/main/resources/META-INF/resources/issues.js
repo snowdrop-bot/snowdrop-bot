@@ -41,6 +41,12 @@ var dataTablesRenderDate = function (data, type, row) {
     return data;
 }
 
+var dataTablesRenderNumber = function (data, type, row) {
+    var url = data;
+    var num = data.substring(data.lastIndexOf('/') + 1);
+    return "<a href='" + url +"'>" +num +"</a>";
+}
+
 $(document).ready(function() {
 
     $('#issues-table').DataTable( {
@@ -52,10 +58,11 @@ $(document).ready(function() {
         columns: [
             {data: 'assignee', type: 'string' },
             {data: 'repository', type: 'string' },
-            {data: 'number', type : 'num'},
+            {data: 'url', type : 'num', render: dataTablesRenderNumber},
             {data: 'title', type: 'string' },
             {data: 'open', type: 'boolean' },
             {data: 'createdAt', type: 'string', render: dataTablesRenderDate},
+            {data: 'updatedAt', type: 'string', render: dataTablesRenderDate},
             {data: 'closedAt', type: 'string', render: dataTablesRenderDate}
         ],
         order: [[3, "desc"]],
