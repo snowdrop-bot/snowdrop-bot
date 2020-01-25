@@ -29,7 +29,7 @@ public class GithubReportingService {
   @Inject
   GithubReporting reporting;
 
-  @ConfigProperty(name = "github.reporting.enabled", defaultValue = "true")
+  @ConfigProperty(name = "github.reporting.enabled", defaultValue = "false")
   private boolean enabled;
 
   public void enable() {
@@ -51,7 +51,7 @@ public class GithubReportingService {
     popullatePullRequests();
   }
 
-  @Scheduled(delay=1, delayUnit = TimeUnit.HOURS, every = "3h")
+  @Scheduled(every = "3h")
   public void executeIfEnabled() {
     if (enabled) {
       execute();

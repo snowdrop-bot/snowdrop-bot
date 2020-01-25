@@ -1,6 +1,4 @@
 $(document).ready(function () {
-
-    console.log("naviation started")
     $(function () {
         $("#includedContent").load("home.html");
     });
@@ -9,11 +7,9 @@ $(document).ready(function () {
         $("#includedContent").load("home.html");
     });
     $("#issues").click(function () {
-        console.log("naviation started")
         $("#includedContent").load("issues.html");
     });
     $("#pull-requests").click(function () {
-        console.log("naviation started")
         $("#includedContent").load("pull-requests.html");
     });
     $("#bridge").click(function () {
