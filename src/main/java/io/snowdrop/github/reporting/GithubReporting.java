@@ -81,7 +81,7 @@ public class GithubReporting {
     this.startTime = endTime.minusWeeks(1);
 
     this.minStartTime = Date.from(startTime.minusMonths(1).toInstant());
-    this.minEndTime = Date.from(endTime.minusMonths(1).toInstant());
+    this.minEndTime = Date.from(endTime.toInstant());
     init();
   }
 
@@ -169,7 +169,7 @@ public class GithubReporting {
     }
   }
 
-  private Set<PullRequest> userPullRequests(final String user, final Repository repository, final String state) {
+  public Set<PullRequest> userPullRequests(final String user, final Repository repository, final String state) {
     synchronized (client) {
       try {
         String id = repository.isFork() ? repository.getParent() : repository.getOwner() + "/" + repository.getName();
@@ -184,15 +184,18 @@ public class GithubReporting {
     }
   }
 
-  private Set<Issue> userIssues(String user, Repository repository, String state) {
+  public Set<Issue> userIssues(String user, Repository repository, String state) {
     synchronized (client) {
 
       try {
         String id = repository.isFork() ? repository.getParent() : repository.getOwner() + "/" + repository.getName();
-        LOGGER.info("Getting {} issues for repository: {}", state, repository.getName());
-        return issueService.getIssues(Github.user(id), Github.repo(id), Github.params().state(state).build()).stream()
-            .map(i -> Issue.create(id, i)).filter(i -> i.getCreatedAt().before(minEndTime)).map(GithubReporting::log)
-            .collect(Collectors.toSet());
+        LOGGER.info("Getting {} issues for repository: {}/{} during: {} - {}.", state, Github.user(id), Github.repo(id), DF.format(minStartTime), DF.format(minEndTime));
+        return issueService.getIssues(Github.user(id), Github.repo(id), Github.params().state(state).build())
+          .stream()
+          .map(i -> Issue.create(id, i))
+          .filter(i -> i.isActiveDuring(minStartTime, minEndTime))
+          .map(GithubReporting::log)
+          .collect(Collectors.toSet());
       } catch (IOException e) {
         throw BotException.launderThrowable(e);
       }
@@ -218,7 +221,9 @@ public class GithubReporting {
    * Log and return self. Lambda friendly log hack.
    */
   private static Issue log(Issue issue) {
-    LOGGER.info("{}: {}", issue.getNumber(), issue.getTitle());
+    LOGGER.info("{}: {}. {} - {} - {}.", issue.getNumber(), issue.getTitle(), DF.format(issue.getCreatedAt()),
+                issue.getUpdatedAt() != null ? DF.format(issue.getUpdatedAt()) : null,
+                issue.getClosedAt() != null ? DF.format(issue.getClosedAt()) : null);
     return issue;
   }
 
@@ -226,7 +231,9 @@ public class GithubReporting {
    * Log and return self. Lambda friendly log hack.
    */
   private static PullRequest log(PullRequest pull) {
-    LOGGER.info("{}: {}", pull.getNumber(), pull.getTitle());
+    LOGGER.info("{}: {}. {} - {} - {}.", pull.getNumber(), pull.getTitle(), DF.format(pull.getCreatedAt()),
+                pull.getUpdatedAt() != null ? DF.format(pull.getUpdatedAt()) : null,
+                pull.getClosedAt() != null ? DF.format(pull.getClosedAt()) : null);
     return pull;
   }
 
