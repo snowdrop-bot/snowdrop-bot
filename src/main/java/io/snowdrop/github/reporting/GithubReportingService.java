@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import io.quarkus.runtime.StartupEvent;
 import io.quarkus.scheduler.Scheduled;
+import io.snowdrop.github.reporting.model.ForkId;
 import io.snowdrop.github.reporting.model.Issue;
 import io.snowdrop.github.reporting.model.PullRequest;
 import io.snowdrop.github.reporting.model.Repository;
@@ -28,7 +29,7 @@ public class GithubReportingService {
   @Inject
   GithubReporting reporting;
 
-  @ConfigProperty(name = "github.reporting.enabled", defaultValue = "true")
+  @ConfigProperty(name = "github.reporting.enabled", defaultValue = "false")
   private boolean enabled;
 
   public void enable() {
@@ -50,7 +51,7 @@ public class GithubReportingService {
     popullatePullRequests();
   }
 
-  @Scheduled(delay=1, delayUnit = TimeUnit.HOURS, every = "3h")
+  @Scheduled(every = "3h")
   public void executeIfEnabled() {
     if (enabled) {
       execute();
@@ -78,7 +79,7 @@ public class GithubReportingService {
 
   @Transactional
   public void persist(Repository repo) {
-    Repository existing = repo.findById(repo.getUrl());
+    Repository existing = Repository.findById(new ForkId(repo.getUrl(), repo.getParent()));
     if (existing != null) {
       existing.delete();
     }
@@ -87,7 +88,7 @@ public class GithubReportingService {
 
   @Transactional
   public void persist(Issue issue) {
-    Issue existing = issue.findById(issue.getUrl());
+    Issue existing = Issue.findById(issue.getUrl());
     if (existing != null) {
       existing.delete();
     }
@@ -96,7 +97,7 @@ public class GithubReportingService {
 
   @Transactional
   public void persist(PullRequest pr) {
-    PullRequest existing = pr.findById(pr.getUrl());
+    PullRequest existing = PullRequest.findById(pr.getUrl());
     if (existing != null) {
       existing.delete();
     }

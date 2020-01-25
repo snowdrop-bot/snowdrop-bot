@@ -1,6 +1,7 @@
 package io.snowdrop.github.issues;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -31,7 +32,7 @@ public class GithubIssueBridgeService {
   @Inject
   List<GithubIssueBridge> bridges;
 
-  @ConfigProperty(name = "github.bridge.enabled", defaultValue = "true")
+  @ConfigProperty(name = "github.bridge.enabled", defaultValue = "false")
   private boolean enabled;
 
   public void enable() {
@@ -46,7 +47,7 @@ public class GithubIssueBridgeService {
     return enabled;
   }
 
-  @Scheduled(every = "1h")
+  @Scheduled(delay = 1, delayUnit = TimeUnit.HOURS, every = "3h")
   public void executeIfEnabled() {
     if (enabled) {
       bridgeNow();

@@ -8,7 +8,7 @@ import javax.persistence.Id;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 
 @Entity
-public class Issue extends PanacheEntityBase {
+public class Issue extends PanacheEntityBase implements WithDates {
 
   @Id
   String url;
@@ -19,13 +19,14 @@ public class Issue extends PanacheEntityBase {
   String assignee;
   boolean open;
   Date createdAt;
+  Date updatedAt;
   Date closedAt;
 
   public Issue() {
   }
 
-  public Issue(String url, String repository, int number, String title, String creator, String assignee,
-      boolean open, Date createdAt, Date closedAt) {
+  public Issue(String url, String repository, int number, String title, String creator, String assignee, boolean open,
+      Date createdAt, Date updatedAt, Date closedAt) {
     this.url = url;
     this.repository = repository;
     this.number = number;
@@ -34,29 +35,14 @@ public class Issue extends PanacheEntityBase {
     this.assignee = assignee;
     this.open = open;
     this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
     this.closedAt = closedAt;
   }
 
   public static Issue create(String repository, org.eclipse.egit.github.core.Issue issue) {
-    return new Issue(issue.getUrl(), repository, issue.getNumber(), issue.getTitle(), issue.getUser().getLogin(),
+    return new Issue(issue.getHtmlUrl(), repository, issue.getNumber(), issue.getTitle(), issue.getUser().getLogin(),
         issue.getAssignee() != null ? issue.getAssignee().getLogin() : null, issue.getState().equals("open"),
-        issue.getCreatedAt(), issue.getClosedAt());
-
-  }
-
-  public boolean isActiveDuring(Date start, Date end) {
-    if (createdAt.after(end)) {
-      return false;
-    }
-    if (closedAt == null) {
-      return true;
-    }
-
-    if (closedAt.before(start)) {
-      return false;
-    }
-
-    return true;
+        issue.getCreatedAt(), issue.getUpdatedAt(), issue.getClosedAt());
   }
 
   public String getUrl() {
@@ -115,6 +101,14 @@ public class Issue extends PanacheEntityBase {
     this.createdAt = createdAt;
   }
 
+  public Date getUpdatedAt() {
+    return updatedAt;
+  }
+
+  public void setUpdatedAt(Date updatedAt) {
+    this.updatedAt = updatedAt;
+  }
+
   public Date getClosedAt() {
     return closedAt;
   }
@@ -131,4 +125,28 @@ public class Issue extends PanacheEntityBase {
     this.open = open;
   }
 
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((url == null) ? 0 : url.hashCode());
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    Issue other = (Issue) obj;
+    if (url == null) {
+      if (other.url != null)
+        return false;
+    } else if (!url.equals(other.url))
+      return false;
+    return true;
+  }
 }

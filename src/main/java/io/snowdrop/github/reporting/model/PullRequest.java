@@ -8,7 +8,7 @@ import javax.persistence.Id;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 
 @Entity
-public class PullRequest extends PanacheEntityBase {
+public class PullRequest extends PanacheEntityBase implements WithDates {
 
   @Id
   String url;
@@ -41,21 +41,8 @@ public class PullRequest extends PanacheEntityBase {
   }
 
   public static PullRequest create(String repository, org.eclipse.egit.github.core.PullRequest pr) {
-    return new PullRequest(pr.getUrl(), repository, pr.getNumber(), pr.getTitle(), pr.getUser().getLogin(), null,
+    return new PullRequest(pr.getHtmlUrl(), repository, pr.getNumber(), pr.getTitle(), pr.getUser().getLogin(), null,
         pr.getState().equals("open"), pr.getCreatedAt(), pr.getUpdatedAt(), pr.getClosedAt());
-  }
-
-  public boolean isActiveDuring(Date start, Date end) {
-    if (createdAt.after(end)) {
-      return false;
-    }
-    if (closedAt == null) {
-      return true;
-    }
-    if (closedAt.before(start)) {
-      return false;
-    }
-    return true;
   }
 
   public String getUrl() {
@@ -136,6 +123,31 @@ public class PullRequest extends PanacheEntityBase {
 
   public void setOpen(boolean open) {
     this.open = open;
+  }
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((url == null) ? 0 : url.hashCode());
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    PullRequest other = (PullRequest) obj;
+    if (url == null) {
+      if (other.url != null)
+        return false;
+    } else if (!url.equals(other.url))
+      return false;
+    return true;
   }
 
 }

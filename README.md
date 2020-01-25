@@ -33,6 +33,32 @@ Google Documents API. Once enabled, you will need to store the provided
 `credentials.json` file under `/data/snowdrop-bot/google/credentials.json`.
 Again the location is configurable via `google.docs.credentials.file` property.
 
+## Running
+
+To run the bot you can just build:
+
+    mvn clean install
+    
+and then run with:
+
+    jar -jar target/snowdrop-bot-0.1-SNAPSHOT-runner.jar
+
+*NOTE:* The `github.token` is required, so either set it in
+`application.properites` or create an environment variable for it.
+
+### Default Profile
+To avoid unnecessary trafic on the github API (which is subject of rate
+limiting) the default profile has the core features (e.g. bridge and reporting disabled).
+
+You can enable them selectively through the UI, or use a different profile (e.g.
+production).
+
+### Production Profile
+The production profile has all features enabled by default.
+Additionally, everything related to file persistence or file configuration is
+configured under `/data/snowdrop-bot` which which is a volume friendlier path
+(e.g. when running on Kubernetes).
+
 
 ## Issue tracking
 
