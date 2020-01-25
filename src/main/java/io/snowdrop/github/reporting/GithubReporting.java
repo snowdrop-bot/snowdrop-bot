@@ -18,6 +18,7 @@
 package io.snowdrop.github.reporting;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.time.DayOfWeek;
 import java.time.ZonedDateTime;
 import java.util.Date;
@@ -25,6 +26,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.eclipse.egit.github.core.client.GitHubClient;
@@ -43,6 +45,7 @@ import io.snowdrop.github.reporting.model.Repository;
 public class GithubReporting {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(GithubReporting.class);
+  private static final SimpleDateFormat DF = new SimpleDateFormat("dd/MM/yyyy");
 
   private final GitHubClient client;
   private final RepositoryService repositoryService;
@@ -160,7 +163,9 @@ public class GithubReporting {
       try {
         LOGGER.info("Getting {} pull requests for repository: {}", state, repository);
         return pullRequestService.getPullRequests(() -> repository, state).stream()
-            .filter(p -> users.contains(p.getUser().getLogin())).map(p -> PullRequest.create(repository, p))
+            .map(p -> PullRequest.create(repository, p))
+            .map(GithubReporting::log)
+            .filter(p -> users.contains(p.getCreator()))
             .filter(p -> p.isActiveDuring(minStartTime, minEndTime)).map(GithubReporting::log)
             .collect(Collectors.groupingBy(PullRequest::getCreator, Collectors.toSet()));
       } catch (IOException e) {
