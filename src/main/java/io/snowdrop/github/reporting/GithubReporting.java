@@ -83,7 +83,7 @@ public class GithubReporting {
     this.endTime = ZonedDateTime.now().with(DayOfWeek.of(reportingDay)).withHour(reportingHour);
     this.startTime = endTime.minusWeeks(1);
 
-    this.minStartTime = Date.from(startTime.minusMonths(1).toInstant());
+    this.minStartTime = Date.from(startTime.minusMonths(6).toInstant());
     this.minEndTime = Date.from(endTime.toInstant());
     init();
   }
