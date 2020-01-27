@@ -1,4 +1,5 @@
 $(document).ready(function() {
+
   $("#report-enable").click(function() {
     $.get("/reporting/enable", function(data, status) {
       $("#report-enable").attr("disabled", true);
@@ -29,28 +30,31 @@ $(document).ready(function() {
     }
   });
 
-  //DataTables
-  var dataTablesRenderDate = function (data, type, row) {
-    // If display or filter data is requested, format the date
-    if (data == null) {
-      return "--"
+  $.ajax({url: "/reporting/start-time"}).then(function(data) {
+    if (data) {
+      var d = new Date(data);
+      d.setHours(12)
+      d.setMinutes(00)
+      var dateText =  d.getDate() + '/' + (d.getMonth() + 1) + '/' + d.getFullYear() + " 12:00 AM";
+      $('#start-date').datetimepicker({
+        defaultDate: d,
+        sideBySide: true,
+      });
     }
-    if ( type === 'display' || type === 'filter' ) {
-      var d = new Date( data );
-      return d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear();
+  });
+
+  $.ajax({url: "/reporting/end-time"}).then(function(data) {
+    if (data) {
+      var d = new Date(data);
+      d.setHours(12)
+      d.setMinutes(00)
+      var dateText =  d.getDate() + '/' + (d.getMonth() + 1) + '/' + d.getFullYear() + "12:00 AM";
+      $('#end-date').datetimepicker({
+        defaultDate: d,
+        sideBySide: true,
+      });
     }
-
-    // Otherwise the data type requested (`type`) is type detection or
-    // sorting data, for which we want to use the integer, so just return
-    // that, unaltered
-    return data;
-  }
-
-  var dataTablesRenderNumber = function (data, type, row) {
-    var url = data;
-    var num = data.substring(data.lastIndexOf('/') + 1);
-    return "<a href='" + url +"'>" +num +"</a>";
-  }
+  });
 
   $('#issues-table').DataTable( {
     processing: true,

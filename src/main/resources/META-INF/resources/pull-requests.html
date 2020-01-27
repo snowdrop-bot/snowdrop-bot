@@ -1,8 +1,33 @@
+<script src="datetimepicker-setup.js"></script>
+<script src="datatables-setup.js"></script>
 <script src="pull-requests.js"></script>
 
 <div class="container">
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="#">Pull Requests</a>
+        <div class="row">
+            <div class="col-xs-6">
+                <a class="navbar-brand" href="#">Pull Requests</a>
+            </div>
+            <div class='col-sx-6'>
+                <div class="form-group">
+                    <div class='input-group date' id='start-date'>
+                        <input type='text' class="form-control" />
+                        <span class="input-group-addon">
+                            <span class="fa fa-calendar"></span>
+                        </span>
+                    </div>
+                </div>
+            <div class='col-sx-6'>
+                <div class="form-group">
+                    <div class='input-group date' id='end-date'>
+                        <input type='text' class="form-control" />
+                        <span class="input-group-addon">
+                            <span class="fa fa-calendar"></span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
     </nav>
     <table id="pull-requests-table" class="display nowrap" style="width:100%">
         <thead>
