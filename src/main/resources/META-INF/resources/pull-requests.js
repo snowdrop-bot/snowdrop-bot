@@ -1,3 +1,6 @@
+var startTime
+var endTime
+
 $(document).ready(function() {
 
   $.ajax({url: "/reporting/status"}).then(function(data) {
@@ -32,47 +35,62 @@ $(document).ready(function() {
 
   $.ajax({url: "/reporting/start-time"}).then(function(data) {
     if (data) {
-      var d = new Date(data);
-      d.setHours(12)
-      d.setMinutes(00)
-      var dateText =  d.getDate() + '/' + (d.getMonth() + 1) + '/' + d.getFullYear() + " 12:00 AM";
+      startTime = new Date(data);
+      startTime.setHours(12)
+      startTime.setMinutes(00)
+      var dateText =  formatDate(startTime) + " 12:00 AM";
       $('#start-date').datetimepicker({
-        defaultDate: d,
+        defaultDate: startTime,
         sideBySide: true,
+      }).on('dp.change', function (e) {
+        startTime=e.date.toDate()
+        refreshDataTable()
       });
+      refreshDataTable()
     }
   });
 
   $.ajax({url: "/reporting/end-time"}).then(function(data) {
     if (data) {
-      var d = new Date(data);
-      d.setHours(12)
-      d.setMinutes(00)
-      var dateText =  d.getDate() + '/' + (d.getMonth() + 1) + '/' + d.getFullYear() + "12:00 AM";
+      endTime = new Date(data);
+      endTime.setHours(12)
+      endTime.setMinutes(00)
+      var dateText =  formatDate(endTime) + "12:00 AM";
       $('#end-date').datetimepicker({
-        defaultDate: d,
+        defaultDate: endTime,
         sideBySide: true,
+      }).on('dp.change', function (e) {
+        endTime=e.date.toDate()
+        refreshDataTable()
       });
+      refreshDataTable()
     }
   });
 
-  $('#pull-requests-table').DataTable( {
-    processing: true,
-    dom: 'Bfrtip',
-    buttons: [
-      'copy', 'csv', 'excel', 'pdf'
-    ],
-    columns: [
-      {data: 'creator', type: 'string' },
-      {data: 'repository', type: 'string' },
-      {data: 'url', type : 'num', render: dataTablesRenderNumber},
-      {data: 'title', type: 'string' },
-      {data: 'open', type: 'boolean' },
-      {data: 'createdAt', type: 'string', render: dataTablesRenderDate},
-      {data: 'updatedAt', type: 'string', render: dataTablesRenderDate},
-      {data: 'closedAt', type: 'string', render: dataTablesRenderDate}
-    ],
-    order: [[3, "desc"]],
-    ajax: "/reporting/data/pr"
-  });
+  function refreshDataTable() {
+    if (startTime == null || endTime == null) {
+      return
+    }
+    $('#pull-requests-table').DataTable( {
+      destroy: true,
+      processing: true,
+      dom: 'Bfrtip',
+      buttons: [
+        'copy', 'csv', 'excel', 'pdf'
+      ],
+      columns: [
+        {data: 'assignee', type: 'string' },
+        {data: 'repository', type: 'string' },
+        {data: 'url', type : 'num', render: dataTablesRenderNumber},
+        {data: 'title', type: 'string' },
+        {data: 'open', type: 'boolean' },
+        {data: 'createdAt', type: 'string', render: dataTablesRenderDate},
+        {data: 'updatedAt', type: 'string', render: dataTablesRenderDate},
+        {data: 'closedAt', type: 'string', render: dataTablesRenderDate}
+      ],
+      order: [[3, "desc"]],
+      ajax: "/reporting/data/pr?startTime=" + formatDate(startTime) + "&endTime=" + formatDate(endTime)
+    });
+  }
+
 });

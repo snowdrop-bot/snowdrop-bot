@@ -1,18 +1,25 @@
+var startTime;
+var endTime;
+
 $("#report-generate").click(function() {
-  $.get("/docs/generate", function(data, status){
-    alert("Document: " + data + " updated!");
-  });
+  if (startTime != null && endTime != null) {
+    $.get("/docs/generate?startTime=" + fomatDate(startTime) + "&endTime=" + formatDate(endTime), function(data, status){
+      alert("Document: " + data + " updated!");
+    });
+  } else {
+      alert("Please define the period!");
+  }
 });
 
 $(document).ready(function() {
   $.ajax({url: "/reporting/start-time"}).then(function(data) {
     if (data) {
-      var d = new Date(data);
-      d.setHours(12)
-      d.setMinutes(00)
-      var dateText =  d.getDate() + '/' + (d.getMonth() + 1) + '/' + d.getFullYear() + " 12:00 AM";
+      startTime = new Date(data);
+      startTime.setHours(12)
+      startTime.setMinutes(00)
+      var dateText =  formatDate(startTime) + " 12:00 AM";
       $('#start-date').datetimepicker({
-        defaultDate: d,
+        defaultDate: startTime,
         sideBySide: true,
       });
     }
@@ -20,12 +27,12 @@ $(document).ready(function() {
 
   $.ajax({url: "/reporting/end-time"}).then(function(data) {
     if (data) {
-      var d = new Date(data);
-      d.setHours(12)
-      d.setMinutes(00)
-      var dateText =  d.getDate() + '/' + (d.getMonth() + 1) + '/' + d.getFullYear() + "12:00 AM";
+      endTime = new Date(data);
+      endTime.setHours(12)
+      endTime.setMinutes(00)
+      var dateText =  formatDate(endTime) + "12:00 AM";
       $('#end-date').datetimepicker({
-        defaultDate: d,
+        defaultDate: endTime,
         sideBySide: true,
       });
     }
