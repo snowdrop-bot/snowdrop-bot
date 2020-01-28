@@ -1,47 +1,40 @@
-$("#report-generate").click(function() {
-  $.get("/docs/generate", function(data, status){
-    alert("Document: " + data + " updated!");
-  });
-});
+var startTime;
+var endTime;
 
-$.extend(true, $.fn.datetimepicker.defaults, {
-    icons: {
-      time: 'fa fa-clock',
-      date: 'fa fa-calendar',
-      up: 'fa fa-angle-up',
-      down: 'fa fa-angle-down',
-      previous: 'fa fa-angle-left',
-      next: 'fa fa-angle-right',
-      today: 'fas fa-calendar-check',
-      clear: 'far fa-trash-alt',
-      close: 'far fa-times-circle'
-    }
+$("#report-generate").click(function() {
+  if (startTime != null && endTime != null) {
+    $.get("/docs/generate?startTime=" + fomatDate(startTime) + "&endTime=" + formatDate(endTime), function(data, status){
+      alert("Document: " + data + " updated!");
+    });
+  } else {
+      alert("Please define the period!");
+  }
 });
 
 $(document).ready(function() {
-  $('#start-date').datetimepicker({
-    useCurrent: false,
-    inline: true,
-    sideBySide: true
-  });
-  $('#end-date').datetimepicker({
-    useCurrent: false,
-    inline: true,
-    sideBySide: true
-  });
   $.ajax({url: "/reporting/start-time"}).then(function(data) {
     if (data) {
-      var d = new Date(data);
-      var dateText =  d.getDate() + '/' + (d.getMonth() + 1) + '/' + d.getFullYear() + " 12:00 AM";
-      $("#start-date").val(dateText);
+      startTime = new Date(data);
+      startTime.setHours(12)
+      startTime.setMinutes(00)
+      var dateText =  formatDate(startTime) + " 12:00 AM";
+      $('#start-date').datetimepicker({
+        defaultDate: startTime,
+        sideBySide: true,
+      });
     }
   });
 
   $.ajax({url: "/reporting/end-time"}).then(function(data) {
     if (data) {
-      var d = new Date(data);
-      var dateText =  d.getDate() + '/' + (d.getMonth() + 1) + '/' + d.getFullYear() + "12:00 AM";
-      $("#end-date").val(dateText);
+      endTime = new Date(data);
+      endTime.setHours(12)
+      endTime.setMinutes(00)
+      var dateText =  formatDate(endTime) + "12:00 AM";
+      $('#end-date').datetimepicker({
+        defaultDate: endTime,
+        sideBySide: true,
+      });
     }
   });
 });
