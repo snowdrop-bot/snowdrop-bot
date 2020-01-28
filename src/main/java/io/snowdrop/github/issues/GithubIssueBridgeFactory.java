@@ -25,7 +25,7 @@ public class GithubIssueBridgeFactory {
   BridgeConfig bridgeConfig;
 
   @Produces
-  public List<GithubIssueBridge> createIssueBridge(GitHubClient client, IssueService issueService, LabelService labelService) {
+  public List<GithubIssueBridge> createIssueBridge(GitHubClient client) {
     return bridgeConfig.getSourceRepos()
       .stream()
       .map(r -> new GithubIssueBridge(client, r, bridgeConfig.getTargetOrganization() + "/" + Github.repo(r), bridgeConfig.getTerminalLabel(), users))
