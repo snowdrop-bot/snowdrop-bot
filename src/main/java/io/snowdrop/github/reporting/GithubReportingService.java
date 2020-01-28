@@ -47,8 +47,6 @@ public class GithubReportingService {
   @ActivateRequestContext
   void onStart(@Observes StartupEvent ev) {
     popullateRepos();
-    popullateIssues();
-    popullatePullRequests();
   }
 
   @Scheduled(every = "3h")
@@ -74,7 +72,6 @@ public class GithubReportingService {
       reporting.collectIssues().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
       reporting.collectPullRequests().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
   }
-
 
 
   @Transactional
@@ -110,20 +107,6 @@ public class GithubReportingService {
     reporting.getRepositories().putAll(Repository.<Repository>streamAll()
         .collect(Collectors.groupingBy(Repository::getOwner, Collectors.toSet())));
 
-  }
-
-  @Transactional
-  public void popullateIssues() {
-    LOGGER.info("Populating issues.");
-    reporting.getIssues().putAll(
-        Issue.<Issue>streamAll().collect(Collectors.groupingBy(Issue::getAssignee, Collectors.toSet())));
-  }
-
-  @Transactional
-  public void popullatePullRequests() {
-    LOGGER.info("Populating pull requests.");
-    reporting.getPullRequests().putAll(PullRequest.<PullRequest>streamAll()
-             .collect(Collectors.groupingBy(PullRequest::getCreator, Collectors.toSet())));
   }
 
   public GithubReporting getReporting() {

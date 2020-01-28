@@ -19,8 +19,6 @@ package io.snowdrop.github.reporting;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,7 +32,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import javax.xml.ws.Service;
 
 import io.snowdrop.github.reporting.model.Issue;
 import io.snowdrop.github.reporting.model.PullRequest;
@@ -130,12 +127,11 @@ public class ReportingEndpoint {
                 : Date.from(service.getReporting().getStartTime().toInstant());
         Date endTime = endTimeString != null ? DF.parse(endTimeString)
                 : Date.from(service.getReporting().getEndTime().toInstant());
-        Set<PullRequest> pullRequests = service.getReporting().getPullRequests().values().stream()
-                .flatMap(s -> s.stream()).filter(p -> p.isActiveDuring(startTime, endTime)).collect(Collectors.toSet());
+        Set<PullRequest> pullRequests = service.getReporting().getPullRequests()
+                .filter(p -> p.isActiveDuring(startTime, endTime)).collect(Collectors.toSet());
         map.put("data", pullRequests);
         return map;
     }
-
 
     @GET
     @Path("/data/issues")
@@ -147,8 +143,8 @@ public class ReportingEndpoint {
                 : Date.from(service.getReporting().getStartTime().toInstant());
         Date endTime = endTimeString != null ? DF.parse(endTimeString)
                 : Date.from(service.getReporting().getEndTime().toInstant());
-        Set<Issue> issues = service.getReporting().getIssues().values().stream().flatMap(s -> s.stream())
-                .filter(i -> i.isActiveDuring(startTime, endTime)).collect(Collectors.toSet());
+        Set<Issue> issues = service.getReporting().getIssues().filter(i -> i.isActiveDuring(startTime, endTime))
+                .collect(Collectors.toSet());
         map.put("data", issues);
         return map;
     }
@@ -165,8 +161,7 @@ public class ReportingEndpoint {
                 : Date.from(service.getReporting().getEndTime().toInstant());
 
         return service.getReporting().userPullRequests(creator, Repository.fromFork(creator, user, repo), "all")
-            .stream()
-            .filter(i -> i.isActiveDuring(startTime, endTime)).collect(Collectors.toSet());
+                .stream().filter(i -> i.isActiveDuring(startTime, endTime)).collect(Collectors.toSet());
     }
 
     @GET
@@ -179,8 +174,7 @@ public class ReportingEndpoint {
                 : Date.from(service.getReporting().getStartTime().toInstant());
         Date endTime = endTimeString != null ? DF.parse(endTimeString)
                 : Date.from(service.getReporting().getEndTime().toInstant());
-        return service.getReporting().userIssues(assignee, Repository.fromFork(assignee, user, repo), "all")
-            .stream()
-            .filter(i -> i.isActiveDuring(startTime, endTime)).collect(Collectors.toSet());
+        return service.getReporting().userIssues(assignee, Repository.fromFork(assignee, user, repo), "all").stream()
+                .filter(i -> i.isActiveDuring(startTime, endTime)).collect(Collectors.toSet());
     }
 }
