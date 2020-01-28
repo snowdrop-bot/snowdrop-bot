@@ -79,7 +79,7 @@ $(document).ready(function() {
         'copy', 'csv', 'excel', 'pdf'
       ],
       columns: [
-        {data: 'assignee', type: 'string' },
+        {data: 'creator', type: 'string' },
         {data: 'repository', type: 'string' },
         {data: 'url', type : 'num', render: dataTablesRenderNumber},
         {data: 'title', type: 'string' },
