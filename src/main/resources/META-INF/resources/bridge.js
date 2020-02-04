@@ -10,6 +10,12 @@ $(document).ready(function() {
     }
   });
 
+  $.ajax({url: "/bridge/source-repos"}).then(function(data) {
+    $.each(data, function( index, val ) {
+      $("#source-repo-list").append("<li class='list-group-item'>" + val + "</li>");
+    });
+  });
+
   $("#bridge-enable").click(function() {
     $.get("/bridge/enable", function(data, status) {
       $("#bridge-enable").attr("disabled", true);
@@ -23,4 +29,10 @@ $(document).ready(function() {
       $("#bridge-disable").attr("disabled", true);
     });
   });
+
+  $("#bridge-now").click(function() {
+    $.get("/bridge/now", function(data, status) {
+    });
+  });
+
 });

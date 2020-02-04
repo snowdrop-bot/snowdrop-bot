@@ -51,4 +51,8 @@ public class GithubIssueBridgeService {
       });
   }
 
+  public List<GithubIssueBridge> getBridges() {
+    return bridges;
+  }
+
 }
