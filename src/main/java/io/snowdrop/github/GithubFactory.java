@@ -21,34 +21,9 @@ public class GithubFactory {
 
   @Produces
   public GitHubClient createClient() {
-    GitHubClient client = new GitHubClient();
+    GitHubClient client = new GithubRateLimitedClient();
     client.setOAuth2Token(token);
     return client;
-  }
-
-  @Produces
-  public RepositoryService createRepositoryService(GitHubClient client) {
-    return new RepositoryService(client);
-  }
-
-  @Produces
-  public IssueService createIssueService(GitHubClient client) {
-    return new IssueService(client);
-  }
-
-  @Produces
-  LabelService createLabelService(GitHubClient client) {
-    return new LabelService(client);
-  }
-
-  @Produces
-  UserService createUserService(GitHubClient client) {
-    return new UserService(client);
-  }
-
-  @Produces
-  PullRequestService createPullRequestService(GitHubClient client) {
-    return new PullRequestService(client);
   }
 
 }

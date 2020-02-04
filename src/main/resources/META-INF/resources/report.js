@@ -3,7 +3,7 @@ var endTime;
 
 $("#report-generate").click(function() {
   if (startTime != null && endTime != null) {
-    $.get("/docs/generate?startTime=" + fomatDate(startTime) + "&endTime=" + formatDate(endTime), function(data, status){
+    $.get("/docs/generate?startTime=" + formatDate(startTime) + "&endTime=" + formatDate(endTime), function(data, status){
       alert("Document: " + data + " updated!");
     });
   } else {

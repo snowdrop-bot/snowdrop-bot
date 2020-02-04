@@ -1,7 +1,9 @@
 package io.snowdrop.google;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -11,6 +13,7 @@ import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import com.google.api.services.docs.v1.Docs;
@@ -31,6 +34,7 @@ import io.snowdrop.google.dsl.ContentBuilder;
 public class GoogleDocsEndpoint {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(GoogleDocsEndpoint.class);
+  private static final SimpleDateFormat DF = new SimpleDateFormat("dd/MM/yyyy");
 
   @ConfigProperty(name = "google.docs.report.document-id")
   String reportDocumentId;
@@ -39,11 +43,11 @@ public class GoogleDocsEndpoint {
   Docs docs;
 
   @Inject
-  GithubReportingService reporting;
+  GithubReportingService service;
 
-  private void populate() {
+  private void populate(Date startTime, Date endTime) {
     try {
-      List<Request> prs = createRequests(reporting.getReporting().getPullRequests());
+      List<Request> prs = createRequests(service.getReporting().getPullRequests().filter(p -> p.isActiveDuring(startTime, endTime)).collect(Collectors.toSet()));
       BatchUpdateDocumentRequest body = new BatchUpdateDocumentRequest().setRequests(prs);
       BatchUpdateDocumentResponse response = docs.documents().batchUpdate(reportDocumentId, body).execute();
     } catch (IOException e) {
@@ -51,16 +55,17 @@ public class GoogleDocsEndpoint {
     }
   }
 
-  public List<Request> createRequests(Map<String, Set<PullRequest>> pullRequests) {
+  public List<Request> createRequests(Set<PullRequest> pullRequests) {
     List<Request> requests = new ArrayList<>();
     ContentBuilder builder = new ContentBuilder();
-    pullRequests.entrySet().forEach(e -> {
+    pullRequests.stream().collect(Collectors.groupingBy(PullRequest::getCreator, Collectors.toSet())).entrySet().forEach(e -> {
       final StringBuilder sb = new StringBuilder();
       String user = e.getKey();
       Set<PullRequest> prs = e.getValue();
       builder.bold(user).newline().bulletsOn();
 
-      prs.stream().collect(Collectors.groupingBy(PullRequest::getRepository, Collectors.toSet())).entrySet()
+      prs.stream()
+           .collect(Collectors.groupingBy(PullRequest::getRepository, Collectors.toSet())).entrySet()
           .forEach(r -> {
               builder.tab().write(r.getKey().split("/")[1] + "[GREEN]:").newline();
               r.getValue().stream().forEach(p -> {
@@ -77,11 +82,15 @@ public class GoogleDocsEndpoint {
   @GET
   @Path("/generate")
   @Produces(MediaType.TEXT_PLAIN)
-  public String createReport() {
+  public String createReport(@QueryParam("startTime") String startTimeString, @QueryParam("endTime") String endTimeString) {
     try {
-      populate();
+        Date startTime = startTimeString != null ? DF.parse(startTimeString)
+                : Date.from(service.getReporting().getStartTime().toInstant());
+        Date endTime = endTimeString != null ? DF.parse(endTimeString)
+                : Date.from(service.getReporting().getEndTime().toInstant());
+      populate(startTime, endTime);
       return docs.documents().get(reportDocumentId).execute().getTitle();
-    } catch (IOException e) {
+    } catch (Exception e) {
       throw BotException.launderThrowable(e);
     }
   }

@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.eclipse.egit.github.core.client.GitHubClient;
 import org.eclipse.egit.github.core.service.IssueService;
@@ -66,8 +67,6 @@ public class GithubReporting {
   private final Date minEndTime;
 
   private final Map<String, Set<Repository>> repositories = new HashMap<>();
-  private final Map<String, Set<PullRequest>> pullRequests = new HashMap<>();
-  private final Map<String, Set<Issue>> issues = new HashMap<>();
 
   public GithubReporting(GitHubClient client, int reportingDay, int reportingHour, Set<String> users,
       Set<String> organizations) {
@@ -91,8 +90,6 @@ public class GithubReporting {
   public void init() {
     users.stream().forEach(u -> {
       repositories.put(u, new HashSet<>());
-      pullRequests.put(u, new HashSet<>());
-      issues.put(u, new HashSet<>());
     });
   }
 
@@ -114,19 +111,24 @@ public class GithubReporting {
   }
 
   public Map<String, Set<Issue>> collectIssues() {
-    repositories.values().stream().flatMap(s -> s.stream()).map(Repository::getParent).filter(r -> r != null).distinct()
-        .sorted().forEach(r -> {
-          issues.putAll(teamIssues(r, "all"));
-        });
-    return issues;
+    return repositories.values()
+      .stream()
+      .flatMap(s -> s.stream())
+      .map(Repository::getParent).filter(r -> r != null)
+      .distinct()
+      .sorted()
+      .flatMap(i -> teamIssueStream(i, "all"))
+      .collect(Collectors.groupingBy(Issue::getAssignee, Collectors.toSet()));
   }
 
   public Map<String, Set<PullRequest>> collectPullRequests() {
-    repositories.values().stream().flatMap(s -> s.stream()).map(Repository::getParent).filter(r -> r != null).distinct()
-        .sorted().forEach(r -> {
-          pullRequests.putAll(teamPullRequests(r, "all"));
-        });
-    return pullRequests;
+    return repositories.values()
+      .stream()
+      .flatMap(s -> s.stream()).map(Repository::getParent)
+      .filter(r -> r != null).distinct()
+      .sorted()
+      .flatMap(r -> teamPullRequestStream(r, "all"))
+      .collect(Collectors.groupingBy(PullRequest::getCreator, Collectors.toSet()));
   }
 
   /**
@@ -159,6 +161,10 @@ public class GithubReporting {
   }
 
   private Map<String, Set<PullRequest>> teamPullRequests(final String repository, final String state) {
+    return teamPullRequestStream(repository, state).collect(Collectors.groupingBy(PullRequest::getCreator, Collectors.toSet()));
+  }
+
+  private Stream<PullRequest> teamPullRequestStream(final String repository, final String state) {
     synchronized (client) {
       try {
         LOGGER.info("Getting {} pull requests for repository: {}", state, repository);
@@ -166,8 +172,8 @@ public class GithubReporting {
             .map(p -> PullRequest.create(repository, p))
             .map(GithubReporting::log)
             .filter(p -> users.contains(p.getCreator()))
-            .filter(p -> p.isActiveDuring(minStartTime, minEndTime)).map(GithubReporting::log)
-            .collect(Collectors.groupingBy(PullRequest::getCreator, Collectors.toSet()));
+            .filter(p -> p.isActiveDuring(minStartTime, minEndTime))
+            .map(GithubReporting::log);
       } catch (IOException e) {
         throw BotException.launderThrowable(e);
       }
@@ -208,6 +214,10 @@ public class GithubReporting {
   }
 
   private Map<String, Set<Issue>> teamIssues(String repository, String state) {
+    return teamIssueStream(repository, state).collect(Collectors.groupingBy(Issue::getCreator, Collectors.toSet()));
+  }
+
+  private Stream<Issue> teamIssueStream(String repository, String state) {
     synchronized (client) {
       try {
         LOGGER.info("Getting {} issues for repository: {}", state, repository);
@@ -215,7 +225,7 @@ public class GithubReporting {
             .getIssues(Github.user(repository), Github.repo(repository), Github.params().state(state).build()).stream()
             .filter(i -> i.getAssignee() != null && users.contains(i.getAssignee().getLogin()))
             .map(i -> Issue.create(repository, i)).filter(i -> i.isActiveDuring(minStartTime, minEndTime))
-            .map(GithubReporting::log).collect(Collectors.groupingBy(Issue::getCreator, Collectors.toSet()));
+            .map(GithubReporting::log);
       } catch (IOException e) {
         throw BotException.launderThrowable(e);
       }
@@ -254,12 +264,12 @@ public class GithubReporting {
     return repositories;
   }
 
-  public Map<String, Set<PullRequest>> getPullRequests() {
-    return pullRequests;
+  public Stream<PullRequest> getPullRequests() {
+    return PullRequest.<PullRequest>findAll().stream();
   }
 
-  public Map<String, Set<Issue>> getIssues() {
-    return issues;
+  public Stream<Issue> getIssues() {
+    return Issue.<Issue>findAll().stream();
   }
 
   public ZonedDateTime getStartTime() {
