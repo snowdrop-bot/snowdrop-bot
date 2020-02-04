@@ -13,7 +13,7 @@ A bot for automating snowdrop related tasks
 ### Database
 
 For the persistence needs of this application `h2` has been used.
-The database is configured to store files under `/data/snowdrop-bot/db`.
+The database is configured to store files under `~/.snowdrop-bot/db`.
 So you will either need to create the folder and ensure that you have write
 access, or reconfigure the application to store files somewhere else.
 
@@ -30,7 +30,7 @@ environment variable.
 
 To upload generate reports to Google Documents, you will need to enable the
 Google Documents API. Once enabled, you will need to store the provided
-`credentials.json` file under `/data/snowdrop-bot/google/credentials.json`.
+`credentials.json` file under `/.snowdrop-bot/google/credentials.json`.
 Again the location is configurable via `google.docs.credentials.file` property.
 
 ## Running
@@ -53,12 +53,18 @@ limiting) the default profile has the core features (e.g. bridge and reporting d
 You can enable them selectively through the UI, or use a different profile (e.g.
 production).
 
+#### Persistence and configuration (defalut)
+The default profile uses /data/snowdrop-bot as the root for configuration and database files.
+
+
 ### Production Profile
 The production profile has all features enabled by default.
 Additionally, everything related to file persistence or file configuration is
 configured under `/data/snowdrop-bot` which which is a volume friendlier path
 (e.g. when running on Kubernetes).
 
+#### Persistence and configuration (production)
+The production profile uses /data/snowdrop-bot as the root for configuration and database files.
 
 ## Issue tracking
 
@@ -114,9 +120,9 @@ of interest is a possible solution.
 This bot provides this feature and allows you to configure the following
 options:
 
-- source repositories (`github.bridge.sourceRepos`)
-- target organization (`github.bridge.targetOrganization`)
-- terminal label (the label to use to mark an issue as closed `github.bridge.terminalLabel`)
+- source repositories (`github.bridge.source-repos`)
+- target organization (`github.bridge.target-organization`)
+- terminal label (the label to use to mark an issue as closed `github.bridge.terminal-label`)
 
 
 ## Google Docs Report Generation
