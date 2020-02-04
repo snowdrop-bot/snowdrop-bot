@@ -50,7 +50,8 @@ public class GithubIssueBridge {
   private final Map<Integer, Issue> closedIssues = new HashMap<>();
   private final Map<Integer, Issue> downstreamIssues = new HashMap<>();
 
-  public GithubIssueBridge(GitHubClient client, String sourceRepository, String targetRepository, String terminalLabel, Set<String> users) {
+  public GithubIssueBridge(GitHubClient client, String sourceRepository, String targetRepository, String terminalLabel,
+      Set<String> users) {
     this.client = client;
     this.issueService = new IssueService(client);
     this.labelService = new LabelService(client);
@@ -302,6 +303,38 @@ public class GithubIssueBridge {
       return Integer.parseInt(body.substring(start + UPSTREAM_REPO_PREFIX.length(), end));
     }
     throw new IllegalStateException("Issue body should contain correlation info.");
+  }
+
+  public String getSourceRepository() {
+    return sourceRepository;
+  }
+
+  public String getTargetRepository() {
+    return targetRepository;
+  }
+
+  public String getTerminalLabel() {
+    return terminalLabel;
+  }
+
+  public Set<String> getUsers() {
+    return users;
+  }
+
+  public Map<String, Map<String, Label>> getRepoLables() {
+    return repoLables;
+  }
+
+  public Map<Integer, Issue> getOpenIssues() {
+    return openIssues;
+  }
+
+  public Map<Integer, Issue> getClosedIssues() {
+    return closedIssues;
+  }
+
+  public Map<Integer, Issue> getDownstreamIssues() {
+    return downstreamIssues;
   }
 
 }

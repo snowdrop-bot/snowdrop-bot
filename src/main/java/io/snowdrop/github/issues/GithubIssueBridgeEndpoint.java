@@ -2,6 +2,7 @@ package io.snowdrop.github.issues;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -14,7 +15,12 @@ import org.eclipse.egit.github.core.Issue;
 import io.snowdrop.github.reporting.GithubReportingService;
 
 @Path("/bridge")
+@Produces(MediaType.APPLICATION_JSON)
 public class GithubIssueBridgeEndpoint {
+
+    private static final String REPO = "repo";
+    private static final String OPEN_ISSUES = "open";
+    private static final String CLOSED_ISSUES = "closed";
 
     @Inject
     GithubIssueBridgeService service;
@@ -35,6 +41,12 @@ public class GithubIssueBridgeEndpoint {
     @Path("/status")
     public Boolean status() {
         return service.status();
+    }
+
+    @GET
+    @Path("/source-repos")
+    public List<String> sourceRepos() {
+       return service.getBridges().stream().map(b->b.getSourceRepository()).collect(Collectors.toList());
     }
 
     @GET
