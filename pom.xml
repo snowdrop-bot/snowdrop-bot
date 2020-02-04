@@ -10,6 +10,7 @@
     <egit-github.version>1.1.2</egit-github.version>
     <google-api.version>1.30.1</google-api.version>
     <google-docs-api.version>v1-rev20190827-1.30.1</google-docs-api.version>
+    <jaxws-api.version>2.3.1</jaxws-api.version>
     <maven.compiler.parameters>true</maven.compiler.parameters>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
@@ -41,6 +42,10 @@
       <artifactId>quarkus-resteasy</artifactId>
     </dependency>
     <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-health</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.eclipse.mylyn.github</groupId>
       <artifactId>org.eclipse.egit.github.core</artifactId>
       <version>${egit-github.version}</version>
@@ -59,6 +64,11 @@
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-docs</artifactId>
       <version>${google-docs-api.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>javax.xml.ws</groupId>
+      <artifactId>jaxws-api</artifactId>
+      <version>${jaxws-api.version}</version>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
