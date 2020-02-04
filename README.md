@@ -41,7 +41,7 @@ To run the bot you can just build:
     
 and then run with:
 
-    jar -jar target/snowdrop-bot-0.1-SNAPSHOT-runner.jar
+    java -jar target/snowdrop-bot-0.1-SNAPSHOT-runner.jar
 
 *NOTE:* The `github.token` is required, so either set it in
 `application.properites` or create an environment variable for it.
