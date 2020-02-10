@@ -27,7 +27,13 @@ public class GithubReportingService {
   private static final Logger LOGGER = LoggerFactory.getLogger(GithubReportingService.class);
 
   @Inject
-  GithubReporting reporting;
+  RepositoryCollector repositoryCollector;
+
+  @Inject
+  IssueCollector issueCollector;
+
+  @Inject
+  PullRequestCollector pullRequestCollector;
 
   @ConfigProperty(name = "github.reporting.enabled", defaultValue = "false")
   private boolean enabled;
@@ -57,20 +63,23 @@ public class GithubReportingService {
   }
 
   public void execute() {
-      reporting.collectForks().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
-      reporting.collectIssues().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
-      reporting.collectPullRequests().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
+      repositoryCollector.collectForks().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
+      issueCollector.collectIssues().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
+      pullRequestCollector.collectPullRequests().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
   }
 
   public void collectIssues() {
-      reporting.collectForks().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
-      reporting.collectIssues().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
+    if (repositoryCollector.getRepositories().isEmpty()) {
+      repositoryCollector.collectForks().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
+    }
+    issueCollector.collectIssues().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
   }
 
   public void collectPullRequests() {
-      reporting.collectForks().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
-      reporting.collectIssues().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
-      reporting.collectPullRequests().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
+    if (repositoryCollector.getRepositories().isEmpty()) {
+      repositoryCollector.collectForks().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
+    }
+    pullRequestCollector.collectPullRequests().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
   }
 
 
@@ -104,13 +113,21 @@ public class GithubReportingService {
   @Transactional
   public void popullateRepos() {
     LOGGER.info("Populating repositories.");
-    reporting.getRepositories().putAll(Repository.<Repository>streamAll()
+    repositoryCollector.getRepositories().putAll(Repository.<Repository>streamAll()
         .collect(Collectors.groupingBy(Repository::getOwner, Collectors.toSet())));
 
   }
 
-  public GithubReporting getReporting() {
-    return reporting;
+  public RepositoryCollector getRepositoryCollector() {
+    return repositoryCollector;
+  }
+
+  public IssueCollector getIssueCollector() {
+    return issueCollector;
+  }
+
+  public PullRequestCollector getPullRequestCollector() {
+    return pullRequestCollector;
   }
 
 }

@@ -28,8 +28,18 @@ public class GithubReportingFactory {
   GitHubClient client;
 
   @Produces
-  public GithubReporting createGithubReporting() {
-    return new GithubReporting(client, reportingDayOfWeek, reportingHours, users, organizations);
+  public RepositoryCollector createRepositoryCollector() {
+    return new RepositoryCollector(client, users, organizations);
+  }
+
+  @Produces
+  public IssueCollector createIssueCollector() {
+    return new IssueCollector(client, reportingDayOfWeek, reportingHours, users, organizations);
+  }
+
+  @Produces
+  public PullRequestCollector createPullRequestCollector() {
+    return new PullRequestCollector(client, reportingDayOfWeek, reportingHours, users, organizations);
   }
 
 }

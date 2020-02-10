@@ -79,42 +79,42 @@ public class ReportingEndpoint {
     @Path("/orgs")
     @Produces(MediaType.APPLICATION_JSON)
     public Set<String> organizations() {
-        return service.getReporting().getOrganizations();
+        return service.getRepositoryCollector().getOrganizations();
     }
 
     @GET
     @Path("/users")
     @Produces(MediaType.APPLICATION_JSON)
     public Set<String> users() {
-        return service.getReporting().getUsers();
-    }
-
-    @GET
-    @Path("/start-time")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Date recomendedStartDate() {
-        return Date.from(service.getReporting().getStartTime().toInstant());
-    }
-
-    @GET
-    @Path("/end-time")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Date recomendedEndDate() {
-        return Date.from(service.getReporting().getEndTime().toInstant());
+        return service.getRepositoryCollector().getUsers();
     }
 
     @GET
     @Path("/repositories")
     @Produces(MediaType.APPLICATION_JSON)
     public Map<String, Set<Repository>> repositories() {
-        return service.getReporting().getRepositories();
+        return service.getRepositoryCollector().getRepositories();
     }
 
     @GET
     @Path("/repositories/{user}")
     @Produces(MediaType.APPLICATION_JSON)
     public Set<Repository> repositories(@PathParam("user") String user) {
-        return service.getReporting().getRepositories().get(user);
+        return service.getRepositoryCollector().getRepositories().get(user);
+    }
+
+    @GET
+    @Path("/start-time")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Date recomendedStartDate() {
+        return Date.from(service.getPullRequestCollector().getStartTime().toInstant());
+    }
+
+    @GET
+    @Path("/end-time")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Date recomendedEndDate() {
+        return Date.from(service.getPullRequestCollector().getEndTime().toInstant());
     }
 
     @GET
@@ -124,10 +124,10 @@ public class ReportingEndpoint {
             @QueryParam("endTime") String endTimeString) throws ParseException {
         Map<String, Set<PullRequest>> map = new HashMap<>();
         Date startTime = startTimeString != null ? DF.parse(startTimeString)
-                : Date.from(service.getReporting().getStartTime().toInstant());
+            : Date.from(service.getPullRequestCollector().getStartTime().toInstant());
         Date endTime = endTimeString != null ? DF.parse(endTimeString)
-                : Date.from(service.getReporting().getEndTime().toInstant());
-        Set<PullRequest> pullRequests = service.getReporting().getPullRequests()
+                : Date.from(service.getPullRequestCollector().getEndTime().toInstant());
+        Set<PullRequest> pullRequests = service.getPullRequestCollector().getPullRequests()
                 .filter(p -> p.isActiveDuring(startTime, endTime)).collect(Collectors.toSet());
         map.put("data", pullRequests);
         return map;
@@ -140,10 +140,10 @@ public class ReportingEndpoint {
             @QueryParam("endTime") String endTimeString) throws ParseException {
         Map<String, Set<Issue>> map = new HashMap<>();
         Date startTime = startTimeString != null ? DF.parse(startTimeString)
-                : Date.from(service.getReporting().getStartTime().toInstant());
+                : Date.from(service.getIssueCollector().getStartTime().toInstant());
         Date endTime = endTimeString != null ? DF.parse(endTimeString)
-                : Date.from(service.getReporting().getEndTime().toInstant());
-        Set<Issue> issues = service.getReporting().getIssues().filter(i -> i.isActiveDuring(startTime, endTime))
+                : Date.from(service.getIssueCollector().getEndTime().toInstant());
+        Set<Issue> issues = service.getIssueCollector().getIssues().filter(i -> i.isActiveDuring(startTime, endTime))
                 .collect(Collectors.toSet());
         map.put("data", issues);
         return map;
@@ -156,11 +156,11 @@ public class ReportingEndpoint {
             @PathParam("repo") String repo, @QueryParam("startTime") String startTimeString,
             @QueryParam("endTime") String endTimeString) throws ParseException {
         Date startTime = startTimeString != null ? DF.parse(startTimeString)
-                : Date.from(service.getReporting().getStartTime().toInstant());
+                : Date.from(service.getPullRequestCollector().getStartTime().toInstant());
         Date endTime = endTimeString != null ? DF.parse(endTimeString)
-                : Date.from(service.getReporting().getEndTime().toInstant());
+                : Date.from(service.getPullRequestCollector().getEndTime().toInstant());
 
-        return service.getReporting().userPullRequests(creator, Repository.fromFork(creator, user, repo), "all")
+        return service.getPullRequestCollector().userPullRequests(creator, Repository.fromFork(creator, user, repo), "all")
                 .stream().filter(i -> i.isActiveDuring(startTime, endTime)).collect(Collectors.toSet());
     }
 
@@ -171,10 +171,10 @@ public class ReportingEndpoint {
             @PathParam("repo") String repo, @QueryParam("startTime") String startTimeString,
             @QueryParam("endTime") String endTimeString) throws ParseException {
         Date startTime = startTimeString != null ? DF.parse(startTimeString)
-                : Date.from(service.getReporting().getStartTime().toInstant());
+                : Date.from(service.getIssueCollector().getStartTime().toInstant());
         Date endTime = endTimeString != null ? DF.parse(endTimeString)
-                : Date.from(service.getReporting().getEndTime().toInstant());
-        return service.getReporting().userIssues(assignee, Repository.fromFork(assignee, user, repo), "all").stream()
+                : Date.from(service.getIssueCollector().getEndTime().toInstant());
+        return service.getIssueCollector().userIssues(assignee, Repository.fromFork(assignee, user, repo), "all").stream()
                 .filter(i -> i.isActiveDuring(startTime, endTime)).collect(Collectors.toSet());
     }
 }
