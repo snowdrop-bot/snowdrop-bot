@@ -47,7 +47,7 @@ public class GoogleDocsEndpoint {
 
   private void populate(Date startTime, Date endTime) {
     try {
-      List<Request> prs = createRequests(service.getReporting().getPullRequests().filter(p -> p.isActiveDuring(startTime, endTime)).collect(Collectors.toSet()));
+      List<Request> prs = createRequests(service.getPullRequestCollector().getPullRequests().filter(p -> p.isActiveDuring(startTime, endTime)).collect(Collectors.toSet()));
       BatchUpdateDocumentRequest body = new BatchUpdateDocumentRequest().setRequests(prs);
       BatchUpdateDocumentResponse response = docs.documents().batchUpdate(reportDocumentId, body).execute();
     } catch (IOException e) {
@@ -85,9 +85,9 @@ public class GoogleDocsEndpoint {
   public String createReport(@QueryParam("startTime") String startTimeString, @QueryParam("endTime") String endTimeString) {
     try {
         Date startTime = startTimeString != null ? DF.parse(startTimeString)
-                : Date.from(service.getReporting().getStartTime().toInstant());
+                : Date.from(service.getPullRequestCollector().getStartTime().toInstant());
         Date endTime = endTimeString != null ? DF.parse(endTimeString)
-                : Date.from(service.getReporting().getEndTime().toInstant());
+                : Date.from(service.getPullRequestCollector().getEndTime().toInstant());
       populate(startTime, endTime);
       return docs.documents().get(reportDocumentId).execute().getTitle();
     } catch (Exception e) {

@@ -1,20 +1,3 @@
-/**
- * Copyright 2018 The original authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- **/
-
 package io.snowdrop.github.reporting;
 
 import java.io.IOException;
@@ -31,27 +14,27 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eclipse.egit.github.core.client.GitHubClient;
-import org.eclipse.egit.github.core.service.IssueService;
 import org.eclipse.egit.github.core.service.PullRequestService;
 import org.eclipse.egit.github.core.service.RepositoryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.snowdrop.BotException;
+import io.snowdrop.StatusLogger;
 import io.snowdrop.github.Github;
 import io.snowdrop.github.reporting.model.Issue;
 import io.snowdrop.github.reporting.model.PullRequest;
 import io.snowdrop.github.reporting.model.Repository;
 
-public class GithubReporting {
+public class PullRequestCollector {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(GithubReporting.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(PullRequestCollector.class);
   private static final SimpleDateFormat DF = new SimpleDateFormat("dd/MM/yyyy");
 
   private final GitHubClient client;
+  private final StatusLogger status;
   private final RepositoryService repositoryService;
   private final PullRequestService pullRequestService;
-  private final IssueService issueService;
   private final int reportingDay;
   private final int reportingHour;
 
@@ -68,12 +51,12 @@ public class GithubReporting {
 
   private final Map<String, Set<Repository>> repositories = new HashMap<>();
 
-  public GithubReporting(GitHubClient client, int reportingDay, int reportingHour, Set<String> users,
+  public PullRequestCollector(GitHubClient client, StatusLogger status, int reportingDay, int reportingHour, Set<String> users,
       Set<String> organizations) {
     this.client = client;
+    this.status  = status;
     this.repositoryService = new RepositoryService(client);
     this.pullRequestService = new PullRequestService(client);
-    this.issueService = new IssueService(client);
     this.reportingDay = reportingDay;
     this.reportingHour = reportingHour;
     this.users = users;
@@ -95,38 +78,19 @@ public class GithubReporting {
 
   public void refresh() {
     LOGGER.info("Refreshing reporting data.");
-    collectForks();
-    collectIssues();
     collectPullRequests();
   }
 
-  public Map<String, Set<Repository>> collectForks() {
-    users.stream().forEach(u -> {
-      LOGGER.info("Getting forks for user: {}.", u);
-      Set<Repository> forks = userForks(u);
-      repositories.get(u).addAll(forks);
-      LOGGER.info("User: {} forks: [{}].", u, forks.stream().map(r -> r.getName()).collect(Collectors.joining(",")));
-    });
-    return repositories;
-  }
-
-  public Map<String, Set<Issue>> collectIssues() {
-    return repositories.values()
-      .stream()
-      .flatMap(s -> s.stream())
-      .map(Repository::getParent).filter(r -> r != null)
-      .distinct()
-      .sorted()
-      .flatMap(i -> teamIssueStream(i, "all"))
-      .collect(Collectors.groupingBy(Issue::getAssignee, Collectors.toSet()));
-  }
-
   public Map<String, Set<PullRequest>> collectPullRequests() {
-    return repositories.values()
-      .stream()
-      .flatMap(s -> s.stream()).map(Repository::getParent)
+    long total = Repository.<Repository>streamAll()
+      .map(Repository::getParent).filter(r -> r != null)
+      .distinct().count();
+
+    return Repository.<Repository>streamAll()
+      .map(Repository::getParent)
       .filter(r -> r != null).distinct()
       .sorted()
+      .map(status.<String>log(total, "Collecting pull requests from repository %s."))
       .flatMap(r -> teamPullRequestStream(r, "all"))
       .collect(Collectors.groupingBy(PullRequest::getCreator, Collectors.toSet()));
   }
@@ -170,10 +134,10 @@ public class GithubReporting {
         LOGGER.info("Getting {} pull requests for repository: {}", state, repository);
         return pullRequestService.getPullRequests(() -> repository, state).stream()
             .map(p -> PullRequest.create(repository, p))
-            .map(GithubReporting::log)
+            .map(PullRequestCollector::log)
             .filter(p -> users.contains(p.getCreator()))
             .filter(p -> p.isActiveDuring(minStartTime, minEndTime))
-            .map(GithubReporting::log);
+            .map(PullRequestCollector::log);
       } catch (IOException e) {
         throw BotException.launderThrowable(e);
       }
@@ -187,59 +151,12 @@ public class GithubReporting {
         LOGGER.info("Getting {} pull requests for repository: {}", state, id);
         return pullRequestService.getPullRequests(() -> id, state).stream()
             .filter(p -> p.getUser().getLogin().equals(user)).map(p -> PullRequest.create(id, p))
-            .filter(i -> i.isActiveDuring(minStartTime, minEndTime)).map(GithubReporting::log)
+            .filter(i -> i.isActiveDuring(minStartTime, minEndTime)).map(PullRequestCollector::log)
             .collect(Collectors.toSet());
       } catch (IOException e) {
         throw BotException.launderThrowable(e);
       }
     }
-  }
-
-  public Set<Issue> userIssues(String user, Repository repository, String state) {
-    synchronized (client) {
-
-      try {
-        String id = repository.isFork() ? repository.getParent() : repository.getOwner() + "/" + repository.getName();
-        LOGGER.info("Getting {} issues for repository: {}/{} during: {} - {}.", state, Github.user(id), Github.repo(id), DF.format(minStartTime), DF.format(minEndTime));
-        return issueService.getIssues(Github.user(id), Github.repo(id), Github.params().state(state).build())
-          .stream()
-          .map(i -> Issue.create(id, i))
-          .filter(i -> i.isActiveDuring(minStartTime, minEndTime))
-          .map(GithubReporting::log)
-          .collect(Collectors.toSet());
-      } catch (IOException e) {
-        throw BotException.launderThrowable(e);
-      }
-    }
-  }
-
-  private Map<String, Set<Issue>> teamIssues(String repository, String state) {
-    return teamIssueStream(repository, state).collect(Collectors.groupingBy(Issue::getCreator, Collectors.toSet()));
-  }
-
-  private Stream<Issue> teamIssueStream(String repository, String state) {
-    synchronized (client) {
-      try {
-        LOGGER.info("Getting {} issues for repository: {}", state, repository);
-        return issueService
-            .getIssues(Github.user(repository), Github.repo(repository), Github.params().state(state).build()).stream()
-            .filter(i -> i.getAssignee() != null && users.contains(i.getAssignee().getLogin()))
-            .map(i -> Issue.create(repository, i)).filter(i -> i.isActiveDuring(minStartTime, minEndTime))
-            .map(GithubReporting::log);
-      } catch (IOException e) {
-        throw BotException.launderThrowable(e);
-      }
-    }
-  }
-
-  /**
-   * Log and return self. Lambda friendly log hack.
-   */
-  private static Issue log(Issue issue) {
-    LOGGER.info("{}: {}. {} - {} - {}.", issue.getNumber(), issue.getTitle(), DF.format(issue.getCreatedAt()),
-                issue.getUpdatedAt() != null ? DF.format(issue.getUpdatedAt()) : null,
-                issue.getClosedAt() != null ? DF.format(issue.getClosedAt()) : null);
-    return issue;
   }
 
   /**
