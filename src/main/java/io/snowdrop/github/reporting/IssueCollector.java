@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.snowdrop.BotException;
+import io.snowdrop.StatusLogger;
 import io.snowdrop.github.Github;
 import io.snowdrop.github.reporting.model.Issue;
 import io.snowdrop.github.reporting.model.PullRequest;
@@ -30,6 +31,8 @@ public class IssueCollector {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(IssueCollector.class);
   private static final SimpleDateFormat DF = new SimpleDateFormat("dd/MM/yyyy");
+
+  private final StatusLogger status;
 
   private final GitHubClient client;
   private final RepositoryService repositoryService;
@@ -48,9 +51,10 @@ public class IssueCollector {
   private final Date minStartTime;
   private final Date minEndTime;
 
-  public IssueCollector(GitHubClient client, int reportingDay, int reportingHour, Set<String> users,
+  public IssueCollector(GitHubClient client, StatusLogger status, int reportingDay, int reportingHour, Set<String> users,
       Set<String> organizations) {
     this.client = client;
+    this.status = status;
     this.repositoryService = new RepositoryService(client);
     this.issueService = new IssueService(client);
     this.reportingDay = reportingDay;
@@ -75,10 +79,15 @@ public class IssueCollector {
   }
 
   public Map<String, Set<Issue>> collectIssues() {
+    long total = Repository.<Repository>streamAll()
+      .map(Repository::getParent).filter(r -> r != null)
+      .distinct().count();
+
     return Repository.<Repository>streamAll()
       .map(Repository::getParent).filter(r -> r != null)
       .distinct()
       .sorted()
+      .map(status.<String>log(total, "Collecting issues from repository %s."))
       .flatMap(i -> teamIssueStream(i, "all"))
       .collect(Collectors.groupingBy(Issue::getAssignee, Collectors.toSet()));
   }

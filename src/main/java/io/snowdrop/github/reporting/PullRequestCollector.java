@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.snowdrop.BotException;
+import io.snowdrop.StatusLogger;
 import io.snowdrop.github.Github;
 import io.snowdrop.github.reporting.model.Issue;
 import io.snowdrop.github.reporting.model.PullRequest;
@@ -31,6 +32,7 @@ public class PullRequestCollector {
   private static final SimpleDateFormat DF = new SimpleDateFormat("dd/MM/yyyy");
 
   private final GitHubClient client;
+  private final StatusLogger status;
   private final RepositoryService repositoryService;
   private final PullRequestService pullRequestService;
   private final int reportingDay;
@@ -49,9 +51,10 @@ public class PullRequestCollector {
 
   private final Map<String, Set<Repository>> repositories = new HashMap<>();
 
-  public PullRequestCollector(GitHubClient client, int reportingDay, int reportingHour, Set<String> users,
+  public PullRequestCollector(GitHubClient client, StatusLogger status, int reportingDay, int reportingHour, Set<String> users,
       Set<String> organizations) {
     this.client = client;
+    this.status  = status;
     this.repositoryService = new RepositoryService(client);
     this.pullRequestService = new PullRequestService(client);
     this.reportingDay = reportingDay;
@@ -79,10 +82,15 @@ public class PullRequestCollector {
   }
 
   public Map<String, Set<PullRequest>> collectPullRequests() {
+    long total = Repository.<Repository>streamAll()
+      .map(Repository::getParent).filter(r -> r != null)
+      .distinct().count();
+
     return Repository.<Repository>streamAll()
       .map(Repository::getParent)
       .filter(r -> r != null).distinct()
       .sorted()
+      .map(status.<String>log(total, "Collecting pull requests from repository %s."))
       .flatMap(r -> teamPullRequestStream(r, "all"))
       .collect(Collectors.groupingBy(PullRequest::getCreator, Collectors.toSet()));
   }

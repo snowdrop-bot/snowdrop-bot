@@ -23,6 +23,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -32,10 +33,21 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.sse.SseEventSink;
 
+import org.jboss.resteasy.annotations.SseElementType;
+import org.reactivestreams.Publisher;
+
+import io.reactivex.Flowable;
+import io.reactivex.FlowableEmitter;
+import io.reactivex.Observable;
+import io.smallrye.reactive.messaging.annotations.Channel;
+import io.smallrye.reactive.messaging.annotations.Stream;
+import io.snowdrop.Status;
 import io.snowdrop.github.reporting.model.Issue;
 import io.snowdrop.github.reporting.model.PullRequest;
 import io.snowdrop.github.reporting.model.Repository;
+import io.vertx.core.json.JsonObject;
 
 @Path("/reporting")
 public class ReportingEndpoint {
@@ -44,6 +56,23 @@ public class ReportingEndpoint {
 
     @Inject
     GithubReportingService service;
+
+    @GET
+    @Path("/issues/status")
+    @Produces(MediaType.SERVER_SENT_EVENTS)
+    @SseElementType(MediaType.APPLICATION_JSON)
+    public Publisher<Status> streamIssuesStatus() {
+        return service.getIssueStatuses();
+    }
+
+    @GET
+    @Path("/prs/status")
+    @Produces(MediaType.SERVER_SENT_EVENTS)
+    @SseElementType(MediaType.APPLICATION_JSON)
+    public Publisher<Status> streamPullRequestsStatus() {
+        return service.getPullrequests();
+    }
+
 
     @GET
     @Path("/enable")
@@ -106,15 +135,15 @@ public class ReportingEndpoint {
     @GET
     @Path("/start-time")
     @Produces(MediaType.APPLICATION_JSON)
-    public Date recomendedStartDate() {
-        return Date.from(service.getPullRequestCollector().getStartTime().toInstant());
+    public Long recomendedStartDate() {
+        return Date.from(service.getPullRequestCollector().getStartTime().toInstant()).getTime();
     }
 
     @GET
     @Path("/end-time")
     @Produces(MediaType.APPLICATION_JSON)
-    public Date recomendedEndDate() {
-        return Date.from(service.getPullRequestCollector().getEndTime().toInstant());
+    public Long recomendedEndDate() {
+        return Date.from(service.getPullRequestCollector().getEndTime().toInstant()).getTime();
     }
 
     @GET

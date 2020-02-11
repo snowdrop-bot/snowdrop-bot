@@ -2,6 +2,13 @@ var startTime;
 var endTime;
 
 $(document).ready(function() {
+
+  new EventSource("/reporting/issues/status").addEventListener('message', function(m) {
+    var data = JSON.parse(m.data)
+    $("#issue-progress").attr("style", "width: " + data.progress + "%");
+    $("#issue-progress").text(data.message);
+  });
+
   $("#report-enable").click(function() {
     $.get("/reporting/enable", function(data, status) {
       $("#report-enable").attr("disabled", true);
