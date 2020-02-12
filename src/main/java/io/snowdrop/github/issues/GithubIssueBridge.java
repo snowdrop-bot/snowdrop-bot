@@ -83,8 +83,7 @@ public class GithubIssueBridge {
   public void assignTeamIssues() {
     LOGGER.info("Assigning team issues in {}.", targetRepository);
     downstreamIssues.values().stream().map(i -> new AbstractMap.SimpleEntry<>(i, findUpstreamIssue(i)))
-        .filter(e -> e.getValue().isPresent()).forEach(e -> assign(client, targetRepository, e.getKey(),
-            e.getValue().map(Issue::getAssignee).orElseThrow(IllegalStateException::new)));
+        .filter(e -> e.getValue().isPresent()).forEach(e -> assign(client, targetRepository, e.getKey(), e.getValue().map(Issue::getAssignee).orElseThrow(IllegalStateException::new)));
   }
 
   public List<Issue> closeTeamIssues() {
@@ -154,9 +153,14 @@ public class GithubIssueBridge {
       return Optional.empty();
     }
 
-    Integer number = upstreamIssueNumber(issue.getBody());
-    LOGGER.info("Checking upstream for issue {}.", number);
-    return Optional.ofNullable(openIssues.get(number));
+    try {
+      Integer number = upstreamIssueNumber(issue);
+      LOGGER.info("Checking upstream for issue {}.", number);
+      return Optional.ofNullable(openIssues.get(number));
+    } catch (Exception e) {
+      LOGGER.warn("Could not find upstream issue for issue: " + issue.getUrl() + ". This issue will be ignored.!");
+      return Optional.empty();
+    }
   }
 
   private Label getLabel(String repo, String label) {
@@ -290,19 +294,23 @@ public class GithubIssueBridge {
     }
   }
 
-  private static Integer upstreamIssueNumber(String body) {
+  private static Integer upstreamIssueNumber(Issue issue) {
+    if (issue == null) {
+      throw new IllegalStateException("Issue should not be null.");
+    }
+    String body = issue.getBody();
     if (body == null || body.isEmpty()) {
-      throw new IllegalStateException("Issue body should not be null or empty.");
+      throw new IllegalStateException("Issue: " + issue.getNumber() + ". Body should not be null or empty.");
     }
     if (body.contains(UPSTREAM_REPO_PREFIX)) {
       int start = body.lastIndexOf(UPSTREAM_REPO_PREFIX);
       int end = body.lastIndexOf(UPSTREAM_REPO_SUFFIX);
       if (end < start) {
-        throw new IllegalStateException("Issue reference is malformed. No suffix found.");
+        throw new IllegalStateException("Issue: "  + issue.getNumber() + ". Reference is malformed. No suffix found.");
       }
       return Integer.parseInt(body.substring(start + UPSTREAM_REPO_PREFIX.length(), end));
     }
-    throw new IllegalStateException("Issue body should contain correlation info.");
+    throw new IllegalStateException("Issue: "  + issue.getNumber() + ".  Body should contain correlation info. Has anyone created this issue manually?");
   }
 
   public String getSourceRepository() {
