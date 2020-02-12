@@ -29,6 +29,9 @@ public class GithubReportingFactory {
   @ConfigProperty(name = "github.reporting.organizations")
   Set<String> organizations;
 
+  @ConfigProperty(name = "github.reporting.additional.repositories")
+  Set<String> additionalRepositories;
+
   @ConfigProperty(name = "github.reporting.day-of-week", defaultValue = "4")
   int reportingDayOfWeek;
 
@@ -37,6 +40,16 @@ public class GithubReportingFactory {
 
   @Inject
   GitHubClient client;
+
+  @Inject
+  @Channel("forks")
+  @OnOverflow(value=OnOverflow.Strategy.BUFFER, bufferSize = 100)
+  Emitter<Status> forks;
+
+  @Inject
+  @Channel("repositories")
+  @OnOverflow(value=OnOverflow.Strategy.BUFFER, bufferSize = 100)
+  Emitter<Status> repositories;
 
   @Inject
   @Channel("issues")
@@ -50,7 +63,7 @@ public class GithubReportingFactory {
 
   @Produces
   public RepositoryCollector createRepositoryCollector() {
-    return new RepositoryCollector(client, users, organizations);
+    return new RepositoryCollector(client, new StatusLogger("forks", forks), new StatusLogger("repositories", repositories), users, organizations, additionalRepositories);
   }
 
   @Produces

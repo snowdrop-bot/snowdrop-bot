@@ -6,6 +6,9 @@ $(document).ready(function () {
     $("#home").click(function () {
         $("#includedContent").load("home.html");
     });
+    $("#repositories").click(function () {
+        $("#includedContent").load("repositories.html");
+    });
     $("#issues").click(function () {
         $("#includedContent").load("issues.html");
     });

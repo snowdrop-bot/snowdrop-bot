@@ -21,6 +21,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -58,6 +59,22 @@ public class ReportingEndpoint {
     GithubReportingService service;
 
     @GET
+    @Path("/repositories/status")
+    @Produces(MediaType.SERVER_SENT_EVENTS)
+    @SseElementType(MediaType.APPLICATION_JSON)
+    public Publisher<Status> streamRepositoryStatus() {
+        return service.getRepositoryStatuses();
+    }
+
+    @GET
+    @Path("/fork/status")
+    @Produces(MediaType.SERVER_SENT_EVENTS)
+    @SseElementType(MediaType.APPLICATION_JSON)
+    public Publisher<Status> streamForkStatus() {
+        return service.getForkStatuses();
+    }
+
+    @GET
     @Path("/issues/status")
     @Produces(MediaType.SERVER_SENT_EVENTS)
     @SseElementType(MediaType.APPLICATION_JSON)
@@ -93,6 +110,12 @@ public class ReportingEndpoint {
     }
 
     @GET
+    @Path("/collect/repositories")
+    public void collectRepositories() {
+        service.collectAllRepositories();
+    }
+
+    @GET
     @Path("/collect/issues")
     public void collectIssues() {
         service.collectIssues();
@@ -119,17 +142,44 @@ public class ReportingEndpoint {
     }
 
     @GET
-    @Path("/repositories")
+    @Path("/data/all-repositories")
     @Produces(MediaType.APPLICATION_JSON)
-    public Map<String, Set<Repository>> repositories() {
-        return service.getRepositoryCollector().getRepositories();
+    public Map<String, Set<Repository>> allRepositories(@QueryParam("reposEnabled") boolean reposEnabled, @QueryParam("forksEnabled") boolean forksEnabled) {
+        Map<String, Set<Repository>>  map = new HashMap<>();
+        Set<Repository> all = new HashSet<>();
+        if (reposEnabled) {
+            all.addAll(service.getRepositoryCollector().getRepositories().collect(Collectors.toSet()));
+        }
+        if (forksEnabled) {
+            all.addAll(service.getRepositoryCollector().getForks().collect(Collectors.toSet()));
+        }
+        map.put("data", all);
+        return map;
     }
 
     @GET
-    @Path("/repositories/{user}")
+    @Path("/data/repositories")
     @Produces(MediaType.APPLICATION_JSON)
-    public Set<Repository> repositories(@PathParam("user") String user) {
-        return service.getRepositoryCollector().getRepositories().get(user);
+    public Map<String, Set<Repository>> repositories() {
+        Map<String, Set<Repository>>  map = new HashMap<>();
+        map.put("data", service.getRepositoryCollector().getRepositories().collect(Collectors.toSet()));
+        return map;
+    }
+
+    @GET
+    @Path("/data/forks")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Map<String, Set<Repository>> forks() {
+        Map<String, Set<Repository>>  map = new HashMap<>();
+        map.put("data", service.getRepositoryCollector().getForks().collect(Collectors.toSet()));
+        return map;
+    }
+
+    @GET
+    @Path("/forks/{user}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Set<Repository> forks(@PathParam("user") String user) {
+        return service.getRepositoryCollector().getForks().filter(r -> user.equals(r.getOwner())).collect(Collectors.toSet());
     }
 
     @GET
