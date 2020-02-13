@@ -1,13 +1,17 @@
-var startTime;
-var endTime;
+var startTime
+var endTime
+
 
 $(document).ready(function() {
 
-  new EventSource("/reporting/issues/status").addEventListener('message', function(m) {
+  var status = new EventSource("/reporting/issues/status")
+  status.addEventListener('message', function(m) {
     var data = JSON.parse(m.data)
     $("#issue-progress").attr("style", "width: " + data.progress + "%");
     $("#issue-progress").text(data.message);
   });
+
+  registerClosable(status)
 
   $("#report-enable").click(function() {
     $.get("/reporting/enable", function(data, status) {

@@ -3,11 +3,13 @@ var endTime
 
 $(document).ready(function() {
 
-  new EventSource("/reporting/prs/status").addEventListener('message', function(m) {
+  var status = new EventSource("/reporting/prs/status")
+  status.addEventListener('message', function(m) {
     var data = JSON.parse(m.data)
     $("#pr-progress").attr("style", "width: " + data.progress + "%;");
     $("#pr-progress").text(data.message);
   });
+  registerClosable(status)
 
   $.ajax({url: "/reporting/status"}).then(function(data) {
     var enabled = JSON.parse(data)

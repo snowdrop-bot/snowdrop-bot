@@ -8,17 +8,21 @@ $(document).ready(function() {
 
   refreshDataTable();
  
-  new EventSource("/reporting/fork/status").addEventListener('message', function(m) {
+  var forkStatus =new EventSource("/reporting/fork/status")
+  forkStatus.addEventListener('message', function(m) {
     var data = JSON.parse(m.data)
     $("#fork-progress").attr("style", "width: " + data.progress + "%");
     $("#fork-progress").text(data.message);
   });
+  registerClosable(forkStatus)
 
-  new EventSource("/reporting/repositories/status").addEventListener('message', function(m) {
+  repoStatus = new EventSource("/reporting/repositories/status")
+  repoStatus.addEventListener('message', function(m) {
     var data = JSON.parse(m.data)
     $("#repository-progress").attr("style", "width: " + data.progress + "%");
     $("#repository-progress").text(data.message);
   });
+  registerClosable(repoStatus)
 
   $("#repositories-toggle").click(function() {
     reposEnabled = !reposEnabled
