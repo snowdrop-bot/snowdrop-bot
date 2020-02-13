@@ -36,8 +36,21 @@ public class GithubReportingService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(GithubReportingService.class);
 
-  private AtomicReference<Status> issueStatus = new AtomicReference<>(new Status("issues", 100, "Done!"));
-  private AtomicReference<Status> pullRequestStatus = new AtomicReference<>(new Status("pull requests", 100, "Done"));
+  private AtomicReference<Status> forkStatus = new AtomicReference<>(new Status("forkStatus", 100, ""));
+  private AtomicReference<Status> repositoryStatus = new AtomicReference<>(new Status("repositories", 100, ""));
+
+  private AtomicReference<Status> issueStatus = new AtomicReference<>(new Status("issues", 100, ""));
+  private AtomicReference<Status> pullRequestStatus = new AtomicReference<>(new Status("pull requests", 100, ""));
+
+  @Incoming("forks")
+  public void onForkStatus(Status s) {
+    forkStatus.set(s);
+  }
+
+  @Incoming("repositories")
+  public void onRepositoryStatus(Status s) {
+    repositoryStatus.set(s);
+  }
 
   @Incoming("issues")
   public void onIssueStatus(Status s) {
@@ -49,6 +62,13 @@ public class GithubReportingService {
     pullRequestStatus.set(s);
   }
 
+  public Publisher<Status> getForkStatuses() {
+    return Flowable.interval(1, TimeUnit.SECONDS).map(t -> forkStatus.get()).filter(s -> s != null);
+  }
+
+  public Publisher<Status> getRepositoryStatuses() {
+    return Flowable.interval(1, TimeUnit.SECONDS).map(t -> repositoryStatus.get()).filter(s -> s != null);
+  }
 
   public Publisher<Status> getIssueStatuses() {
     return Flowable.interval(1, TimeUnit.SECONDS).map(t -> issueStatus.get()).filter(s -> s != null);
@@ -84,7 +104,6 @@ public class GithubReportingService {
 
   @ActivateRequestContext
   void onStart(@Observes StartupEvent ev) {
-    popullateRepos();
   }
 
   @Scheduled(every = "3h")
@@ -96,20 +115,28 @@ public class GithubReportingService {
 
   public void execute() {
       repositoryCollector.collectForks().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
+      repositoryCollector.collectRepositories().stream().forEach(e -> persist(e));
       issueCollector.collectIssues().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
       pullRequestCollector.collectPullRequests().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
   }
 
-  public void collectIssues() {
-    if (repositoryCollector.getRepositories().isEmpty()) {
+  public void collectAllRepositories() {
       repositoryCollector.collectForks().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
+      repositoryCollector.collectRepositories().stream().forEach(e -> persist(e));
+  }
+
+  public void collectIssues() {
+    if (repositoryCollector.getAllRepositories().count() == 0) {
+      repositoryCollector.collectForks().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
+      repositoryCollector.collectRepositories().stream().forEach(e -> persist(e));
     }
     issueCollector.collectIssues().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
   }
 
   public void collectPullRequests() {
-    if (repositoryCollector.getRepositories().isEmpty()) {
+    if (repositoryCollector.getAllRepositories().count() == 0) {
       repositoryCollector.collectForks().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
+      repositoryCollector.collectRepositories().stream().forEach(e -> persist(e));
     }
     pullRequestCollector.collectPullRequests().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
   }
@@ -140,14 +167,6 @@ public class GithubReportingService {
       existing.delete();
     }
     pr.persist();
-  }
-
-  @Transactional
-  public void popullateRepos() {
-    LOGGER.info("Populating repositories.");
-    repositoryCollector.getRepositories().putAll(Repository.<Repository>streamAll()
-        .collect(Collectors.groupingBy(Repository::getOwner, Collectors.toSet())));
-
   }
 
   public RepositoryCollector getRepositoryCollector() {

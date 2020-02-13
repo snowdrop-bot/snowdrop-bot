@@ -10,6 +10,7 @@ import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 @IdClass(ForkId.class)
 public class Repository extends PanacheEntityBase {
 
+
   @Id
   private String url;
   @Id
@@ -35,8 +36,8 @@ public class Repository extends PanacheEntityBase {
   }
 
   public static Repository create(org.eclipse.egit.github.core.Repository repo) {
-    return new Repository(repo.getUrl(),
-                          repo.getParent() != null ? repo.getParent().getOwner().getLogin() + "/" + repo.getParent().getName() : null,
+    return new Repository(repo.getHtmlUrl(),
+                          repo.getParent() != null ? repo.getParent().getOwner().getLogin() + "/" + repo.getParent().getName() : Parent.NONE,
                           repo.getOwner().getLogin(), repo.getName(),
                           repo.isFork());
   }
@@ -71,6 +72,10 @@ public class Repository extends PanacheEntityBase {
 
   public void setFork(boolean fork) {
     this.fork = fork;
+  }
+
+  public boolean hasParent() {
+    return !Parent.NONE.equals(parent);
   }
 
   public String getParent() {
