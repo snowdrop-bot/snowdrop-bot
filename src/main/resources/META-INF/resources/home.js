@@ -31,5 +31,5 @@ $.ajax({url: "/tags/cloud"}).then(function(data) {
         tooltipDiffY: 10
 
     };
-    $('#tag-cloud').svg3DTagCloud( settings );
-});
+    $('#tag-cloud').svg3DTagCloud( settings )
+})

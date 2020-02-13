@@ -13,5 +13,5 @@ $.extend(true, $.fn.datetimepicker.defaults, {
 });
 
 function formatDate(d) {
-    return d.getDate() + '/' + (d.getMonth() + 1) + '/' + d.getFullYear();
+    return d.getDate() + '/' + (d.getMonth() + 1) + '/' + d.getFullYear()
 }

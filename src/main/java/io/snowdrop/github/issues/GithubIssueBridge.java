@@ -132,8 +132,6 @@ public class GithubIssueBridge {
     LOGGER.info("Checking if downstream issue {} exists downstream.", issue.getNumber());
     String link = UPSTREAM_REPO_PREFIX + issue.getNumber() + UPSTREAM_REPO_SUFFIX;
     return downstreamIssues.values().stream()
-        // .map(i -> {System.out.println(issue.getNumber() + " :" + i.getTitle());
-        // return i;})
         .filter(i -> i.getBody() != null && i.getBody().contains(link)).findFirst();
   }
 

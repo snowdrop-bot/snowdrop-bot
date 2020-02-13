@@ -25,7 +25,6 @@ public class StatusLogger {
         : String.format(format, Arrays.stream(args).map(e -> e.apply(t)).collect(Collectors.toList()).toArray());
       try {
         emitter.send(new Status(category, 100 * counter.incrementAndGet() / total, message));
-        System.out.println(category + ":" + counter.get() + " of " + total);
       } catch (Exception e) {
         // if the emitter is not `connected` an error will be thrown.
       }
