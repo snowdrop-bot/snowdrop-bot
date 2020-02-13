@@ -83,12 +83,16 @@ $(document).ready(function() {
     if (startTime == null || endTime == null) {
       return
     }
+    var exportTitle = 'Issues from ' + printedDate(startTime) + " to " + printedDate(endTime);
     $('#issues-table').DataTable( {
       destroy: true,
       processing: true,
       dom: 'Bfrtip',
       buttons: [
-        'copy', 'csv', 'excel', 'pdf'
+        'copy',
+        {extend: 'csvHtml5', title: exportTitle},
+        {extend: 'excelHtml5', title: exportTitle},
+        {extend: 'pdfHtml5', title: exportTitle}
       ],
       columns: [
         {data: 'assignee', type: 'string' },

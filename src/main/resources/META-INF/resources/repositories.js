@@ -70,12 +70,16 @@ $(document).ready(function() {
 
   function refreshDataTable() {
 
+    var exportTitle = 'Repositories'
     $('#repositories-table').DataTable( {
       destroy: true,
       processing: true,
       dom: 'Bfrtip',
       buttons: [
-        'copy', 'csv', 'excel', 'pdf'
+        'copy',
+        {extend: 'csvHtml5', title: exportTitle},
+        {extend: 'excelHtml5', title: exportTitle},
+        {extend: 'pdfHtml5', title: exportTitle}
       ],
       columns: [
         {data: 'owner', type: 'string' },

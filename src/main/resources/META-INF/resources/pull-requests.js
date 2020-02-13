@@ -79,12 +79,16 @@ $(document).ready(function() {
     if (startTime == null || endTime == null) {
       return
     }
+    var exportTitle = 'Pull requests from ' + printedDate(startTime) + " to " + printedDate(endTime);
     $('#pull-requests-table').DataTable( {
       destroy: true,
       processing: true,
       dom: 'Bfrtip',
       buttons: [
-        'copy', 'csv', 'excel', 'pdf'
+        'copy',
+        {extend: 'csvHtml5', title: exportTitle},
+        {extend: 'excelHtml5', title: exportTitle},
+        {extend: 'pdfHtml5', title: exportTitle}
       ],
       columns: [
         {data: 'creator', type: 'string' },
