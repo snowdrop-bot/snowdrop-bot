@@ -84,7 +84,7 @@ $(document).ready(function() {
       columns: [
         {data: 'owner', type: 'string' },
         {data: 'name', type: 'string' },
-        {data: 'url', type: 'string' },
+        {data: 'url', type: 'string', render: dataTablesRenderUrl},
       ],
       order: [[1, "desc"]],
       ajax: "/reporting/data/all-repositories?forksEnabled=" + forksEnabled + "&reposEnabled=" + reposEnabled

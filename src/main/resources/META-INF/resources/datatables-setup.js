@@ -18,5 +18,10 @@ var dataTablesRenderDate = function (data, type, row) {
 var dataTablesRenderNumber = function (data, type, row) {
     var url = data
     var num = data.substring(data.lastIndexOf('/') + 1)
-    return "<a href='" + url +"'>" +num +"</a>"
+    return "<a href='" + url +"' target='_blank'>" + num +"</a>"
+}
+
+var dataTablesRenderUrl = function (data, type, row) {
+    var url = data
+    return "<a href='" + url +"' target='_blank'>" + url +"</a>"
 }
