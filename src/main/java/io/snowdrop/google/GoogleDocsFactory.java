@@ -63,7 +63,7 @@ public class GoogleDocsFactory {
    */
   private Credential getCredentials(HttpTransport transport) throws IOException {
     // Load client secrets.
-    try (InputStream in = new FileInputStream(credentialsFile)) {
+    try (InputStream in = new FileInputStream(credentialsFile.replaceAll("^[~]", System.getProperty("user.home")))) {
       if (in == null) {
         throw new FileNotFoundException("Resource not found: " + credentialsFile);
       }

@@ -11,7 +11,12 @@ $.extend(true, $.fn.datetimepicker.defaults, {
         close: 'far fa-times-circle'
     }
 });
+const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 function formatDate(d) {
-    return d.getDate() + '/' + (d.getMonth() + 1) + '/' + d.getFullYear();
+    return d.getDate() + '/' + (d.getMonth() + 1) + '/' + d.getFullYear()
+}
+
+function printedDate(d) {
+    return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear()
 }

@@ -24,6 +24,7 @@ import io.snowdrop.BotException;
 import io.snowdrop.StatusLogger;
 import io.snowdrop.github.Github;
 import io.snowdrop.github.reporting.model.Issue;
+import io.snowdrop.github.reporting.model.Parent;
 import io.snowdrop.github.reporting.model.PullRequest;
 import io.snowdrop.github.reporting.model.Repository;
 
@@ -80,11 +81,12 @@ public class IssueCollector {
 
   public Map<String, Set<Issue>> collectIssues() {
     long total = Repository.<Repository>streamAll()
-      .map(Repository::getParent).filter(r -> r != null)
-      .distinct().count();
+      .map(r -> Parent.NONE.equals(r.getParent()) ? r.getOwner() + "/" + r.getName() : r.getParent())
+      .distinct()
+      .count();
 
     return Repository.<Repository>streamAll()
-      .map(Repository::getParent).filter(r -> r != null)
+      .map(r -> Parent.NONE.equals(r.getParent()) ? r.getOwner() + "/" + r.getName() : r.getParent())
       .distinct()
       .sorted()
       .map(status.<String>log(total, "Collecting issues from repository %s."))
@@ -110,10 +112,6 @@ public class IssueCollector {
     }
   }
 
-  private Map<String, Set<Issue>> teamIssues(String repository, String state) {
-    return teamIssueStream(repository, state).collect(Collectors.groupingBy(Issue::getCreator, Collectors.toSet()));
-  }
-
   private Stream<Issue> teamIssueStream(String repository, String state) {
     synchronized (client) {
       try {
@@ -124,7 +122,8 @@ public class IssueCollector {
             .map(i -> Issue.create(repository, i)).filter(i -> i.isActiveDuring(minStartTime, minEndTime))
             .map(IssueCollector::log);
       } catch (IOException e) {
-        throw BotException.launderThrowable(e);
+        LOGGER.warn("Failed to get issues from repository: " + repository + ", due to:" + e.getMessage());
+        return Stream.of();
       }
     }
   }

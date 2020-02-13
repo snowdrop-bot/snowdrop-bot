@@ -62,7 +62,7 @@ public class GoogleDocsEndpoint {
       final StringBuilder sb = new StringBuilder();
       String user = e.getKey();
       Set<PullRequest> prs = e.getValue();
-      builder.bold(user).newline().bulletsOn();
+      builder.bold(user).newline();
 
       prs.stream()
            .collect(Collectors.groupingBy(PullRequest::getRepository, Collectors.toSet())).entrySet()
@@ -73,7 +73,7 @@ public class GoogleDocsEndpoint {
                   builder.tab(3).link(p.getUrl()).newline();
             });
           });
-      builder.bulletsOff().newline();
+      builder.newline();
     });
     requests.addAll(builder.getAllRequests());
     return requests;
