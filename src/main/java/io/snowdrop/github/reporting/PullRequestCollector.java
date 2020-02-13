@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.time.DayOfWeek;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,6 +24,7 @@ import io.snowdrop.BotException;
 import io.snowdrop.StatusLogger;
 import io.snowdrop.github.Github;
 import io.snowdrop.github.reporting.model.Issue;
+import io.snowdrop.github.reporting.model.Parent;
 import io.snowdrop.github.reporting.model.PullRequest;
 import io.snowdrop.github.reporting.model.Repository;
 
@@ -83,12 +85,12 @@ public class PullRequestCollector {
 
   public Map<String, Set<PullRequest>> collectPullRequests() {
     long total = Repository.<Repository>streamAll()
-      .map(Repository::getParent).filter(r -> r != null)
+      .map(r -> Parent.NONE.equals(r.getParent()) ? r.getOwner() + "/" + r.getName() : r.getParent())
       .distinct().count();
 
     return Repository.<Repository>streamAll()
-      .map(Repository::getParent)
-      .filter(r -> r != null).distinct()
+      .map(r -> Parent.NONE.equals(r.getParent()) ? r.getOwner() + "/" + r.getName() : r.getParent())
+      .distinct()
       .sorted()
       .map(status.<String>log(total, "Collecting pull requests from repository %s."))
       .flatMap(r -> teamPullRequestStream(r, "all"))
@@ -124,10 +126,6 @@ public class PullRequestCollector {
     }
   }
 
-  private Map<String, Set<PullRequest>> teamPullRequests(final String repository, final String state) {
-    return teamPullRequestStream(repository, state).collect(Collectors.groupingBy(PullRequest::getCreator, Collectors.toSet()));
-  }
-
   private Stream<PullRequest> teamPullRequestStream(final String repository, final String state) {
     synchronized (client) {
       try {
@@ -138,8 +136,9 @@ public class PullRequestCollector {
             .filter(p -> users.contains(p.getCreator()))
             .filter(p -> p.isActiveDuring(minStartTime, minEndTime))
             .map(PullRequestCollector::log);
-      } catch (IOException e) {
-        throw BotException.launderThrowable(e);
+      } catch (Exception e) {
+        LOGGER.warn("Failed to get pull requests from repository: " + repository + ", due to:" + e.getMessage());
+        return Stream.of();
       }
     }
   }
