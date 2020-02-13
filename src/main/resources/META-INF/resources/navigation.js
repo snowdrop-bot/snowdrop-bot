@@ -22,10 +22,9 @@ $(document).ready(function () {
         $("#includedContent").load("report.html");
     });
 
-    // Make selected tab active on click
-    $(".nav a").on("click", function () {
-        $(".nav").find(".active").removeClass("active");
-        $(this).parent().addClass("active");
+    //Let's cleanup before changing pages
+    $(".nav-link").on("click", function () {
+        cleanUp()
     });
 
 });
