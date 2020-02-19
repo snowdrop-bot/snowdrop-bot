@@ -114,31 +114,31 @@ public class GithubReportingService {
   }
 
   public void execute() {
-      repositoryCollector.collectForks().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
+      repositoryCollector.streamForks().forEach(e -> persist(e));
       repositoryCollector.collectRepositories().stream().forEach(e -> persist(e));
-      issueCollector.collectIssues().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
-      pullRequestCollector.collectPullRequests().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
+      issueCollector.streamIssues().forEach(e -> persist(e));
+      pullRequestCollector.streamPullRequests().forEach(e -> persist(e));
   }
 
   public void collectAllRepositories() {
-      repositoryCollector.collectForks().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
+      repositoryCollector.streamForks().forEach(e -> persist(e));
       repositoryCollector.collectRepositories().stream().forEach(e -> persist(e));
   }
 
   public void collectIssues() {
     if (repositoryCollector.getAllRepositories().count() == 0) {
-      repositoryCollector.collectForks().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
+      repositoryCollector.streamForks().forEach(e -> persist(e));
       repositoryCollector.collectRepositories().stream().forEach(e -> persist(e));
     }
-    issueCollector.collectIssues().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
+    issueCollector.streamIssues().forEach(e -> persist(e));
   }
 
   public void collectPullRequests() {
     if (repositoryCollector.getAllRepositories().count() == 0) {
-      repositoryCollector.collectForks().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
+      repositoryCollector.streamForks().forEach(e -> persist(e));
       repositoryCollector.collectRepositories().stream().forEach(e -> persist(e));
     }
-    pullRequestCollector.collectPullRequests().values().stream().flatMap(Collection::stream).forEach(e -> persist(e));
+    pullRequestCollector.streamPullRequests().forEach(e -> persist(e));
   }
 
 

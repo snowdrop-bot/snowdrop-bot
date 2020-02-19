@@ -1,5 +1,6 @@
 var forksEnabled=true
 var reposEnabled=true
+var lastProgress=0
 
 $(document).ready(function() {
 
@@ -13,6 +14,10 @@ $(document).ready(function() {
     var data = JSON.parse(m.data)
     $("#fork-progress").attr("style", "width: " + data.progress + "%")
     $("#fork-progress").text(data.message)
+    if (lastProgress != data.progress) {
+      refreshDataTable()
+    }
+    lastProgress = data.progress
   })
   registerClosable(forkStatus)
 

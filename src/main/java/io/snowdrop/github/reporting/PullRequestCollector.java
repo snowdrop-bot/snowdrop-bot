@@ -84,6 +84,11 @@ public class PullRequestCollector {
   }
 
   public Map<String, Set<PullRequest>> collectPullRequests() {
+    return streamPullRequests()
+      .collect(Collectors.groupingBy(PullRequest::getCreator, Collectors.toSet()));
+  }
+
+  public Stream<PullRequest> streamPullRequests() {
     long total = Repository.<Repository>streamAll()
       .map(r -> Parent.NONE.equals(r.getParent()) ? r.getOwner() + "/" + r.getName() : r.getParent())
       .distinct().count();
@@ -93,27 +98,7 @@ public class PullRequestCollector {
       .distinct()
       .sorted()
       .map(status.<String>log(total, "Collecting pull requests from repository %s."))
-      .flatMap(r -> teamPullRequestStream(r, "all"))
-      .collect(Collectors.groupingBy(PullRequest::getCreator, Collectors.toSet()));
-  }
-
-  /**
-   * Get all the repositories of the specified user.
-   *
-   * @param user The user
-   * @return A set of {@link Repository}.
-   */
-  public Set<Repository> userForks(final String user) {
-    synchronized (client) {
-      try {
-        return repositoryService.getRepositories(user).stream().filter(r -> r.isFork())
-            .map(r -> repository(user, r.getName()))
-            .filter(r -> organizations.contains(r.getParent().getOwner().getLogin())).map(Repository::create)
-            .collect(Collectors.toSet());
-      } catch (final IOException e) {
-        throw BotException.launderThrowable(e);
-      }
-    }
+      .flatMap(r -> teamPullRequestStream(r, "all"));
   }
 
   private org.eclipse.egit.github.core.Repository repository(String user, String name) {
