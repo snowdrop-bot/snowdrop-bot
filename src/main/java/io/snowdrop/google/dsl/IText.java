@@ -64,6 +64,16 @@ public interface IText<T> {
   public T link(String s);
 
   /*
+   * Writes a link
+   *
+   * @param s the string to write
+   * @param url the lik url
+   *
+   * @return the {@link Writable}
+   */
+  public T link(String s, String url);
+
+  /*
    * Writes a newline
    *
    * @return the {@link Writable}

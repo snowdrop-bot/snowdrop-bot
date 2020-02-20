@@ -128,7 +128,7 @@ public class GithubReportingService {
   public void collectIssues() {
     if (repositoryCollector.getAllRepositories().count() == 0) {
       repositoryCollector.streamForks().forEach(e -> persist(e));
-      repositoryCollector.collectRepositories().stream().forEach(e -> persist(e));
+      repositoryCollector.streamRepositories().forEach(e -> persist(e));
     }
     issueCollector.streamIssues().forEach(e -> persist(e));
   }
@@ -136,7 +136,7 @@ public class GithubReportingService {
   public void collectPullRequests() {
     if (repositoryCollector.getAllRepositories().count() == 0) {
       repositoryCollector.streamForks().forEach(e -> persist(e));
-      repositoryCollector.collectRepositories().stream().forEach(e -> persist(e));
+      repositoryCollector.streamRepositories().forEach(e -> persist(e));
     }
     pullRequestCollector.streamPullRequests().forEach(e -> persist(e));
   }

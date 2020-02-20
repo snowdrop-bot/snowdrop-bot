@@ -70,8 +70,8 @@ public class RepositoryCollector {
 
   public Stream<Repository> streamRepositories() {
    return additionalRepositories.stream()
-                       .map(r -> repository(Github.user(r), Github.repo(r))).map(Repository::create)
-                       .map(repositoryLogger.log(users.size(), "Collecting repository %s.", r -> r.getUrl()));
+     .map(r -> repository(Github.user(r), Github.repo(r))).map(Repository::create)
+     .map(repositoryLogger.log(additionalRepositories.size(), "Collecting repository %s.", r -> r.getUrl()));
   }
 
   /**

@@ -89,6 +89,12 @@ public class Line implements IText<Line>, IBullets<Line> {
   }
 
   @Override
+  public Line link(String s, String url) {
+    strings.add(new Str(getEndIndex()).link(s, url));
+    return this;
+  }
+
+  @Override
   public Line newline() {
     strings.add(new Str(getEndIndex()).newline());
     ended = true;

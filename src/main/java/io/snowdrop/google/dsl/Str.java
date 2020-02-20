@@ -102,6 +102,14 @@ public class Str implements IText<Str> {
   }
 
   @Override
+  public Str link(String s, String url) {
+    write(s);
+    formattings.add(LINK + " " + url);
+    return this;
+  }
+
+
+  @Override
   public Str newline() {
     write(NEWLINE);
     return this;
@@ -126,7 +134,11 @@ public class Str implements IText<Str> {
       } else if (LINK.equals(formating)) {
         LOGGER.info("Link: {}-{}: {}", getStartIndex(), getEndIndex(), getText());
         requests.add(new UpdateTextStyleRequest().setTextStyle(new TextStyle().setLink(new Link().setUrl(getText()))).setFields(formating));
+      } else if (formating.startsWith(LINK)) {
+        LOGGER.info("Link: {}-{}: {}", getStartIndex(), getEndIndex(), getText());
+        requests.add(new UpdateTextStyleRequest().setTextStyle(new TextStyle().setLink(new Link().setUrl(formating.substring(LINK.length() + 1).trim()))).setFields(LINK));
       }
+
     }
 
     return requests.stream().map(r -> r.setRange(new Range().setStartIndex(startIndex).setEndIndex(getEndIndex()))).collect(Collectors.toList());

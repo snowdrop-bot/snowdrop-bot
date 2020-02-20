@@ -77,6 +77,13 @@ public class ContentBuilder implements IText<ContentBuilder>, IBullets<ContentBu
   }
 
   @Override
+  public ContentBuilder link(String s, String url) {
+    current.link(s, url);
+    return this;
+  }
+
+
+  @Override
   public ContentBuilder newline() {
     lines.add(current.newline());
     current = new Line(getEndIndex());
