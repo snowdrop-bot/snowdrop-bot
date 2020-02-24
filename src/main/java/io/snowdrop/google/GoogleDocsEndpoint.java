@@ -3,11 +3,13 @@ package io.snowdrop.google;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -21,12 +23,15 @@ import com.google.api.services.docs.v1.model.BatchUpdateDocumentRequest;
 import com.google.api.services.docs.v1.model.BatchUpdateDocumentResponse;
 import com.google.api.services.docs.v1.model.Request;
 
+import org.eclipse.egit.github.core.RepositoryId;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.snowdrop.BotException;
+import io.snowdrop.github.Github;
 import io.snowdrop.github.reporting.GithubReportingService;
+import io.snowdrop.github.reporting.model.Issue;
 import io.snowdrop.github.reporting.model.PullRequest;
 import io.snowdrop.google.dsl.ContentBuilder;
 
@@ -47,7 +52,20 @@ public class GoogleDocsEndpoint {
 
   private void populate(Date startTime, Date endTime) {
     try {
-      List<Request> prs = createRequests(service.getPullRequestCollector().getPullRequests().filter(p -> p.isActiveDuring(startTime, endTime)).collect(Collectors.toSet()));
+      Set<PullRequest> pullRequests = service.getPullRequestCollector().getPullRequests().filter(p -> p.isActiveDuring(startTime, endTime)).collect(Collectors.toSet());
+      Set<Issue> issues = service.getIssueCollector().getIssues().filter(i -> i.isActiveDuring(startTime, endTime)).collect(Collectors.toSet());
+
+      Set<RepositoryWork> workItems = service.getRepositoryCollector().getUsers().stream().flatMap(u -> {
+          Map<String, Set<Issue>> userIssues = issues.stream().filter(i -> u.equals(i.getAssignee())).collect(Collectors.groupingBy(i ->  i.getRepository(), Collectors.toSet()));
+          Map<String, Set<PullRequest>> userPullRequests = pullRequests.stream().filter(p -> u.equals(p.getCreator())).collect(Collectors.groupingBy(p ->  p.getRepository(), Collectors.toSet()));
+          return Stream.concat(userIssues.keySet().stream(),  userPullRequests.keySet().stream())
+            .distinct()
+            .map(r -> new RepositoryWork(Github.user(r), Github.repo(r), u,
+                                         userIssues.getOrDefault(r, Collections.emptySet()),
+                                         userPullRequests.getOrDefault(r, Collections.emptySet())));
+        }).collect(Collectors.toSet());
+
+      List<Request> prs = createRequests(startTime, endTime, workItems);
       BatchUpdateDocumentRequest body = new BatchUpdateDocumentRequest().setRequests(prs);
       BatchUpdateDocumentResponse response = docs.documents().batchUpdate(reportDocumentId, body).execute();
     } catch (IOException e) {
@@ -55,24 +73,36 @@ public class GoogleDocsEndpoint {
     }
   }
 
-  public List<Request> createRequests(Set<PullRequest> pullRequests) {
+  public List<Request> createRequests(Date startTime, Date endTime, Set<RepositoryWork> items) {
     List<Request> requests = new ArrayList<>();
     ContentBuilder builder = new ContentBuilder();
-    pullRequests.stream().collect(Collectors.groupingBy(PullRequest::getCreator, Collectors.toSet())).entrySet().forEach(e -> {
+    builder.newline().bold(DF.format(startTime) + " - " +  DF.format(endTime)).newline();
+    items.stream().collect(Collectors.groupingBy(RepositoryWork::getWorker, Collectors.toSet())).entrySet().forEach(e -> {
       final StringBuilder sb = new StringBuilder();
       String user = e.getKey();
-      Set<PullRequest> prs = e.getValue();
+      Set<RepositoryWork> work = e.getValue();
       builder.bold(user).newline();
-
-      prs.stream()
-           .collect(Collectors.groupingBy(PullRequest::getRepository, Collectors.toSet())).entrySet()
-          .forEach(r -> {
-              builder.tab().write(r.getKey().split("/")[1] + "[GREEN]:").newline();
-              r.getValue().stream().forEach(p -> {
-                  builder.tab(2).write(p.getTitle()).newline();
-                  builder.tab(3).link(p.getUrl()).newline();
+      work.stream().forEach(w  -> {
+          builder.write(w.getName() + " [GREEN]:").newline();
+          Set<Issue> issues = w.getIssues();
+          if (issues.size() > 0) {
+          builder.tab(1).write("Tasks").newline();
+          w.getIssues().forEach(i -> {
+                  builder.tab(2).write(i.getTitle()).newline();
+                  w.getLinkedRequests(i.getNumber()).forEach(p  -> {
+                      builder.tab(3).link(p.getUrl()).newline();
+                    });
             });
-          });
+          }
+
+          Set<PullRequest> otherPullRequests = w.getLinkedRequests(0);
+          if (otherPullRequests.size() > 0) {
+            builder.tab(1).write("Other Pull Requests").newline();
+            otherPullRequests.stream().forEach(p -> {
+                builder.tab(2).link("(#" +  p.getNumber() + "): " +  p.getTitle(), p.getUrl()).newline();
+              });
+          }
+      });
       builder.newline();
     });
     requests.addAll(builder.getAllRequests());

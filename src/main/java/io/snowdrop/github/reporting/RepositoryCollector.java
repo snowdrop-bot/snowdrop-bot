@@ -34,8 +34,6 @@ public class RepositoryCollector {
   private final Set<String> organizations;
   private final Set<String> additionalRepositories;
 
-  private final Map<String, Set<Repository>> forks = new HashMap<>();
-  private final Set<Repository> repositories = new HashSet<>();
 
   public RepositoryCollector(GitHubClient client, StatusLogger forkLogger, StatusLogger repositoryLogger,  Set<String> users, Set<String> organizations, Set<String> additionalRepositories) {
     this.client = client;
@@ -49,9 +47,6 @@ public class RepositoryCollector {
   }
 
   public void init() {
-    users.stream().forEach(u -> {
-      forks.put(u, new HashSet<>());
-    });
   }
 
   public void refresh() {
@@ -60,42 +55,49 @@ public class RepositoryCollector {
   }
 
   public Map<String, Set<Repository>> collectForks() {
-    users.stream()
+    return streamForks().collect(Collectors.groupingBy(Repository::getOwner, Collectors.toSet()));
+  }
+
+  public Stream<Repository> streamForks() {
+    return users.stream()
       .map(forkLogger.log(users.size(), "Collecting forks for user %s.", u -> u))
-      .forEach(u -> {
-      LOGGER.info("Getting forks for user: {}.", u);
-      Set<Repository> f = userForks(u);
-      forks.get(u).addAll(f);
-      LOGGER.info("User: {} forks: [{}].", u, f.stream().map(r -> r.getName()).collect(Collectors.joining(",")));
-    });
-    return forks;
+      .flatMap(u -> streamUserForks(u));
   }
 
   public Set<Repository> collectRepositories() {
-   repositories.addAll(additionalRepositories.stream()
-                       .map(r -> repository(Github.user(r), Github.repo(r))).map(Repository::create)
-                       .map(repositoryLogger.log(users.size(), "Collecting repository %s.", r -> r.getUrl()))
-                       .collect(Collectors.toSet()));
-   return repositories;
+    return streamRepositories().collect(Collectors.toSet());
+  }
+
+  public Stream<Repository> streamRepositories() {
+   return additionalRepositories.stream()
+     .map(r -> repository(Github.user(r), Github.repo(r))).map(Repository::create)
+     .map(repositoryLogger.log(additionalRepositories.size(), "Collecting repository %s.", r -> r.getUrl()));
   }
 
   /**
    * Get all the repositories of the specified user.
-   *
    * @param user The user
    * @return A set of {@link Repository}.
    */
   public Set<Repository> userForks(final String user) {
+    return streamUserForks(user).collect(Collectors.toSet());
+  }
+
+  /**
+   * Stream all the repositories of the specified user.
+   * @param user The user
+   * @return A stream of {@link Repository}.
+   */
+  public Stream<Repository> streamUserForks(final String user) {
     synchronized (client) {
       try {
         return repositoryService.getRepositories(user).stream().filter(r -> r.isFork())
             .map(r -> repository(user, r.getName()))
-            .filter(r -> organizations.contains(r.getParent().getOwner().getLogin())).map(Repository::create)
-            .collect(Collectors.toSet());
+            .filter(r -> organizations.contains(r.getParent().getOwner().getLogin())).map(Repository::create);
       } catch (final IOException e) {
         throw BotException.launderThrowable(e);
       }
-    }
+    } 
   }
 
   private org.eclipse.egit.github.core.Repository repository(String user, String name) {

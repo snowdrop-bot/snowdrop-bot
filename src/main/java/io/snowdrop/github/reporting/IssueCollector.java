@@ -80,6 +80,9 @@ public class IssueCollector {
   }
 
   public Map<String, Set<Issue>> collectIssues() {
+    return streamIssues().collect(Collectors.groupingBy(Issue::getAssignee, Collectors.toSet()));
+  }
+  public Stream<Issue> streamIssues() {
     long total = Repository.<Repository>streamAll()
       .map(r -> Parent.NONE.equals(r.getParent()) ? r.getOwner() + "/" + r.getName() : r.getParent())
       .distinct()
@@ -90,11 +93,15 @@ public class IssueCollector {
       .distinct()
       .sorted()
       .map(status.<String>log(total, "Collecting issues from repository %s."))
-      .flatMap(i -> teamIssueStream(i, "all"))
-      .collect(Collectors.groupingBy(Issue::getAssignee, Collectors.toSet()));
+      .flatMap(i -> teamIssueStream(i, "all"));
   }
 
   public Set<Issue> userIssues(String user, Repository repository, String state) {
+    return streamUserIssues(user, repository, state)
+          .collect(Collectors.toSet());
+  }
+
+  public Stream<Issue> streamUserIssues(String user, Repository repository, String state) {
     synchronized (client) {
 
       try {
@@ -104,8 +111,7 @@ public class IssueCollector {
           .stream()
           .map(i -> Issue.create(id, i))
           .filter(i -> i.isActiveDuring(minStartTime, minEndTime))
-          .map(IssueCollector::log)
-          .collect(Collectors.toSet());
+          .map(IssueCollector::log);
       } catch (IOException e) {
         throw BotException.launderThrowable(e);
       }

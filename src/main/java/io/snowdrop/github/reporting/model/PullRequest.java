@@ -1,7 +1,15 @@
 package io.snowdrop.github.reporting.model;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
@@ -10,10 +18,15 @@ import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 @Entity
 public class PullRequest extends PanacheEntityBase implements WithDates {
 
+  private static final String ISSUE_REF =  "/\\d+$";
+  private static final Pattern COMMIT_REF =  Pattern.compile("#\\d+");
+
   @Id
   String url;
   String repository;
   int number;
+  @ElementCollection
+  Set<Integer> issues;
   String title;
   String creator;
   String assignee;
@@ -26,7 +39,7 @@ public class PullRequest extends PanacheEntityBase implements WithDates {
 
   }
 
-  public PullRequest(String url, String repository, int number, String title, String creator, String assignee,
+  public PullRequest(String url, String repository, int number, Set<Integer> issues, String title, String creator, String assignee,
       boolean open, Date createdAt, Date updatedAt, Date closedAt) {
     this.url = url;
     this.repository = repository;
@@ -41,7 +54,20 @@ public class PullRequest extends PanacheEntityBase implements WithDates {
   }
 
   public static PullRequest create(String repository, org.eclipse.egit.github.core.PullRequest pr) {
-    return new PullRequest(pr.getHtmlUrl(), repository, pr.getNumber(), pr.getTitle(), pr.getUser().getLogin(), null,
+    Set<Integer> issues = new HashSet<>();
+    if (pr.getIssueUrl() != null && pr.getIssueUrl().matches(ISSUE_REF)) {
+      String issue = pr.getIssueUrl().substring(pr.getIssueUrl().lastIndexOf("/"));
+      issues.add(Integer.parseInt(issue));
+    }
+
+    if (pr.getBody() != null && !pr.getBody().isEmpty()) {
+      Matcher matcher = COMMIT_REF.matcher(pr.getBody());
+      while (matcher.find()) {
+        issues.add(Integer.parseInt(matcher.group().substring(1)));
+      }
+    }
+
+    return new PullRequest(pr.getHtmlUrl(), repository, pr.getNumber(), issues, pr.getTitle(), pr.getUser().getLogin(), null,
         pr.getState().equals("open"), pr.getCreatedAt(), pr.getUpdatedAt(), pr.getClosedAt());
   }
 
@@ -67,6 +93,14 @@ public class PullRequest extends PanacheEntityBase implements WithDates {
 
   public void setNumber(int number) {
     this.number = number;
+  }
+
+  public Set<Integer> getIssues() {
+    return this.issues;
+  }
+
+  public void setIssues(Set<Integer> issues) {
+    this.issues=issues;
   }
 
   public String getTitle() {

@@ -1,5 +1,6 @@
 var startTime
 var endTime
+var lastProgress = 0
 
 $(document).ready(function() {
 
@@ -8,6 +9,10 @@ $(document).ready(function() {
     var data = JSON.parse(m.data)
     $("#pr-progress").attr("style", "width: " + data.progress + "%;")
     $("#pr-progress").text(data.message)
+        if (lastProgress != data.progress) {
+      refreshDataTable()
+    }
+    lastProgress = data.progress
   })
   registerClosable(status)
 
