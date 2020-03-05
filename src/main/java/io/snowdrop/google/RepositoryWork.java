@@ -53,4 +53,8 @@ public class RepositoryWork {
   public Set<PullRequest> getLinkedRequests(int issueNumber) {
     return pullRequests != null ? pullRequests.stream().filter(p -> p.getIssues().contains(issueNumber)).collect(Collectors.toSet()) : Collections.emptySet();
   }
+
+  public Set<PullRequest> getUnLinkedRequests() {
+    return pullRequests != null ? pullRequests.stream().filter(p -> p.getIssues().isEmpty()).collect(Collectors.toSet()) : Collections.emptySet();
+  }
 }

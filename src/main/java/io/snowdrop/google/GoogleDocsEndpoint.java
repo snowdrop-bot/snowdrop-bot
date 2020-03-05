@@ -95,7 +95,7 @@ public class GoogleDocsEndpoint {
             });
           }
 
-          Set<PullRequest> otherPullRequests = w.getLinkedRequests(0);
+          Set<PullRequest> otherPullRequests = w.getUnLinkedRequests();
           if (otherPullRequests.size() > 0) {
             builder.tab(1).write("Other Pull Requests").newline();
             otherPullRequests.stream().forEach(p -> {

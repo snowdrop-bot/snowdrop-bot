@@ -114,15 +114,15 @@ public class GithubReportingService {
   }
 
   public void execute() {
-      repositoryCollector.streamForks().forEach(e -> persist(e));
-      repositoryCollector.collectRepositories().stream().forEach(e -> persist(e));
-      issueCollector.streamIssues().forEach(e -> persist(e));
-      pullRequestCollector.streamPullRequests().forEach(e -> persist(e));
+    repositoryCollector.streamForks().forEach(e -> persist(e));
+    repositoryCollector.streamRepositories().forEach(e -> persist(e));
+    issueCollector.streamIssues().forEach(e -> persist(e));
+    pullRequestCollector.streamPullRequests().forEach(e -> persist(e));
   }
 
   public void collectAllRepositories() {
-      repositoryCollector.streamForks().forEach(e -> persist(e));
-      repositoryCollector.collectRepositories().stream().forEach(e -> persist(e));
+    repositoryCollector.streamForks().forEach(e -> persist(e));
+    repositoryCollector.streamRepositories().forEach(e -> persist(e));
   }
 
   public void collectIssues() {
@@ -141,32 +141,43 @@ public class GithubReportingService {
     pullRequestCollector.streamPullRequests().forEach(e -> persist(e));
   }
 
-
   @Transactional
   public void persist(Repository repo) {
-    Repository existing = Repository.findById(new ForkId(repo.getUrl(), repo.getParent()));
-    if (existing != null) {
-      existing.delete();
+    try {
+      Repository existing = Repository.findById(new ForkId(repo.getUrl(), repo.getParent()));
+      if (existing != null) {
+        existing.delete();
+      }
+      repo.persist();
+    } catch (Exception e) {
+      LOGGER.error("Failed to persist issue.", e);
     }
-    repo.persist();
   }
 
   @Transactional
   public void persist(Issue issue) {
-    Issue existing = Issue.findById(issue.getUrl());
-    if (existing != null) {
-      existing.delete();
+    try {
+      Issue existing = Issue.findById(issue.getUrl());
+      if (existing != null) {
+        existing.delete();
+      }
+      issue.persist();
+    } catch (Exception e) {
+      LOGGER.error("Failed to persist issue.", e);
     }
-    issue.persist();
   }
 
   @Transactional
   public void persist(PullRequest pr) {
-    PullRequest existing = PullRequest.findById(pr.getUrl());
-    if (existing != null) {
-      existing.delete();
+    try {
+      PullRequest existing = PullRequest.findById(pr.getUrl());
+      if (existing != null) {
+        existing.delete();
+      }
+      pr.persist();
+    } catch (Exception e) {
+      LOGGER.error("Failed to persist pull request.", e);
     }
-    pr.persist();
   }
 
   public RepositoryCollector getRepositoryCollector() {
