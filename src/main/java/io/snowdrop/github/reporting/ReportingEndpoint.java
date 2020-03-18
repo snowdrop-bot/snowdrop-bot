@@ -43,7 +43,6 @@ import io.reactivex.Flowable;
 import io.reactivex.FlowableEmitter;
 import io.reactivex.Observable;
 import io.smallrye.reactive.messaging.annotations.Channel;
-import io.smallrye.reactive.messaging.annotations.Stream;
 import io.snowdrop.Status;
 import io.snowdrop.github.reporting.model.Issue;
 import io.snowdrop.github.reporting.model.PullRequest;
