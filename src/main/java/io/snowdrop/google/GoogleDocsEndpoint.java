@@ -88,9 +88,9 @@ public class GoogleDocsEndpoint {
           if (issues.size() > 0) {
           builder.tab(1).write("Tasks").newline();
           w.getIssues().forEach(i -> {
-                  builder.tab(2).write(i.getTitle()).newline();
+                  builder.tab(2).link("(#" +  i.getNumber() + "): " +  i.getTitle(), i.getUrl()).newline();
                   w.getLinkedRequests(i.getNumber()).forEach(p  -> {
-                      builder.tab(3).link(p.getUrl()).newline();
+                      builder.tab(3).link("(#" +  p.getNumber() + "): " +  p.getTitle(), p.getUrl()).newline();
                     });
             });
           }
