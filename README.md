@@ -134,3 +134,43 @@ This can be done by selecting the `Reporting` tab and clicking the `generate` bu
 
 This requires the setup mentioned in [Google APIS](#google-apis).
 The id of the target document can be specified using `google.docs.report.document-id`.
+
+
+## Kubernetes / Openshift deployment
+
+During compilation resources for Kubernetes and Openshift are generated.
+
+Before these resources can be applied, some preparation is required.
+
+1. Create a PV with name `snowdrop-db-claim`
+2. Create a secret with the github token.
+
+``` sh
+kubectl create secret generic dev-db-secret --from-literal=GITHUB_TOKEN=<your github token here>
+```
+
+Since the snowdrop team is using a shared `password-store` for handling
+credentials, the following would work:
+
+``` sh
+export GITHUB_TOKEN=`pass show snowdrop/github.com/snowdrop-bot/token`
+kubectl create secret generic dev-db-secret --from-literal=GITHUB_TOKEN=$GITHUB_TOKEN
+```
+
+`
+3. Create a secret with the googledocs `credentials.json` file
+
+``` sh
+kubectl create secret generic snowdrop-googledocs --from-file=credentials.json=/path/to/credentials.json
+```
+
+4. Build the container and apply the manifests.
+
+``` sh
+mvn clean package -Dquarkus.kubernetes.deploy=true
+```
+
+The project is configured to use `Openshift` out of the box.
+To use `Kubernetes` you may need to set
+`quarkus.kubernetes.deployment-target=kuberentes` to `application.properties`
+and also add container-image-docker or container-image-jib dependencies to your pom.
