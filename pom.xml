@@ -11,6 +11,8 @@
     <google-api.version>1.30.1</google-api.version>
     <google-docs-api.version>v1-rev20190827-1.30.1</google-docs-api.version>
     <jaxws-api.version>2.3.1</jaxws-api.version>
+    <jira-client.version>5.2.1</jira-client.version>
+    <fugue.version>4.5.1</fugue.version>
     <maven.compiler.parameters>true</maven.compiler.parameters>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
@@ -24,6 +26,7 @@
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <surefire-plugin.version>2.22.1</surefire-plugin.version>
   </properties>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -33,8 +36,16 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+      <dependency>
+        <groupId>com.atlassian.jira</groupId>
+        <artifactId>jira-rest-java-client-parent</artifactId>
+        <version>${jira-client.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
     </dependencies>
   </dependencyManagement>
+
   <dependencies>
     <dependency>
       <groupId>io.quarkus</groupId>
@@ -61,6 +72,16 @@
       <groupId>com.google.api-client</groupId>
       <artifactId>google-api-client</artifactId>
       <version>${google-api.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.atlassian.jira</groupId>
+      <artifactId>jira-rest-java-client-core</artifactId>
+      <version>${jira-client.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.atlassian.fugue</groupId>
+      <artifactId>fugue</artifactId>
+      <version>${fugue.version}</version>
     </dependency>
     <dependency>
       <groupId>com.google.oauth-client</groupId>
@@ -190,4 +211,25 @@
       </properties>
     </profile>
   </profiles>
+
+ <repositories>
+        <repository>
+            <id>atlassian.com</id>
+            <name>Atlassian</name>
+            <url>https://maven.atlassian.com/public/</url>
+        </repository>
+        <repository>
+            <id>atlassian-public</id>
+            <url>https://m2proxy.atlassian.com/repository/public</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>daily</updatePolicy>
+                <checksumPolicy>warn</checksumPolicy>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+                <checksumPolicy>warn</checksumPolicy>
+            </releases>
+        </repository>
+    </repositories>
 </project>
