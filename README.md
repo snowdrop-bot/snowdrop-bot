@@ -1,3 +1,24 @@
+# Table of Contents
+
+   * [Snowdrop Bot](#snowdrop-bot)
+      * [Features](#features)
+      * [Installation](#installation)
+         * [Database](#database)
+         * [Github](#github)
+         * [Google APIS](#google-apis)
+         * [Jira](#jira)
+      * [Running](#running)
+         * [Default Profile](#default-profile)
+            * [Persistence and configuration (defalut)](#persistence-and-configuration-defalut)
+         * [Production Profile](#production-profile)
+            * [Persistence and configuration (production)](#persistence-and-configuration-production)
+      * [Issue tracking](#issue-tracking)
+      * [Pull Request tracking](#pull-request-tracking)
+      * [Forked repository issue bridging](#forked-repository-issue-bridging)
+      * [Google Docs Report Generation](#google-docs-report-generation)
+      * [Kubernetes / Openshift deployment](#kubernetes--openshift-deployment)
+
+
 # Snowdrop Bot
 A bot for automating snowdrop related tasks
 
@@ -32,6 +53,26 @@ To upload generate reports to Google Documents, you will need to enable the
 Google Documents API. Once enabled, you will need to store the provided
 `credentials.json` file under `/.snowdrop-bot/google/credentials.json`.
 Again the location is configurable via `google.docs.credentials.file` property.
+
+### Jira
+
+The application will need to access jira nd for that it will need the credentials.
+
+This information can be provided either by the application.properties file or environment variables.
+
+`application.properties`:
+
+```properties
+jira.user=my-jira-user
+jira.password=my-jira-password
+```
+
+Environment variables:
+
+```bash
+$ export JIRA_USERNAME=my-jira-user
+$ export JIRA_PASSWORD=my-jira-password
+```
 
 ## Running
 
