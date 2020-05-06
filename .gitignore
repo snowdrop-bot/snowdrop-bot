@@ -12,6 +12,10 @@ release.properties
 dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
+tokens/
+
+# Local resource files
+src/main/local-resources/*
 
 bin
 build/

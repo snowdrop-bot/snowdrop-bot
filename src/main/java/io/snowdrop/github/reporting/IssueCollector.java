@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 import io.snowdrop.BotException;
 import io.snowdrop.StatusLogger;
 import io.snowdrop.github.Github;
-import io.snowdrop.github.reporting.model.Issue;
+import io.snowdrop.reporting.model.Issue;
 import io.snowdrop.github.reporting.model.Parent;
 import io.snowdrop.github.reporting.model.Repository;
 

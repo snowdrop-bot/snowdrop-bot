@@ -23,7 +23,6 @@ import com.google.api.services.docs.v1.model.BatchUpdateDocumentRequest;
 import com.google.api.services.docs.v1.model.BatchUpdateDocumentResponse;
 import com.google.api.services.docs.v1.model.Request;
 
-import org.eclipse.egit.github.core.RepositoryId;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +30,7 @@ import org.slf4j.LoggerFactory;
 import io.snowdrop.BotException;
 import io.snowdrop.github.Github;
 import io.snowdrop.github.reporting.GithubReportingService;
-import io.snowdrop.github.reporting.model.Issue;
+import io.snowdrop.reporting.model.Issue;
 import io.snowdrop.github.reporting.model.PullRequest;
 import io.snowdrop.google.dsl.ContentBuilder;
 

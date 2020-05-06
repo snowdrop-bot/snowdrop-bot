@@ -101,6 +101,8 @@ $(document).ready(function() {
       columns: [
         {data: 'assignee', type: 'string' },
         {data: 'repository', type: 'string' },
+        {data: 'source', type: 'string' },
+        {data: 'label', type: 'string' },
         {data: 'url', type : 'num', render: dataTablesRenderNumber},
         {data: 'title', type: 'string' },
         {data: 'open', type: 'boolean' },
