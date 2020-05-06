@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.snowdrop.github.reporting.model.Issue;
+import io.snowdrop.reporting.model.Issue;
 import io.snowdrop.github.reporting.model.PullRequest;
 
 public class RepositoryWork {

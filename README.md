@@ -31,6 +31,9 @@ A bot for automating snowdrop related tasks
 
 ## Installation
 
+To prevent adding personal information to github, create an alternate resources folder at `src/main/local-resources` and copy the `src/main/resources/application.properties` 
+file into it. All changes should be made to this file. This folder is excluded in `.gitignore`.
+
 ### Database
 
 For the persistence needs of this application `h2` has been used.
@@ -44,8 +47,12 @@ You can specify where h2 will store files by editing: `quarkus.datasource.url`.
 
 The application will need to access github. So you are going to need an access
 token.
+
 The token can be configured either via `github.token` property or `GITHUB_TOKEN`
-environment variable.
+environment variable. 
+
+> NOTE: The `github.token` property is configured to have it's value filled with the [Maven Rsource plugin Filter capabilities](https://maven.apache.org/plugins/maven-resources-plugin/examples/filter.html).
+> It can be easilly filled by adding -Dgithub.token=<the token> to the maven compilation statement.
 
 ### Google APIS
 
@@ -78,7 +85,11 @@ $ export JIRA_PASSWORD=my-jira-password
 
 To run the bot you can just build:
 
-    mvn clean install
+    ./mvnw clean package
+
+If using resource filtering use build it this way instead:
+
+    ./mvnw -Dgithub.token=<the token> clean package 
     
 and then run with:
 
