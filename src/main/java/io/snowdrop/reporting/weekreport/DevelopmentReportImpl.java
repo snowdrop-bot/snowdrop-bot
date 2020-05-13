@@ -46,19 +46,17 @@ public class DevelopmentReportImpl {
     public String buildWeeklyReport(final List<Repository> pByModifiedDate) {
         StringBuilder sb = new StringBuilder();
         users.stream().forEach(eachAssignee -> {
-//            LOGGER.info("eachAssignee: " + eachAssignee);
             sb.append(ReportConstants.CR).append(ReportConstants.CR).append(MarkdownHelper.addHeadingTitle(eachAssignee, 2)).append(ReportConstants.CR);
             UnorderedList repoUnorderedList = new UnorderedList();
             Repository.findByExcOwnerName(ReportConstants.WEEK_DEV_REPO_OWNER,ReportConstants.WEEK_DEV_REPO_NAME).list().stream().forEach(eachRepo -> {
                 String repoName = ((Repository) eachRepo).getOwner() + "/" + ((Repository) eachRepo).getName();
-//                LOGGER.info("repoName: " + repoName);
+//                LOGGER.info("eachAssignee/repoName: " + eachAssignee+"/"+repoName);
                 UnorderedList issueUnorderedList = new UnorderedList();
                 List<Issue> lstIssue = Issue
                         .findByRepoAssigneeAndModifiedDate(repoName, eachAssignee, startDate, endDate);
                 if (lstIssue.size() > 0) {
                     repoUnorderedList.getItems().add(repoName + " - Issues");
                     lstIssue.stream().forEach(eachIssue -> {
-//                        LOGGER.info("issue: " + eachIssue.getTitle() + " - " + eachIssue.getUrl());
                         TextBuilder issueTextB = new TextBuilder();
                         issueTextB.append(new Text(eachIssue.getTitle())).append(" - ").append(new Link(eachIssue.getUrl()));
                         issueUnorderedList.getItems().add(issueTextB);
@@ -71,7 +69,6 @@ public class DevelopmentReportImpl {
                     UnorderedList prUnorderedList = new UnorderedList();
                     repoUnorderedList.getItems().add(repoName + " - PRs");
                     lstPullRequest.stream().forEach(eachPR -> {
-//                        LOGGER.info("pr:" + eachPR.getTitle() + "," + eachPR.getAssignee() + "," + eachPR.getRepository() + ".");
                         TextBuilder issueTextB = new TextBuilder();
                         issueTextB.append(new Text(eachPR.getTitle())).append(" - ").append(new Link(eachPR.getUrl()));
                         prUnorderedList.getItems().add(issueTextB);
