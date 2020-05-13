@@ -1,13 +1,11 @@
 package io.snowdrop.github.reporting.model;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
@@ -18,170 +16,190 @@ import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 @Entity
 public class PullRequest extends PanacheEntityBase implements WithDates {
 
-  private static final String ISSUE_REF =  "/\\d+$";
-  private static final Pattern COMMIT_REF =  Pattern.compile("#\\d+");
+    private static final String ISSUE_REF = "/\\d+$";
+    private static final Pattern COMMIT_REF = Pattern.compile("#\\d+");
 
-  @Id
-  String url;
-  String repository;
-  int number;
-  @ElementCollection
-  Set<Integer> issues;
-  String title;
-  String creator;
-  String assignee;
-  boolean open;
-  Date createdAt;
-  Date updatedAt;
-  Date closedAt;
+    @Id
+    String url;
+    String repository;
+    int number;
+    @ElementCollection
+    Set<Integer> issues;
+    String title;
+    String creator;
+    String assignee;
+    boolean open;
+    Date createdAt;
+    Date updatedAt;
+    Date closedAt;
 
-  public PullRequest() {
+    public PullRequest() {
 
-  }
-
-  public PullRequest(String url, String repository, int number, Set<Integer> issues, String title, String creator, String assignee,
-      boolean open, Date createdAt, Date updatedAt, Date closedAt) {
-    this.url = url;
-    this.repository = repository;
-    this.number = number;
-    this.title = title;
-    this.creator = creator;
-    this.assignee = assignee;
-    this.open = open;
-    this.createdAt = createdAt;
-    this.updatedAt = updatedAt;
-    this.closedAt = closedAt;
-  }
-
-  public static PullRequest create(String repository, org.eclipse.egit.github.core.PullRequest pr) {
-    Set<Integer> issues = new HashSet<>();
-    if (pr.getIssueUrl() != null && pr.getIssueUrl().matches(ISSUE_REF)) {
-      String issue = pr.getIssueUrl().substring(pr.getIssueUrl().lastIndexOf("/"));
-      issues.add(Integer.parseInt(issue));
     }
 
-    if (pr.getBody() != null && !pr.getBody().isEmpty()) {
-      Matcher matcher = COMMIT_REF.matcher(pr.getBody());
-      while (matcher.find()) {
-        issues.add(Integer.parseInt(matcher.group().substring(1)));
-      }
+    public PullRequest(
+            String url, String repository, int number, Set<Integer> issues, String title, String creator, String assignee,
+            boolean open, Date createdAt, Date updatedAt, Date closedAt) {
+        this.url = url;
+        this.repository = repository;
+        this.number = number;
+        this.title = title;
+        this.creator = creator;
+        this.assignee = assignee;
+        this.open = open;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+        this.closedAt = closedAt;
     }
 
-    return new PullRequest(pr.getHtmlUrl(), repository, pr.getNumber(), issues, pr.getTitle(), pr.getUser().getLogin(), null,
-        pr.getState().equals("open"), pr.getCreatedAt(), pr.getUpdatedAt(), pr.getClosedAt());
-  }
+    public static PullRequest create(String repository, org.eclipse.egit.github.core.PullRequest pr) {
+        Set<Integer> issues = new HashSet<>();
+        if (pr.getIssueUrl() != null && pr.getIssueUrl().matches(ISSUE_REF)) {
+            String issue = pr.getIssueUrl().substring(pr.getIssueUrl().lastIndexOf("/"));
+            issues.add(Integer.parseInt(issue));
+        }
 
-  public String getUrl() {
-    return url;
-  }
+        if (pr.getBody() != null && !pr.getBody().isEmpty()) {
+            Matcher matcher = COMMIT_REF.matcher(pr.getBody());
+            while (matcher.find()) {
+                issues.add(Integer.parseInt(matcher.group().substring(1)));
+            }
+        }
 
-  public void setUrl(String url) {
-    this.url = url;
-  }
+        return new PullRequest(pr.getHtmlUrl(), repository, pr.getNumber(), issues, pr.getTitle(), pr.getUser().getLogin(), null,
+                pr.getState().equals("open"), pr.getCreatedAt(), pr.getUpdatedAt(), pr.getClosedAt());
+    }
 
-  public String getRepository() {
-    return repository;
-  }
+    /**
+     * <p>Issues modified between a date range for a specific repository.</p>
+     *
+     * @param prepository
+     * @param pdateFrom
+     * @param pdateTo
+     * @return
+     */
+    public static List<PullRequest> findByRepoAssigneeAndModifiedDate(
+            final String prepository,
+            final String pasignee,
+            final Date pdateFrom,
+            final Date pdateTo) {
+        return PullRequest
+                .find("repository = ?1 AND creator = ?2 AND updatedAt >= ?3 AND updatedAt <= ?4",
+                        prepository, pasignee, pdateFrom, pdateTo)
+                .list();
+    }
 
-  public void setRepository(String repository) {
-    this.repository = repository;
-  }
+    public String getUrl() {
+        return url;
+    }
 
-  public int getNumber() {
-    return number;
-  }
+    public void setUrl(String url) {
+        this.url = url;
+    }
 
-  public void setNumber(int number) {
-    this.number = number;
-  }
+    public String getRepository() {
+        return repository;
+    }
 
-  public Set<Integer> getIssues() {
-    return this.issues;
-  }
+    public void setRepository(String repository) {
+        this.repository = repository;
+    }
 
-  public void setIssues(Set<Integer> issues) {
-    this.issues=issues;
-  }
+    public int getNumber() {
+        return number;
+    }
 
-  public String getTitle() {
-    return title;
-  }
+    public void setNumber(int number) {
+        this.number = number;
+    }
 
-  public void setTitle(String title) {
-    this.title = title;
-  }
+    public Set<Integer> getIssues() {
+        return this.issues;
+    }
 
-  public String getCreator() {
-    return creator;
-  }
+    public void setIssues(Set<Integer> issues) {
+        this.issues = issues;
+    }
 
-  public void setCreator(String creator) {
-    this.creator = creator;
-  }
+    public String getTitle() {
+        return title;
+    }
 
-  public String getAssignee() {
-    return assignee;
-  }
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
-  public void setAssignee(String assignee) {
-    this.assignee = assignee;
-  }
+    public String getCreator() {
+        return creator;
+    }
 
-  public Date getCreatedAt() {
-    return createdAt;
-  }
+    public void setCreator(String creator) {
+        this.creator = creator;
+    }
 
-  public void setCreatedAt(Date createdAt) {
-    this.createdAt = createdAt;
-  }
+    public String getAssignee() {
+        return assignee;
+    }
 
-  public Date getUpdatedAt() {
-    return updatedAt;
-  }
+    public void setAssignee(String assignee) {
+        this.assignee = assignee;
+    }
 
-  public void setUpdatedAt(Date updatedAt) {
-    this.updatedAt = updatedAt;
-  }
+    public Date getCreatedAt() {
+        return createdAt;
+    }
 
-  public Date getClosedAt() {
-    return closedAt;
-  }
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
 
-  public void setClosedAt(Date closedAt) {
-    this.closedAt = closedAt;
-  }
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
 
-  public boolean isOpen() {
-    return open;
-  }
+    public void setUpdatedAt(Date updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 
-  public void setOpen(boolean open) {
-    this.open = open;
-  }
+    public Date getClosedAt() {
+        return closedAt;
+    }
 
-  @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + ((url == null) ? 0 : url.hashCode());
-    return result;
-  }
+    public void setClosedAt(Date closedAt) {
+        this.closedAt = closedAt;
+    }
 
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
-      return false;
-    PullRequest other = (PullRequest) obj;
-    if (url == null) {
-      if (other.url != null)
-        return false;
-    } else if (!url.equals(other.url))
-      return false;
-    return true;
-  }
+    public boolean isOpen() {
+        return open;
+    }
+
+    public void setOpen(boolean open) {
+        this.open = open;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((url == null) ? 0 : url.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        PullRequest other = (PullRequest) obj;
+        if (url == null) {
+            if (other.url != null)
+                return false;
+        } else if (!url.equals(other.url))
+            return false;
+        return true;
+    }
 
 }

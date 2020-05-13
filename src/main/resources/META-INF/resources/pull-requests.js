@@ -97,6 +97,7 @@ $(document).ready(function() {
       ],
       columns: [
         {data: 'creator', type: 'string' },
+        {data: 'assignee', type: 'string' },
         {data: 'repository', type: 'string' },
         {data: 'url', type : 'num', render: dataTablesRenderNumber},
         {data: 'title', type: 'string' },

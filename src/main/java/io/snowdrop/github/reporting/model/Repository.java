@@ -5,6 +5,7 @@ import javax.persistence.Id;
 import javax.persistence.IdClass;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
 
 @Entity
 @IdClass(ForkId.class)
@@ -40,6 +41,30 @@ public class Repository extends PanacheEntityBase {
                           repo.getParent() != null ? repo.getParent().getOwner().getLogin() + "/" + repo.getParent().getName() : Parent.NONE,
                           repo.getOwner().getLogin(), repo.getName(),
                           repo.isFork());
+  }
+
+  /**
+   * <p>Issues modified between a date range for a specific repository.</p>
+   *
+   * @param prepoOwner
+   * @param prepoName
+   * @return
+   */
+  public static PanacheQuery<PanacheEntityBase> findByExcOwnerName(final String prepoOwner,final String prepoName) {
+    return Repository
+            .find("owner != ?1 AND name != ?2", prepoOwner, prepoName);
+  }
+
+  /**
+   * <p>Issues modified between a date range for a specific repository.</p>
+   *
+   * @param prepoOwner
+   * @param prepoName
+   * @return
+   */
+  public static PanacheQuery<PanacheEntityBase> findByOwnerName(final String prepoOwner,final String prepoName) {
+    return Repository
+            .find("owner = ?1 AND name = ?2", prepoOwner, prepoName);
   }
 
   public String getUrl() {

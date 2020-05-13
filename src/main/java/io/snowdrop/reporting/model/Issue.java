@@ -1,11 +1,14 @@
 package io.snowdrop.reporting.model;
 
 import java.util.Date;
+import java.util.List;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
+import io.quarkus.panache.common.Sort;
 import io.snowdrop.github.reporting.model.WithDates;
 
 @Entity
@@ -72,6 +75,44 @@ public class Issue extends PanacheEntityBase implements WithDates {
                 issue.getAssignee() != null ? issue.getAssignee().getLogin() : null, IssueOpen.isOpen(issue.getState()),
                 issue.getCreatedAt(), issue.getUpdatedAt(), issue.getClosedAt(), IssueSource.GITHUB.name(), issue.getState(),
                 ((issue.getLabels() != null && issue.getLabels().size() > 0) ? issue.getLabels().get(0).getName() : null), null, null, null);
+    }
+
+    /**
+     * <p>Issues modified between a date range.</p>
+     *
+     * @param pdateFrom
+     * @param pdateTo
+     * @return
+     */
+    public static List<Issue> findByModifiedDate(final Date pdateFrom, final Date pdateTo) {
+        return Issue.find("SELECT issues FROM Issue issues WHERE updatedAt >= ?1 AND updatedAt <= ?2 ORDER BY assignee, repository, label", pdateFrom, pdateTo)
+                .list();
+    }
+
+    /**
+     * <p>Issues modified between a date range for a specific repository.</p>
+     *
+     * @param prepository
+     * @param pdateFrom
+     * @param pdateTo
+     * @return
+     */
+    public static PanacheQuery<Issue> findByIssuesForWeeklyDevelopmentReport(final String prepository, final Date pdateFrom, final Date pdateTo) {
+        return Issue.find("repository = ?1 AND (updatedAt >= ?2 AND updatedAt <= ?3 OR open = true) AND (label != 'report' or label is null)", Sort.ascending("assignee", "label", "updatedAt"), prepository, pdateFrom, pdateTo);
+    }
+
+    /**
+     * <p>Issues modified between a date range for a specific repository.</p>
+     *
+     * @param prepository
+     * @param pdateFrom
+     * @param pdateTo
+     * @return
+     */
+    public static List<Issue> findByRepoAssigneeAndModifiedDate(final String prepository, final String pasignee, final Date pdateFrom, final Date pdateTo) {
+        return Issue
+                .find("repository = ?1 AND assignee = ?2 AND updatedAt >= ?3 AND updatedAt <= ?4 ", Sort.ascending("updatedAt"), prepository, pasignee, pdateFrom, pdateTo)
+                .list();
     }
 
     public String getUrl() {
@@ -171,7 +212,7 @@ public class Issue extends PanacheEntityBase implements WithDates {
     }
 
     public String getLabel() {
-        return label;
+        return label == null ? "" : label;
     }
 
     public void setLabel(final String pLabel) {
