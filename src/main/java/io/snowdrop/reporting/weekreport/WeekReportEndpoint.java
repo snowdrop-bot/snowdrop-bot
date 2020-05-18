@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +12,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
+import javax.transaction.Transactional;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -47,11 +47,11 @@ public class WeekReportEndpoint {
     @ConfigProperty(name = "github.users")
     Set<String> users;
 
-    //  @ConfigProperty(name = "google.docs.report.document-id")
-    //  String reportDocumentId;
+    @ConfigProperty(name = "github.reporting.target.organization")
+    String repoOrganization;
 
-    //  @Inject
-    //  Docs docs;
+    @ConfigProperty(name = "github.reporting.target.repository")
+    String repoName;
 
     @Inject
     GitHubClient client;
@@ -60,7 +60,6 @@ public class WeekReportEndpoint {
     GithubReportingService service;
 
     private void populate(Date startTime, Date endTime) {
-        //    try {
         Set<PullRequest> pullRequests = service.getPullRequestCollector().getPullRequests().filter(p -> p.isActiveDuring(startTime, endTime))
                 .collect(Collectors.toSet());
         Set<Issue> issues = service.getIssueCollector().getIssues().filter(i -> i.isActiveDuring(startTime, endTime)).collect(Collectors.toSet());
@@ -81,32 +80,25 @@ public class WeekReportEndpoint {
     @GET
     @Path("/generate")
     @Produces(MediaType.TEXT_PLAIN)
+    @Transactional
     public String createReport(@QueryParam("startTime") String startTimeString, @QueryParam("endTime") String endTimeString) {
         String mdText;
         String weekNumber;
-        String issueTitle;
-        List<Label> lstLabels = new LinkedList() {{
-            add(new Label().setName("report"));
-        }};
-        org.eclipse.egit.github.core.Issue issue;
         IssueService issueService = new IssueService(client);
-        List<org.eclipse.egit.github.core.Issue> lstIssue;
         try {
             Date startTime = startTimeString != null ? DF.parse(startTimeString)
                     : Date.from(service.getPullRequestCollector().getStartTime().toInstant());
             Date endTime = endTimeString != null ? DF.parse(endTimeString)
                     : Date.from(service.getPullRequestCollector().getEndTime().toInstant());
-            LOGGER.info("Time: " + startTimeString + "," + endTimeString);
-            LOGGER.info("Time: " + startTime + "," + endTime);
             weekNumber = WEEK_YEAR_FORMAT.format(endTime);
-            LOGGER.info("weekNumber: " + weekNumber);
+            LOGGER.debug("week number: " + weekNumber);
             populate(startTime, endTime);
             mdText = WeeklyDevelopmentReportImpl.build(startTime, endTime, users).buildWeeklyReport(Repository.findAll().list());
-            LOGGER.info(mdText);
-            updateGithubIssue(mdText, "weeklyDevelopment" + weekNumber, lstLabels, issueService, "snowdrop", "snowdrop-team");
+            LOGGER.info("weekly_development: " + mdText);
+            updateGithubIssue(mdText, "weekly_development_" + weekNumber, "report", issueService, repoOrganization, repoName);
             mdText = DevelopmentReportImpl.build(startTime, endTime, users).buildWeeklyReport(Repository.findAll().list());
-            LOGGER.info(mdText);
-            updateGithubIssue(mdText, "assocDev" + weekNumber, lstLabels, issueService, "snowdrop", "snowdrop-team");
+            LOGGER.info("dev: " + mdText);
+            updateGithubIssue(mdText, "dev_" + weekNumber, "report", issueService, repoOrganization, repoName);
             return mdText;
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
@@ -114,44 +106,44 @@ public class WeekReportEndpoint {
         }
     }
 
+    /**
+     * <p>Create/Update GitHub issue with the resulting information from the report.</p>
+     *
+     * @param pMdText
+     * @param pIssueTitle
+     * @param pstrLabel
+     * @param pIssueService
+     * @param pstrUser
+     * @param pstrRepo
+     * @throws IOException
+     */
     private void updateGithubIssue(
             final String pMdText,
             final String pIssueTitle,
-            final List<Label> pLstLabels,
+            final String pstrLabel,
             final IssueService pIssueService,
             final String pstrUser,
             final String pstrRepo)
             throws IOException {
-        LOGGER.info("pIssueTitle: " + pIssueTitle);
-        LOGGER.info("pLstLabels: " + pLstLabels);
-        LOGGER.info("pstrUser: " + pstrUser);
-        LOGGER.info("pstrRepo: " + pstrRepo);
-        org.eclipse.egit.github.core.Issue issue;
-        Map mapFilter = new HashMap(2) {{
-            put(IssueService.FIELD_FILTER, "in:title:" + pIssueTitle + " label:report");
-//            put(IssueService.FILTER_LABELS, "report");
+        final List<Label> lstLabels = new LinkedList() {{
+            add(new Label().setName(pstrLabel));
         }};
-        LOGGER.info("mapFilter: " + mapFilter);
-        List<org.eclipse.egit.github.core.Issue> lstIssue = pIssueService.getIssues(pstrUser, pstrRepo, mapFilter);
-        LOGGER.info("size: " + lstIssue.size());
-        if (lstIssue.size() > 0) {
-            issue = lstIssue.get(0);
-            LOGGER.info("issue: " + issue);
-            LOGGER.info("title: " + issue.getTitle());
-            LOGGER.info("getUrl: " + issue.getUrl());
-            LOGGER.info("getNumber: " + issue.getNumber());
-            LOGGER.info("getMilestone: " + issue.getMilestone());
-            issue.setLabels(pLstLabels);
-            issue.setBody(pMdText);
-            issue.setTitle(pIssueTitle);
-            pIssueService.editIssue(pstrUser, pstrRepo, issue);
+        org.eclipse.egit.github.core.Issue gitIssue;
+        Issue issue = Issue.findByLabelTitle(pstrLabel, pIssueTitle).firstResult();
+        if (issue != null) {
+            gitIssue = pIssueService.getIssue(pstrUser, pstrRepo, issue.getNumber());
+            gitIssue.setLabels(lstLabels);
+            gitIssue.setBody(pMdText);
+            gitIssue.setTitle(pIssueTitle);
+            pIssueService.editIssue(pstrUser, pstrRepo, gitIssue);
         } else {
-            LOGGER.info("NEW!");
-            issue = new org.eclipse.egit.github.core.Issue();
-            issue.setTitle(pIssueTitle);
-            issue.setLabels(pLstLabels);
-            issue.setBody(pMdText);
-            pIssueService.createIssue("snowdrop", "snowdrop-team", issue);
+            gitIssue = new org.eclipse.egit.github.core.Issue();
+            gitIssue.setTitle(pIssueTitle);
+            gitIssue.setLabels(lstLabels);
+            gitIssue.setBody(pMdText);
+            gitIssue = pIssueService.createIssue(pstrUser, pstrRepo, gitIssue);
+            issue = Issue.create(pstrUser + "/" + pstrRepo, gitIssue);
+            issue.persist();
         }
     }
 

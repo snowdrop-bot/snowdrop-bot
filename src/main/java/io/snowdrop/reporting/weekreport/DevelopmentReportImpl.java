@@ -36,7 +36,7 @@ public class DevelopmentReportImpl {
     }
 
     public static DevelopmentReportImpl build(final Date pStartDate, final Date pEndDate, final Set<String> pusers) {
-        return new DevelopmentReportImpl(pStartDate, pEndDate,pusers);
+        return new DevelopmentReportImpl(pStartDate, pEndDate, pusers);
     }
 
     /**
@@ -48,12 +48,10 @@ public class DevelopmentReportImpl {
         users.stream().forEach(eachAssignee -> {
             sb.append(ReportConstants.CR).append(ReportConstants.CR).append(MarkdownHelper.addHeadingTitle(eachAssignee, 2)).append(ReportConstants.CR);
             UnorderedList repoUnorderedList = new UnorderedList();
-            Repository.findByExcOwnerName(ReportConstants.WEEK_DEV_REPO_OWNER,ReportConstants.WEEK_DEV_REPO_NAME).list().stream().forEach(eachRepo -> {
+            Repository.findByExcOwnerName(ReportConstants.WEEK_DEV_REPO_OWNER, ReportConstants.WEEK_DEV_REPO_NAME).list().stream().forEach(eachRepo -> {
                 String repoName = ((Repository) eachRepo).getOwner() + "/" + ((Repository) eachRepo).getName();
-//                LOGGER.info("eachAssignee/repoName: " + eachAssignee+"/"+repoName);
                 UnorderedList issueUnorderedList = new UnorderedList();
-                List<Issue> lstIssue = Issue
-                        .findByRepoAssigneeAndModifiedDate(repoName, eachAssignee, startDate, endDate);
+                List<Issue> lstIssue = Issue.findByRepoAssigneeAndModifiedDate(repoName, eachAssignee, startDate, endDate).list();
                 if (lstIssue.size() > 0) {
                     repoUnorderedList.getItems().add(repoName + " - Issues");
                     lstIssue.stream().forEach(eachIssue -> {

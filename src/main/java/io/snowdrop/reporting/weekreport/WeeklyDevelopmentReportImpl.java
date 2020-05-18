@@ -46,23 +46,20 @@ public class WeeklyDevelopmentReportImpl {
     public String buildWeeklyReport(final List<Repository> pByModifiedDate) {
         StringBuilder sb = new StringBuilder();
         String repoName = ReportConstants.WEEK_DEV_REPO_OWNER + "/" + ReportConstants.WEEK_DEV_REPO_NAME;
-        LOGGER.info("repoName: " + repoName);
-        Issue.findByIssuesForWeeklyDevelopmentReport(repoName, startDate, endDate).list().stream().collect(Collectors.groupingBy(Issue::getAssignee, Collectors.toSet()))
+        Issue.findByIssuesForWeeklyDevelopmentReport(repoName, startDate, endDate).list().stream()
+                .collect(Collectors.groupingBy(Issue::getAssignee, Collectors.toSet()))
                 .entrySet().forEach(eachAssignee -> {
             String assignee = eachAssignee.getKey();
-            LOGGER.info("assignee: " + assignee);
-            LOGGER.info("eachAssignee.value: " + eachAssignee.getValue());
             sb.append(ReportConstants.CR).append(ReportConstants.CR).append(MarkdownHelper.addHeadingTitle(assignee, 2)).append(ReportConstants.CR);
             UnorderedList labelUnorderedList = new UnorderedList();
             eachAssignee.getValue().stream().collect(Collectors.groupingBy(Issue::getLabel, Collectors.toSet())).entrySet().forEach(eachLabel -> {
                 String label = eachLabel.getKey();
-                LOGGER.info("label: " + label);
                 labelUnorderedList.getItems().add(label);
                 UnorderedList issueUnorderedList = new UnorderedList();
                 eachLabel.getValue().stream().forEach(eachIssue -> {
-                    LOGGER.info("issue: " + eachIssue.getTitle() + " - " + eachIssue.getUrl());
                     TextBuilder issueTextB = new TextBuilder();
-                    issueTextB.append(new Text(eachIssue.getTitle())).append(" - ").append(new Link(eachIssue.getUrl()));
+                    issueTextB.append(new Text("<span style=\"color:" + (eachIssue.isOpen() ? "green" : "orange") + "\">[")).append(eachIssue.getStatus())
+                            .append("]</span> ").append(eachIssue.getTitle()).append(" - ").append(new Link(eachIssue.getUrl()));
                     issueUnorderedList.getItems().add(issueTextB);
                 });
                 labelUnorderedList.getItems().add(issueUnorderedList);

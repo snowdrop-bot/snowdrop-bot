@@ -78,15 +78,14 @@ public class Issue extends PanacheEntityBase implements WithDates {
     }
 
     /**
-     * <p>Issues modified between a date range.</p>
+     * <p>Issue for weekly report.</p>
      *
-     * @param pdateFrom
-     * @param pdateTo
+     * @param pstrLabel
+     * @param pstrTitle
      * @return
      */
-    public static List<Issue> findByModifiedDate(final Date pdateFrom, final Date pdateTo) {
-        return Issue.find("SELECT issues FROM Issue issues WHERE updatedAt >= ?1 AND updatedAt <= ?2 ORDER BY assignee, repository, label", pdateFrom, pdateTo)
-                .list();
+    public static PanacheQuery<Issue> findByLabelTitle(final String pstrLabel, final String pstrTitle) {
+        return Issue.find("label = ?1 AND title like ?2 ", Sort.ascending("number"), pstrLabel, pstrTitle);
     }
 
     /**
@@ -98,7 +97,8 @@ public class Issue extends PanacheEntityBase implements WithDates {
      * @return
      */
     public static PanacheQuery<Issue> findByIssuesForWeeklyDevelopmentReport(final String prepository, final Date pdateFrom, final Date pdateTo) {
-        return Issue.find("repository = ?1 AND (updatedAt >= ?2 AND updatedAt <= ?3 OR open = true) AND (label != 'report' or label is null)", Sort.ascending("assignee", "label", "updatedAt"), prepository, pdateFrom, pdateTo);
+        return Issue.find("repository = ?1 AND ((updatedAt >= ?2 AND updatedAt <= ?3) OR open = true) AND (label != 'report' or label is null)",
+                Sort.ascending("assignee", "label", "updatedAt"), prepository, pdateFrom, pdateTo);
     }
 
     /**
@@ -109,10 +109,10 @@ public class Issue extends PanacheEntityBase implements WithDates {
      * @param pdateTo
      * @return
      */
-    public static List<Issue> findByRepoAssigneeAndModifiedDate(final String prepository, final String pasignee, final Date pdateFrom, final Date pdateTo) {
+    public static PanacheQuery<Issue> findByRepoAssigneeAndModifiedDate(final String prepository, final String pasignee, final Date pdateFrom, final Date pdateTo) {
         return Issue
-                .find("repository = ?1 AND assignee = ?2 AND updatedAt >= ?3 AND updatedAt <= ?4 ", Sort.ascending("updatedAt"), prepository, pasignee, pdateFrom, pdateTo)
-                .list();
+                .find("repository = ?1 AND assignee = ?2 AND updatedAt >= ?3 AND updatedAt <= ?4 ", Sort.ascending("updatedAt"), prepository, pasignee,
+                        pdateFrom, pdateTo);
     }
 
     public String getUrl() {
