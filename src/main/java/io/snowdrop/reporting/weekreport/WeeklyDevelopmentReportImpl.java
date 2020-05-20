@@ -1,5 +1,6 @@
 package io.snowdrop.reporting.weekreport;
 
+import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -48,6 +49,8 @@ public class WeeklyDevelopmentReportImpl extends Report {
    */
   public String buildWeeklyReport() {
     StringBuilder sb = new StringBuilder();
+    ZonedDateTime now = ZonedDateTime.now();
+    ZonedDateTime twoWeeksAgo = now.minusWeeks(2);
     String repoName = ReportConstants.WEEK_DEV_REPO_OWNER + "/" + ReportConstants.WEEK_DEV_REPO_NAME;
     Issue.findByIssuesForWeeklyDevelopmentReport(repoName, startDate, endDate).list().stream()
         .collect(Collectors.groupingBy(Issue::getAssignee, Collectors.toSet()))
@@ -61,7 +64,16 @@ public class WeeklyDevelopmentReportImpl extends Report {
         UnorderedList issueUnorderedList = new UnorderedList();
         eachLabel.getValue().stream().forEach(eachIssue -> {
           TextBuilder issueTextB = new TextBuilder();
-          issueTextB.append(new Text("<span style=\"color:" + (eachIssue.isOpen() ? "green" : "orange") + "\">[")).append(eachIssue.getStatus())
+          Date dateCreatedAt = eachIssue.getCreatedAt();
+          String strMdColor = "orange";
+          if(eachIssue.isOpen()) {
+            if (dateCreatedAt.toInstant().isBefore(twoWeeksAgo.toInstant())) {
+              strMdColor = "red";
+            } else {
+              strMdColor = "green";
+            }
+          }
+          issueTextB.append(new Text("<span style=\"color:" + strMdColor + "\">[")).append(eachIssue.getStatus())
               .append("]</span> ").append(eachIssue.getTitle()).append(" - ").append(new Link(eachIssue.getUrl()));
           issueUnorderedList.getItems().add(issueTextB);
         });
