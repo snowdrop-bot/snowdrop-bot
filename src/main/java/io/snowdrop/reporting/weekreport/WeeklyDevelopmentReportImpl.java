@@ -51,6 +51,7 @@ public class WeeklyDevelopmentReportImpl extends Report {
     StringBuilder sb = new StringBuilder();
     ZonedDateTime now = ZonedDateTime.now();
     ZonedDateTime twoWeeksAgo = now.minusWeeks(2);
+    ZonedDateTime oneMonthAgo = now.minusMonths(1);
     String repoName = ReportConstants.WEEK_DEV_REPO_OWNER + "/" + ReportConstants.WEEK_DEV_REPO_NAME;
     Issue.findByIssuesForWeeklyDevelopmentReport(repoName, startDate, endDate).list().stream()
         .collect(Collectors.groupingBy(Issue::getAssignee, Collectors.toSet()))
@@ -65,10 +66,12 @@ public class WeeklyDevelopmentReportImpl extends Report {
         eachLabel.getValue().stream().forEach(eachIssue -> {
           TextBuilder issueTextB = new TextBuilder();
           Date dateCreatedAt = eachIssue.getCreatedAt();
-          String strMdColor = "orange";
+          String strMdColor = "gray";
           if(eachIssue.isOpen()) {
-            if (dateCreatedAt.toInstant().isBefore(twoWeeksAgo.toInstant())) {
+            if (dateCreatedAt.toInstant().isBefore(oneMonthAgo.toInstant())) {
               strMdColor = "red";
+            } else if (dateCreatedAt.toInstant().isBefore(twoWeeksAgo.toInstant())) {
+              strMdColor = "orange";
             } else {
               strMdColor = "green";
             }
