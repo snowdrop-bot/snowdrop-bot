@@ -4,9 +4,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import io.snowdrop.github.reporting.model.PullRequest;
 import io.snowdrop.github.reporting.model.Repository;
 import io.snowdrop.reporting.MarkdownHelper;
@@ -19,68 +16,66 @@ import net.steppschuh.markdowngenerator.text.Text;
 import net.steppschuh.markdowngenerator.text.TextBuilder;
 
 /**
- * <p>Generates the weekly report.</p>
+ * <p>Generates the Development report.</p>
+ * <p>This report consists in all the Issue and PR from all the gathered repositories, having the following characteristics:
+ * <ul>
+ *     <li>Are assigned assigned to any of the associates</li>
+ *     <li>Where changed inside the date period informed</li>
+ * </ul>
+ * </p>
+ * <p>The SQL sentence used is the following: <pre>repository = ?1 AND assignee = ?2 AND updatedAt >= ?3 AND updatedAt <= ?4</pre></p>
+ * <p>For the presentation, the issues are grouped by assignee and label.</p>
  */
-public class DevelopmentReportImpl {
+public class DevelopmentReportImpl extends Report {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DevelopmentReportImpl.class);
+  public DevelopmentReportImpl(final Date pStartDate, final Date pEndDate, final Set<String> pusers) {
+    users = pusers;
+    startDate = pStartDate;
+    endDate = pEndDate;
+  }
 
-    private Set<String> users;
-    private Date startDate = null;
-    private Date endDate = null;
+  public static DevelopmentReportImpl build(final Date pStartDate, final Date pEndDate, final Set<String> pusers) {
+    return new DevelopmentReportImpl(pStartDate, pEndDate, pusers);
+  }
 
-    public DevelopmentReportImpl(final Date pStartDate, final Date pEndDate, final Set<String> pusers) {
-        users = pusers;
-        startDate = pStartDate;
-        endDate = pEndDate;
-    }
-
-    public static DevelopmentReportImpl build(final Date pStartDate, final Date pEndDate, final Set<String> pusers) {
-        return new DevelopmentReportImpl(pStartDate, pEndDate, pusers);
-    }
-
-    /**
-     * @param pByModifiedDate
-     * @return
-     */
-    public String buildWeeklyReport(final List<Repository> pByModifiedDate) {
-        StringBuilder sb = new StringBuilder();
-        users.stream().forEach(eachAssignee -> {
-            sb.append(ReportConstants.CR).append(ReportConstants.CR).append(MarkdownHelper.addHeadingTitle(eachAssignee, 2)).append(ReportConstants.CR);
-            UnorderedList repoUnorderedList = new UnorderedList();
-            Repository.findByExcOwnerName(ReportConstants.WEEK_DEV_REPO_OWNER, ReportConstants.WEEK_DEV_REPO_NAME).list().stream().forEach(eachRepo -> {
-                String repoName = ((Repository) eachRepo).getOwner() + "/" + ((Repository) eachRepo).getName();
-                UnorderedList issueUnorderedList = new UnorderedList();
-                List<Issue> lstIssue = Issue.findByRepoAssigneeAndModifiedDate(repoName, eachAssignee, startDate, endDate).list();
-                if (lstIssue.size() > 0) {
-                    repoUnorderedList.getItems().add(repoName + " - Issues");
-                    lstIssue.stream().forEach(eachIssue -> {
-                        TextBuilder issueTextB = new TextBuilder();
-                        issueTextB.append(new Text(eachIssue.getTitle())).append(" - ").append(new Link(eachIssue.getUrl()));
-                        issueUnorderedList.getItems().add(issueTextB);
-                    });
-                    repoUnorderedList.getItems().add(issueUnorderedList);
-                }
-                List<PullRequest> lstPullRequest = PullRequest
-                        .findByRepoAssigneeAndModifiedDate(repoName, eachAssignee, startDate, endDate);
-                if (lstPullRequest.size() > 0) {
-                    UnorderedList prUnorderedList = new UnorderedList();
-                    repoUnorderedList.getItems().add(repoName + " - PRs");
-                    lstPullRequest.stream().forEach(eachPR -> {
-                        TextBuilder issueTextB = new TextBuilder();
-                        issueTextB.append(new Text(eachPR.getTitle())).append(" - ").append(new Link(eachPR.getUrl()));
-                        prUnorderedList.getItems().add(issueTextB);
-                    });
-                    repoUnorderedList.getItems().add(prUnorderedList);
-                }
-            });
-            try {
-                sb.append(repoUnorderedList.serialize());
-            } catch (MarkdownSerializationException pE) {
-                pE.printStackTrace();
-            }
-        });
-        return sb.toString();
-    }
+  public String buildWeeklyReport() {
+    StringBuilder sb = new StringBuilder();
+    users.stream().forEach(eachAssignee -> {
+      sb.append(ReportConstants.CR).append(ReportConstants.CR).append(MarkdownHelper.addHeadingTitle(eachAssignee, 2)).append(ReportConstants.CR);
+      UnorderedList repoUnorderedList = new UnorderedList();
+      Repository.findByExcOwnerName(ReportConstants.WEEK_DEV_REPO_OWNER, ReportConstants.WEEK_DEV_REPO_NAME).list().stream().forEach(eachRepo -> {
+        String repoName = ((Repository) eachRepo).getOwner() + "/" + ((Repository) eachRepo).getName();
+        UnorderedList issueUnorderedList = new UnorderedList();
+        List<Issue> lstIssue = Issue.findByRepoAssigneeAndModifiedDate(repoName, eachAssignee, startDate, endDate).list();
+        if (lstIssue.size() > 0) {
+          repoUnorderedList.getItems().add(repoName + " - Issues");
+          lstIssue.stream().forEach(eachIssue -> {
+            TextBuilder issueTextB = new TextBuilder();
+            issueTextB.append(new Text(eachIssue.getTitle())).append(" - ").append(new Link(eachIssue.getUrl()));
+            issueUnorderedList.getItems().add(issueTextB);
+          });
+          repoUnorderedList.getItems().add(issueUnorderedList);
+        }
+        List<PullRequest> lstPullRequest = PullRequest
+            .findByRepoAssigneeAndModifiedDate(repoName, eachAssignee, startDate, endDate);
+        if (lstPullRequest.size() > 0) {
+          UnorderedList prUnorderedList = new UnorderedList();
+          repoUnorderedList.getItems().add(repoName + " - PRs");
+          lstPullRequest.stream().forEach(eachPR -> {
+            TextBuilder issueTextB = new TextBuilder();
+            issueTextB.append(new Text(eachPR.getTitle())).append(" - ").append(new Link(eachPR.getUrl()));
+            prUnorderedList.getItems().add(issueTextB);
+          });
+          repoUnorderedList.getItems().add(prUnorderedList);
+        }
+      });
+      try {
+        sb.append(repoUnorderedList.serialize());
+      } catch (MarkdownSerializationException pE) {
+        pE.printStackTrace();
+      }
+    });
+    return sb.toString();
+  }
 
 }

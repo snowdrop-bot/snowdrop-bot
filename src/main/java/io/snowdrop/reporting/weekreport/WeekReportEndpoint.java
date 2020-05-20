@@ -43,6 +43,8 @@ public class WeekReportEndpoint {
     private static final Logger LOGGER = LoggerFactory.getLogger(WeekReportEndpoint.class);
     private static final SimpleDateFormat DF = new SimpleDateFormat("dd/MM/yyyy");
     private static final SimpleDateFormat WEEK_YEAR_FORMAT = new SimpleDateFormat("w");
+    private static final String REPO_DEV_PREFIX="";
+    private static final String REPO_WEEK_DEV_PREFIX="";
 
     @ConfigProperty(name = "github.users")
     Set<String> users;
@@ -93,10 +95,10 @@ public class WeekReportEndpoint {
             weekNumber = WEEK_YEAR_FORMAT.format(endTime);
             LOGGER.debug("week number: " + weekNumber);
             populate(startTime, endTime);
-            mdText = WeeklyDevelopmentReportImpl.build(startTime, endTime, users).buildWeeklyReport(Repository.findAll().list());
+            mdText = WeeklyDevelopmentReportImpl.build(startTime, endTime, users).buildWeeklyReport();
             LOGGER.info("weekly_development: " + mdText);
             updateGithubIssue(mdText, "weekly_development_" + weekNumber, "report", issueService, repoOrganization, repoName);
-            mdText = DevelopmentReportImpl.build(startTime, endTime, users).buildWeeklyReport(Repository.findAll().list());
+            mdText = DevelopmentReportImpl.build(startTime, endTime, users).buildWeeklyReport();
             LOGGER.info("dev: " + mdText);
             updateGithubIssue(mdText, "dev_" + weekNumber, "report", issueService, repoOrganization, repoName);
             return mdText;

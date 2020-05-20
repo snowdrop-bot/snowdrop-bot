@@ -19,58 +19,61 @@ import net.steppschuh.markdowngenerator.text.Text;
 import net.steppschuh.markdowngenerator.text.TextBuilder;
 
 /**
- * <p>Generates the weekly report.</p>
+ * <p>Generates the Weekly Development report.</p>
+ * <p>This report consists of all the Issue existing in the weekly development repository that have the following characteristics:
+ * <ul>
+ *     <li>Have been modified in the specified date range or are still open</li>
+ *     <li>Are not labeled report or have no label at all</li>
+ * </ul>
+ * </p>
+ * <p>The SQL sentence used is the following: <pre>repository = ?1 AND ((updatedAt >= ?2 AND updatedAt <= ?3) OR open = true) AND (label != 'report' or label is null)</pre></p>
+ * <p>For the presentation, the issues are grouped by assignee and label.</p>
  */
-public class WeeklyDevelopmentReportImpl {
+public class WeeklyDevelopmentReportImpl extends Report {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(WeeklyDevelopmentReportImpl.class);
+  public WeeklyDevelopmentReportImpl(final Date pStartDate, final Date pEndDate, final Set<String> pusers) {
+    users = pusers;
+    startDate = pStartDate;
+    endDate = pEndDate;
+  }
 
-    private Set<String> users;
-    private Date startDate = null;
-    private Date endDate = null;
+  public static WeeklyDevelopmentReportImpl build(final Date pStartDate, final Date pEndDate, final Set<String> pusers) {
+    return new WeeklyDevelopmentReportImpl(pStartDate, pEndDate, pusers);
+  }
 
-    public WeeklyDevelopmentReportImpl(final Date pStartDate, final Date pEndDate, final Set<String> pusers) {
-        users = pusers;
-        startDate = pStartDate;
-        endDate = pEndDate;
-    }
-
-    public static WeeklyDevelopmentReportImpl build(final Date pStartDate, final Date pEndDate, final Set<String> pusers) {
-        return new WeeklyDevelopmentReportImpl(pStartDate, pEndDate, pusers);
-    }
-
-    /**
-     * @param pByModifiedDate
-     * @return
-     */
-    public String buildWeeklyReport(final List<Repository> pByModifiedDate) {
-        StringBuilder sb = new StringBuilder();
-        String repoName = ReportConstants.WEEK_DEV_REPO_OWNER + "/" + ReportConstants.WEEK_DEV_REPO_NAME;
-        Issue.findByIssuesForWeeklyDevelopmentReport(repoName, startDate, endDate).list().stream()
-                .collect(Collectors.groupingBy(Issue::getAssignee, Collectors.toSet()))
-                .entrySet().forEach(eachAssignee -> {
-            String assignee = eachAssignee.getKey();
-            sb.append(ReportConstants.CR).append(ReportConstants.CR).append(MarkdownHelper.addHeadingTitle(assignee, 2)).append(ReportConstants.CR);
-            UnorderedList labelUnorderedList = new UnorderedList();
-            eachAssignee.getValue().stream().collect(Collectors.groupingBy(Issue::getLabel, Collectors.toSet())).entrySet().forEach(eachLabel -> {
-                String label = eachLabel.getKey();
-                labelUnorderedList.getItems().add(label);
-                UnorderedList issueUnorderedList = new UnorderedList();
-                eachLabel.getValue().stream().forEach(eachIssue -> {
-                    TextBuilder issueTextB = new TextBuilder();
-                    issueTextB.append(new Text("<span style=\"color:" + (eachIssue.isOpen() ? "green" : "orange") + "\">[")).append(eachIssue.getStatus())
-                            .append("]</span> ").append(eachIssue.getTitle()).append(" - ").append(new Link(eachIssue.getUrl()));
-                    issueUnorderedList.getItems().add(issueTextB);
-                });
-                labelUnorderedList.getItems().add(issueUnorderedList);
-            });
-            try {
-                sb.append(labelUnorderedList.serialize());
-            } catch (MarkdownSerializationException pE) {
-                pE.printStackTrace();
-            }
+  /**
+   * <p>Generates the markdown for the report.</p>
+   *
+   * @return
+   */
+  public String buildWeeklyReport() {
+    StringBuilder sb = new StringBuilder();
+    String repoName = ReportConstants.WEEK_DEV_REPO_OWNER + "/" + ReportConstants.WEEK_DEV_REPO_NAME;
+    Issue.findByIssuesForWeeklyDevelopmentReport(repoName, startDate, endDate).list().stream()
+        .collect(Collectors.groupingBy(Issue::getAssignee, Collectors.toSet()))
+        .entrySet().forEach(eachAssignee -> {
+      String assignee = eachAssignee.getKey();
+      sb.append(ReportConstants.CR).append(ReportConstants.CR).append(MarkdownHelper.addHeadingTitle(assignee, 2)).append(ReportConstants.CR);
+      UnorderedList labelUnorderedList = new UnorderedList();
+      eachAssignee.getValue().stream().collect(Collectors.groupingBy(Issue::getLabel, Collectors.toSet())).entrySet().forEach(eachLabel -> {
+        String label = eachLabel.getKey();
+        labelUnorderedList.getItems().add(label);
+        UnorderedList issueUnorderedList = new UnorderedList();
+        eachLabel.getValue().stream().forEach(eachIssue -> {
+          TextBuilder issueTextB = new TextBuilder();
+          issueTextB.append(new Text("<span style=\"color:" + (eachIssue.isOpen() ? "green" : "orange") + "\">[")).append(eachIssue.getStatus())
+              .append("]</span> ").append(eachIssue.getTitle()).append(" - ").append(new Link(eachIssue.getUrl()));
+          issueUnorderedList.getItems().add(issueTextB);
         });
-        return sb.toString();
-    }
+        labelUnorderedList.getItems().add(issueUnorderedList);
+      });
+      try {
+        sb.append(labelUnorderedList.serialize());
+      } catch (MarkdownSerializationException pE) {
+        pE.printStackTrace();
+      }
+    });
+    return sb.toString();
+  }
 
 }
