@@ -20,10 +20,6 @@ public class GithubRateLimitedClient extends GitHubClient {
 
     private final RateLimiter limiter = RateLimiter.create(1);
 
-	public GithubRateLimitedClient(HttpHost httpHost) {
-		super(httpHost);
-	}
-
 	public GithubRateLimitedClient() {
 	}
 
@@ -51,12 +47,6 @@ public class GithubRateLimitedClient extends GitHubClient {
 	public synchronized InputStream getStream(GitHubRequest request) throws IOException {
         limiter.acquire();
 		return super.getStream(request);
-	}
-
-	@Override
-	protected synchronized <V> V sendJson(HttpEntityEnclosingRequestBase method, Object params, Type type) throws IOException {
-        limiter.acquire();
-		return super.sendJson(method, params, type);
 	}
 
 }

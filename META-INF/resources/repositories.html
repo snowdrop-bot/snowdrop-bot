@@ -1,0 +1,48 @@
+<link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet">
+<script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
+
+<script src="datetimepicker-setup.js"></script>
+<script src="datatables-setup.js"></script>
+<script src="repositories.js"></script>
+
+<div class="container">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="row">
+            <div class="col-xs-6">
+                <a class="navbar-brand" href="#">Repositories</a>
+                <div class="checkbox" id="forks-toggle">
+                    <label>
+                        <input  type="checkbox" checked data-toggle="toggle">
+                        Include forks
+                    </label>
+                </div>
+                <div class="checkbox" id="repositories-toggle">
+                    <label>
+                        <input type="checkbox" checked data-toggle="toggle">
+                        Include additional repositories
+                    </label>
+                </div>
+            </div>
+    </nav>
+    <div class="progress">
+        <div id="fork-progress" class="progress-bar" role="progressbar" style="width: 0" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+    <div class="progress">
+        <div id="repository-progress" class="progress-bar" role="progressbar" style="width: 0" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+
+    <table id="repositories-table" class="display nowrap" style="width:100%">
+        <thead>
+            <tr>
+                <th>Owner</th>
+                <th>Name</th>
+                <th>URL</th>
+            </tr>
+        </thead>
+    </table>
+    <div class="btn-group d-flex justify-content-center">
+        <button id="repositories-enable" type="button" class="btn btn-success">Enable</button>
+        <button id="repositories-disable" type="button" class="btn btn-danger">Disable</button>
+        <button id="repositories-collect" type="button" class="btn btn-warning">Collect Repositories</button>
+    </div>
+</div>
