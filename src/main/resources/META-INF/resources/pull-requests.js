@@ -101,6 +101,7 @@ $(document).ready(function() {
         {data: 'repository', type: 'string' },
         {data: 'url', type : 'num', render: dataTablesRenderNumber},
         {data: 'title', type: 'string' },
+        {data: 'issueUrls', type : 'string', render: dataTablesRenderNumber},
         {data: 'open', type: 'boolean' },
         {data: 'createdAt', type: 'string', render: dataTablesRenderDate},
         {data: 'updatedAt', type: 'string', render: dataTablesRenderDate},
