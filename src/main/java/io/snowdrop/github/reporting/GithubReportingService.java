@@ -20,12 +20,13 @@ import io.quarkus.scheduler.Scheduled;
 import io.reactivex.Flowable;
 import io.snowdrop.Status;
 import io.snowdrop.github.reporting.model.ForkId;
+import io.snowdrop.reporting.IssueReportingService;
 import io.snowdrop.reporting.model.Issue;
 import io.snowdrop.github.reporting.model.PullRequest;
 import io.snowdrop.github.reporting.model.Repository;
 
 @Singleton
-public class GithubReportingService {
+public class GithubReportingService implements IssueReportingService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(GithubReportingService.class);
 

@@ -38,6 +38,7 @@ import org.jboss.resteasy.annotations.SseElementType;
 import org.reactivestreams.Publisher;
 
 import io.snowdrop.Status;
+import io.snowdrop.jira.reporting.JiraReportingService;
 import io.snowdrop.reporting.model.Issue;
 import io.snowdrop.github.reporting.model.PullRequest;
 import io.snowdrop.github.reporting.model.Repository;
@@ -49,6 +50,9 @@ public class ReportingEndpoint {
 
     @Inject
     GithubReportingService service;
+
+    @Inject
+    JiraReportingService jiraService;
 
     @GET
     @Path("/repositories/status")
@@ -111,6 +115,7 @@ public class ReportingEndpoint {
     @Path("/collect/issues")
     public void collectIssues() {
         service.collectIssues();
+        jiraService.collectIssues();
     }
 
     @GET

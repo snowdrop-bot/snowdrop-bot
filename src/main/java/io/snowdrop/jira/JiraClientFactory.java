@@ -1,4 +1,3 @@
-
 package io.snowdrop.jira;
 
 import java.net.URI;
@@ -14,13 +13,13 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 @ApplicationScoped
 public class JiraClientFactory {
 
-  @ConfigProperty(name="jira.url")
+  @ConfigProperty(name = "jira.url")
   String url;
 
-  @ConfigProperty(name="jira.username")
+  @ConfigProperty(name = "jira.username")
   String username;
 
-  @ConfigProperty(name="jira.password")
+  @ConfigProperty(name = "jira.password")
   String password;
 
   @Produces
