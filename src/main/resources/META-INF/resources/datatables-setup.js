@@ -16,10 +16,14 @@ var dataTablesRenderDate = function (data, type, row) {
 }
 
 var dataTablesRenderNumber = function (data, type, row) {
-    var url = data
-    var num = data.substring(data.lastIndexOf('/') + 1)
-    return "<a href='" + url +"' target='_blank'>" + num +"</a>"
+    if (!Array.isArray(data)) {
+        var url = data
+        var num = data.substring(data.lastIndexOf('/') + 1)
+        return "<a href='" + url +"' target='_blank'>" + num +"</a>"
+    }
+    return data.map(e => dataTablesRenderNumber(e, type, row))
 }
+
 
 var dataTablesRenderUrl = function (data, type, row) {
     var url = data
