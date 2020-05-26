@@ -9,8 +9,6 @@ import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
 import org.eclipse.egit.github.core.client.GitHubClient;
-import org.eclipse.egit.github.core.service.IssueService;
-import org.eclipse.egit.github.core.service.LabelService;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import io.snowdrop.github.Github;
@@ -28,7 +26,10 @@ public class GithubIssueBridgeFactory {
   public List<GithubIssueBridge> createIssueBridge(GitHubClient client) {
     return bridgeConfig.getSourceRepos()
       .stream()
-      .map(r -> new GithubIssueBridge(client, r, bridgeConfig.getTargetOrganization() + "/" + Github.repo(r), bridgeConfig.getTerminalLabel(), users))
+      .map(r -> new GithubIssueBridge(client, r, bridgeConfig.getTargetOrganization() + "/" + Github.repo(r),
+                                      bridgeConfig.getAutoLabel().getName(), bridgeConfig.getAutoLabel().getDescription(), bridgeConfig.getAutoLabel().getColor(),
+                                      bridgeConfig.getTerminalLabel().getName(), bridgeConfig.getTerminalLabel().getDescription(), bridgeConfig.getTerminalLabel().getColor(),
+                                      users))
       .collect(Collectors.toList());
   }
 

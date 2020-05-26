@@ -46,13 +46,14 @@ public class GithubIssueBridgeService {
     bridges.forEach(b -> {
         b.refresh();
         b.assignTeamIssues();
+        b.labelTeamIssues();
         b.closeTeamIssues();
         b.cloneTeamIssues();
       });
   }
 
   public List<GithubIssueBridge> getBridges() {
-    return bridges;
+   return bridges;
   }
 
 }

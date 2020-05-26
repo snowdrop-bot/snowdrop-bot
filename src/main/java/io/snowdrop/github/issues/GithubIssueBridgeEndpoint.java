@@ -12,8 +12,6 @@ import javax.ws.rs.core.MediaType;
 
 import org.eclipse.egit.github.core.Issue;
 
-import io.snowdrop.github.reporting.GithubReportingService;
-
 @Path("/bridge")
 @Produces(MediaType.APPLICATION_JSON)
 public class GithubIssueBridgeEndpoint {
