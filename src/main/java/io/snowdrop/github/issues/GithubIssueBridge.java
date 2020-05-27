@@ -41,7 +41,12 @@ public class GithubIssueBridge {
 
   private final String sourceRepository;
   private final String targetRepository;
-  private final String terminalLabel;
+  private final String autoLabelName;
+  private final String autoLabelDescription;
+  private final String autoLabelColor;
+  private final String terminalLabelName;
+  private final String terminalLabelDescription;
+  private final String terminalLabelColor;
   private final Set<String> users;
 
   private final Map<String, Map<String, Label>> repoLables = new HashMap<>();
@@ -50,14 +55,19 @@ public class GithubIssueBridge {
   private final Map<Integer, Issue> closedIssues = new HashMap<>();
   private final Map<Integer, Issue> downstreamIssues = new HashMap<>();
 
-  public GithubIssueBridge(GitHubClient client, String sourceRepository, String targetRepository, String terminalLabel,
+  public GithubIssueBridge(GitHubClient client, String sourceRepository, String targetRepository, String autoLabelName, String autoLabelDescription, String autoLabelColor, String terminalLabelName, String terminalLabelDescription, String terminalLabelColor,
       Set<String> users) {
     this.client = client;
     this.issueService = new IssueService(client);
     this.labelService = new LabelService(client);
     this.sourceRepository = sourceRepository;
     this.targetRepository = targetRepository;
-    this.terminalLabel = terminalLabel;
+    this.autoLabelName = autoLabelName;
+    this.autoLabelDescription = autoLabelDescription;
+    this.autoLabelColor = autoLabelColor;
+    this.terminalLabelName = terminalLabelName;
+    this.terminalLabelDescription = terminalLabelDescription;
+    this.terminalLabelColor = terminalLabelColor;
     this.users = users;
   }
 
@@ -69,6 +79,7 @@ public class GithubIssueBridge {
   public void refresh() {
     LOGGER.info("Refershing bridge: {} -> {}.", sourceRepository, targetRepository);
     downstreamOpenIssues().stream().forEach(i -> downstreamIssues.put(i.getNumber(), i));
+    LOGGER.info("Downstream issue count: {} -> {}.", targetRepository, downstreamIssues.size());
 
     teamOpenIssues().stream().forEach(i -> openIssues.put(i.getNumber(), i));
     teamClosedIssues().stream().forEach(i -> closedIssues.put(i.getNumber(), i));
@@ -77,7 +88,9 @@ public class GithubIssueBridge {
   public List<Issue> cloneTeamIssues() {
     LOGGER.info("Cloning team issues from {}.", sourceRepository);
     return openIssues.values().stream().filter(i -> !findDownstreamIssue(i).isPresent())
-        .map(i -> cloneIssue(i, targetRepository)).collect(Collectors.toList());
+        .map(i -> cloneIssue(i, targetRepository))
+        .map(i -> labelIssue(i, targetRepository, autoLabelName, autoLabelDescription, autoLabelColor))
+        .collect(Collectors.toList());
   }
 
   public void assignTeamIssues() {
@@ -85,6 +98,14 @@ public class GithubIssueBridge {
     downstreamIssues.values().stream().map(i -> new AbstractMap.SimpleEntry<>(i, findUpstreamIssue(i)))
         .filter(e -> e.getValue().isPresent()).forEach(e -> assign(client, targetRepository, e.getKey(), e.getValue().map(Issue::getAssignee).orElseThrow(IllegalStateException::new)));
   }
+
+  public List<Issue> labelTeamIssues() {
+    LOGGER.info("Labeling team issues in {}.", targetRepository);
+    return downstreamOpenIssues().stream()
+    .map(i -> labelIssue(i, targetRepository, autoLabelName, autoLabelDescription, autoLabelColor))
+    .collect(Collectors.toList());
+  }
+
 
   public List<Issue> closeTeamIssues() {
     LOGGER.info("Closing team issues from {}.", sourceRepository);
@@ -161,6 +182,30 @@ public class GithubIssueBridge {
     }
   }
 
+  private Label getOrCreateLabel(String repo, String name, String description, String color) {
+    synchronized (client) {
+      Map<String, Label> labelCache = repoLables.computeIfAbsent(repo, l -> new HashMap<String, Label>());
+      return labelCache.computeIfAbsent(name, l -> {
+        try {
+          Optional<Label> label = labelService.getLabels(Github.user(repo), Github.repo(repo))
+            .stream()
+            .filter(i -> name.equals(i.getName()))
+            .findAny();
+          if (label.isPresent()) {
+            return label.get();
+          }
+          Label newLabel = new Label();
+          newLabel.setName(name);
+          newLabel.setColor(color);
+          return labelService.createLabel(Github.user(repo), Github.repo(repo), newLabel);
+        } catch (IOException e) {
+          throw BotException.launderThrowable(e);
+        }
+      });
+    }
+  }
+
+
   private Label getLabel(String repo, String label) {
     synchronized (client) {
       Map<String, Label> labelCache = repoLables.computeIfAbsent(repo, l -> new HashMap<String, Label>());
@@ -202,6 +247,21 @@ public class GithubIssueBridge {
     }
   }
 
+  private Issue labelIssue(Issue issue, String repo, String labelName, String labelDescription, String labelColor) {
+    synchronized (client) {
+      try {
+        LOGGER.info("Labeleing issue {} with: {}.", issue.getNumber(), labelName);
+        List<Label> labels = new ArrayList<>(issue.getLabels());
+        labels.add(getOrCreateLabel(repo, labelName, labelDescription, labelColor));
+        issue.setLabels(labels);
+        return issueService.editIssue(Github.user(repo), Github.repo(repo), issue);
+      } catch (IOException e) {
+        throw BotException.launderThrowable(e);
+      }
+    }
+  }
+
+
   /**
    * Mark an issue as closed.
    *
@@ -213,7 +273,7 @@ public class GithubIssueBridge {
       try {
         LOGGER.info("Closing issue {} to repository: {}.", issue.getNumber(), repo);
         List<Label> labels = new ArrayList<>(issue.getLabels());
-        labels.add(getLabel(repo, terminalLabel));
+        labels.add(getLabel(repo, terminalLabelName));
         issue.setLabels(labels);
         return issueService.editIssue(Github.user(repo), Github.repo(repo), issue);
       } catch (IOException e) {
@@ -317,10 +377,6 @@ public class GithubIssueBridge {
 
   public String getTargetRepository() {
     return targetRepository;
-  }
-
-  public String getTerminalLabel() {
-    return terminalLabel;
   }
 
   public Set<String> getUsers() {
