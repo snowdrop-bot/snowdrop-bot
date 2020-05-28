@@ -2,14 +2,9 @@ package io.snowdrop.reporting.weekreport;
 
 import java.time.ZonedDateTime;
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import io.snowdrop.github.reporting.model.Repository;
 import io.snowdrop.reporting.MarkdownHelper;
 import io.snowdrop.reporting.ReportConstants;
 import io.snowdrop.reporting.model.Issue;
@@ -53,7 +48,7 @@ public class WeeklyDevelopmentReportImpl extends Report {
     ZonedDateTime twoWeeksAgo = now.minusWeeks(2);
     ZonedDateTime oneMonthAgo = now.minusMonths(1);
     String repoName = ReportConstants.WEEK_DEV_REPO_OWNER + "/" + ReportConstants.WEEK_DEV_REPO_NAME;
-    Issue.findByIssuesForWeeklyDevelopmentReport(repoName, startDate, endDate).list().stream()
+    Issue.findByIssuesForWeeklyDevelopmentReport(startDate, endDate).list().stream()
         .collect(Collectors.groupingBy(Issue::getAssignee, Collectors.toSet()))
         .entrySet().forEach(eachAssignee -> {
       String assignee = eachAssignee.getKey();

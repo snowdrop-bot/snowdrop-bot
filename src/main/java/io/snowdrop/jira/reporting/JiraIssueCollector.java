@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.snowdrop.StatusLogger;
-import io.snowdrop.github.reporting.model.Parent;
 import io.snowdrop.github.reporting.model.Repository;
 import io.snowdrop.reporting.model.Issue;
 
@@ -29,7 +28,6 @@ public class JiraIssueCollector {
   private final StatusLogger status;
 
   private final JiraRestClient client;
-  //  private final IssueService issueService;
 
   private final Set<String> users;
 
@@ -102,7 +100,7 @@ public class JiraIssueCollector {
       return StreamSupport.stream(
       client.getSearchClient().searchJql("project = " + repository + " and updatedDate >= '" + DF.format(minStartTime) + "'").claim().getIssues()
       .spliterator(), false).peek(i -> log(i))
-      .filter(i -> i.getAssignee() != null && users.contains(i.getAssignee().getName()))
+//      .filter(i -> i.getAssignee() != null && users.contains(i.getAssignee().getName()))
       .map(i -> Issue.create(repository, i)).filter(i -> i.isActiveDuring(minStartTime, minEndTime))
       .map(JiraIssueCollector::log);
     }
