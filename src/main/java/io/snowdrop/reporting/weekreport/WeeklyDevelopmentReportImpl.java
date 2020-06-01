@@ -25,7 +25,22 @@ import net.steppschuh.markdowngenerator.text.TextBuilder;
  * <p>The SQL sentence used is the following: <pre>repository = ?1 AND ((updatedAt >= ?2 AND updatedAt <= ?3) OR open = true) AND (label != 'report' or label is null)</pre></p>
  * <p>For the presentation, the issues are grouped by assignee and label.</p>
  */
-public class WeeklyDevelopmentReportImpl extends Report {
+public class WeeklyDevelopmentReportImpl {
+
+  /**
+   * <p>Users to which the report will be applied</p>
+   */
+  protected Set<String> users;
+
+  /**
+   * <p>Identifies the begining of the time period for the report</p>
+   */
+  protected Date startDate = null;
+
+  /**
+   * <p>Identifies the begining of the time period for the report</p>
+   */
+  protected Date endDate = null;
 
   public WeeklyDevelopmentReportImpl(final Date pStartDate, final Date pEndDate, final Set<String> pusers) {
     users = pusers;
@@ -48,7 +63,7 @@ public class WeeklyDevelopmentReportImpl extends Report {
     ZonedDateTime twoWeeksAgo = now.minusWeeks(2);
     ZonedDateTime oneMonthAgo = now.minusMonths(1);
     String repoName = ReportConstants.WEEK_DEV_REPO_OWNER + "/" + ReportConstants.WEEK_DEV_REPO_NAME;
-    Issue.findByIssuesForWeeklyDevelopmentReport(startDate, endDate).list().stream()
+    Issue.findByIssuesForWeeklyDevelopmentReport(repoName, startDate, endDate).list().stream()
         .collect(Collectors.groupingBy(Issue::getAssignee, Collectors.toSet()))
         .entrySet().forEach(eachAssignee -> {
       String assignee = eachAssignee.getKey();

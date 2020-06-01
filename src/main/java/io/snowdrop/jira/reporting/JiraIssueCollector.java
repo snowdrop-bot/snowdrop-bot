@@ -100,7 +100,7 @@ public class JiraIssueCollector {
       return StreamSupport.stream(
       client.getSearchClient().searchJql("project = " + repository + " and updatedDate >= '" + DF.format(minStartTime) + "'").claim().getIssues()
       .spliterator(), false).peek(i -> log(i))
-//      .filter(i -> i.getAssignee() != null && users.contains(i.getAssignee().getName()))
+      .filter(i -> i.getAssignee() != null && users.contains(i.getAssignee().getName()))
       .map(i -> Issue.create(repository, i)).filter(i -> i.isActiveDuring(minStartTime, minEndTime))
       .map(JiraIssueCollector::log);
     }

@@ -32,6 +32,7 @@ import io.snowdrop.github.reporting.GithubReportingService;
 import io.snowdrop.github.reporting.model.PullRequest;
 import io.snowdrop.google.RepositoryWork;
 import io.snowdrop.reporting.model.Issue;
+import io.snowdrop.reporting.model.IssueSource;
 
 /**
  * <p>
@@ -69,7 +70,7 @@ public class WeekReportEndpoint {
         .collect(Collectors.toSet());
 
     service.getRepositoryCollector().getUsers().stream().flatMap(u -> {
-      Map<String, Set<Issue>> userIssues = issues.stream().filter(i -> u.equals(i.getAssignee()))
+      Map<String, Set<Issue>> userIssues = issues.stream().filter(i -> (u.equals(i.getAssignee()) && IssueSource.GITHUB.name().equalsIgnoreCase(i.getSource()) ))
           .collect(Collectors.groupingBy(i -> i.getRepository(), Collectors.toSet()));
       Map<String, Set<PullRequest>> userPullRequests = pullRequests.stream().filter(p -> u.equals(p.getCreator()))
           .collect(Collectors.groupingBy(p -> p.getRepository(), Collectors.toSet()));
@@ -94,6 +95,33 @@ public class WeekReportEndpoint {
           : Date.from(service.getPullRequestCollector().getStartTime().toInstant());
       Date endTime = endTimeString != null ? DF.parse(endTimeString)
           : Date.from(service.getPullRequestCollector().getEndTime().toInstant());
+      weekNumber = WEEK_YEAR_FORMAT.format(endTime);
+      LOGGER.debug("week number: {}", weekNumber);
+      populate(startTime, endTime);
+      mdText = WeeklyDevelopmentReportImpl.build(startTime, endTime, users).buildWeeklyReport();
+      LOGGER.info("weekly_development: {}", mdText);
+//      updateGithubIssue(mdText, "weekly_development_" + weekNumber, "report", issueService, repoOrganization, repoName);
+      return mdText;
+    } catch (Exception e) {
+      LOGGER.error(e.getMessage(), e);
+      throw BotException.launderThrowable(e);
+    }
+  }
+
+  @GET
+  @Path("/publish")
+  @Produces(MediaType.TEXT_PLAIN)
+  @Transactional
+  public String publishReport(@QueryParam("startTime") String startTimeString,
+  @QueryParam("endTime") String endTimeString) {
+    String mdText;
+    String weekNumber;
+    IssueService issueService = new IssueService(client);
+    try {
+      Date startTime = startTimeString != null ? DF.parse(startTimeString)
+      : Date.from(service.getPullRequestCollector().getStartTime().toInstant());
+      Date endTime = endTimeString != null ? DF.parse(endTimeString)
+      : Date.from(service.getPullRequestCollector().getEndTime().toInstant());
       weekNumber = WEEK_YEAR_FORMAT.format(endTime);
       LOGGER.debug("week number: {}", weekNumber);
       populate(startTime, endTime);
