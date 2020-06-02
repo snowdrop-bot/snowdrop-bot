@@ -21,6 +21,16 @@ $("#report-generate-md").click(function() {
   }
 })
 
+$("#report-publish-md").click(function() {
+  if (strStartTime != null && strEndTime != null) {
+    $.get("/weeklyreport/publish?startTime=" + formatDate(new Date(strStartTime.value)) + "&endTime=" + formatDate(new Date(strEndTime.value)), function(data, status){
+      alert("Document: updated!")
+    })
+  } else {
+      alert("Please define the period!")
+  }
+})
+
 $(document).ready(function() {
   $.ajax({url: "/reporting/start-time"}).then(function(data) {
     if (data) {

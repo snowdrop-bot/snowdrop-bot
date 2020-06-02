@@ -20,7 +20,7 @@ public class Issue extends PanacheEntityBase implements WithDates {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Issue.class);
 
-  //  private static final DateTimeFormatter DF = DateTimeFormat.forPattern("yyyy/MM/dd'T'HH:mm:ss.SZ");
+  // private static final DateTimeFormatter DF = DateTimeFormat.forPattern("yyyy/MM/dd'T'HH:mm:ss.SZ");
 
   private static final SimpleDateFormat DF = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 
@@ -128,14 +128,15 @@ public class Issue extends PanacheEntityBase implements WithDates {
    * @return
    */
   public static PanacheQuery<Issue> findByIssuesForWeeklyDevelopmentReport(final String prepository, final Date pdateFrom, final Date pdateTo) {
-    return Issue.find("repository = ?1 AND ((updatedAt >= ?2 AND updatedAt <= ?3) OR open = true) AND (label != 'report' or label is null)",
+    return Issue.find("((repository != ?1 AND updatedAt >= ?2 AND updatedAt <= ?3) OR (repository = ?1 AND ((updatedAt >= ?2 AND updatedAt <= ?3) OR open = true))) AND (label != 'report' or label is null) AND assignee is not null",
     Sort.ascending("assignee", "label", "updatedAt"), prepository, pdateFrom, pdateTo);
   }
 
   /**
-   * <p>Issues modified between a date range for a specific repository.</p>
+   * <p>Issues modified between a date range for a specific repository and assignee.</p>
    *
    * @param prepository
+   * @param pasignee
    * @param pdateFrom
    * @param pdateTo
    * @return

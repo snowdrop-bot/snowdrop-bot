@@ -15,5 +15,5 @@ public class ReportConstants {
     /**
      * <p>Name of the snowdrop weekly development repository</p>
      */
-    public static String WEEK_DEV_REPO_NAME="snowdrop-team";
+    public static String WEEK_DEV_REPO_NAME="team";
 }

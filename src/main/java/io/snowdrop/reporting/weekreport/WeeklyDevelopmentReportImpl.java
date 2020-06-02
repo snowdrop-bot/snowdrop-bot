@@ -2,14 +2,9 @@ package io.snowdrop.reporting.weekreport;
 
 import java.time.ZonedDateTime;
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import io.snowdrop.github.reporting.model.Repository;
 import io.snowdrop.reporting.MarkdownHelper;
 import io.snowdrop.reporting.ReportConstants;
 import io.snowdrop.reporting.model.Issue;
@@ -30,7 +25,22 @@ import net.steppschuh.markdowngenerator.text.TextBuilder;
  * <p>The SQL sentence used is the following: <pre>repository = ?1 AND ((updatedAt >= ?2 AND updatedAt <= ?3) OR open = true) AND (label != 'report' or label is null)</pre></p>
  * <p>For the presentation, the issues are grouped by assignee and label.</p>
  */
-public class WeeklyDevelopmentReportImpl extends Report {
+public class WeeklyDevelopmentReportImpl {
+
+  /**
+   * <p>Users to which the report will be applied</p>
+   */
+  protected Set<String> users;
+
+  /**
+   * <p>Identifies the begining of the time period for the report</p>
+   */
+  protected Date startDate = null;
+
+  /**
+   * <p>Identifies the begining of the time period for the report</p>
+   */
+  protected Date endDate = null;
 
   public WeeklyDevelopmentReportImpl(final Date pStartDate, final Date pEndDate, final Set<String> pusers) {
     users = pusers;
