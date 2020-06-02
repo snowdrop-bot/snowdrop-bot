@@ -65,19 +65,19 @@ public class WeekReportEndpoint {
 
   private void populate(Date startTime, Date endTime) {
     Set<PullRequest> pullRequests = service.getPullRequestCollector().getPullRequests()
-        .filter(p -> p.isActiveDuring(startTime, endTime)).collect(Collectors.toSet());
+    .filter(p -> p.isActiveDuring(startTime, endTime)).collect(Collectors.toSet());
     Set<Issue> issues = service.getIssueCollector().getIssues().filter(i -> i.isActiveDuring(startTime, endTime))
-        .collect(Collectors.toSet());
+    .collect(Collectors.toSet());
 
     service.getRepositoryCollector().getUsers().stream().flatMap(u -> {
-      Map<String, Set<Issue>> userIssues = issues.stream().filter(i -> (u.equals(i.getAssignee()) && IssueSource.GITHUB.name().equalsIgnoreCase(i.getSource()) ))
-          .collect(Collectors.groupingBy(i -> i.getRepository(), Collectors.toSet()));
+      Map<String, Set<Issue>> userIssues = issues.stream().filter(i -> (u.equals(i.getAssignee()) && IssueSource.GITHUB.name().equalsIgnoreCase(i.getSource())))
+      .collect(Collectors.groupingBy(i -> i.getRepository(), Collectors.toSet()));
       Map<String, Set<PullRequest>> userPullRequests = pullRequests.stream().filter(p -> u.equals(p.getCreator()))
-          .collect(Collectors.groupingBy(p -> p.getRepository(), Collectors.toSet()));
+      .collect(Collectors.groupingBy(p -> p.getRepository(), Collectors.toSet()));
       return Stream.concat(userIssues.keySet().stream(), userPullRequests.keySet().stream()).distinct()
-          .map(r -> new RepositoryWork(Github.user(r), Github.repo(r), u,
-              userIssues.getOrDefault(r, Collections.emptySet()),
-              userPullRequests.getOrDefault(r, Collections.emptySet())));
+      .map(r -> new RepositoryWork(Github.user(r), Github.repo(r), u,
+      userIssues.getOrDefault(r, Collections.emptySet()),
+      userPullRequests.getOrDefault(r, Collections.emptySet())));
     }).collect(Collectors.toSet());
   }
 
@@ -85,22 +85,20 @@ public class WeekReportEndpoint {
   @Path("/generate")
   @Produces(MediaType.TEXT_PLAIN)
   @Transactional
-  public String createReport(@QueryParam("startTime") String startTimeString,
-      @QueryParam("endTime") String endTimeString) {
+  public String createReport(
+  @QueryParam("startTime") String startTimeString,
+  @QueryParam("endTime") String endTimeString) {
     String mdText;
     String weekNumber;
     IssueService issueService = new IssueService(client);
     try {
-      Date startTime = startTimeString != null ? DF.parse(startTimeString)
-          : Date.from(service.getPullRequestCollector().getStartTime().toInstant());
-      Date endTime = endTimeString != null ? DF.parse(endTimeString)
-          : Date.from(service.getPullRequestCollector().getEndTime().toInstant());
+      Date startTime = startTimeString != null ? DF.parse(startTimeString) : Date.from(service.getPullRequestCollector().getStartTime().toInstant());
+      Date endTime = endTimeString != null ? DF.parse(endTimeString) : Date.from(service.getPullRequestCollector().getEndTime().toInstant());
       weekNumber = WEEK_YEAR_FORMAT.format(endTime);
       LOGGER.debug("week number: {}", weekNumber);
       populate(startTime, endTime);
       mdText = WeeklyDevelopmentReportImpl.build(startTime, endTime, users).buildWeeklyReport();
       LOGGER.info("weekly_development: {}", mdText);
-//      updateGithubIssue(mdText, "weekly_development_" + weekNumber, "report", issueService, repoOrganization, repoName);
       return mdText;
     } catch (Exception e) {
       LOGGER.error(e.getMessage(), e);
@@ -112,25 +110,21 @@ public class WeekReportEndpoint {
   @Path("/publish")
   @Produces(MediaType.TEXT_PLAIN)
   @Transactional
-  public String publishReport(@QueryParam("startTime") String startTimeString,
+  public String publishReport(
+  @QueryParam("startTime") String startTimeString,
   @QueryParam("endTime") String endTimeString) {
     String mdText;
     String weekNumber;
     IssueService issueService = new IssueService(client);
     try {
-      Date startTime = startTimeString != null ? DF.parse(startTimeString)
-      : Date.from(service.getPullRequestCollector().getStartTime().toInstant());
-      Date endTime = endTimeString != null ? DF.parse(endTimeString)
-      : Date.from(service.getPullRequestCollector().getEndTime().toInstant());
+      Date startTime = startTimeString != null ? DF.parse(startTimeString) : Date.from(service.getPullRequestCollector().getStartTime().toInstant());
+      Date endTime = endTimeString != null ? DF.parse(endTimeString) : Date.from(service.getPullRequestCollector().getEndTime().toInstant());
       weekNumber = WEEK_YEAR_FORMAT.format(endTime);
       LOGGER.debug("week number: {}", weekNumber);
       populate(startTime, endTime);
       mdText = WeeklyDevelopmentReportImpl.build(startTime, endTime, users).buildWeeklyReport();
       LOGGER.info("weekly_development: {}", mdText);
       updateGithubIssue(mdText, "weekly_development_" + weekNumber, "report", issueService, repoOrganization, repoName);
-      // mdText = DevelopmentReportImpl.build(startTime, endTime, users).buildWeeklyReport();
-      // LOGGER.info("dev: {}", mdText);
-      // updateGithubIssue(mdText, "dev_" + weekNumber, "report", issueService, repoOrganization, repoName);
       return mdText;
     } catch (Exception e) {
       LOGGER.error(e.getMessage(), e);
@@ -151,8 +145,9 @@ public class WeekReportEndpoint {
    * @param pstrRepo
    * @throws IOException
    */
-  private void updateGithubIssue(final String pMdText, final String pIssueTitle, final String pstrLabel,
-      final IssueService pIssueService, final String pstrUser, final String pstrRepo) throws IOException {
+  private void updateGithubIssue(
+  final String pMdText, final String pIssueTitle, final String pstrLabel,
+  final IssueService pIssueService, final String pstrUser, final String pstrRepo) throws IOException {
     final List<Label> lstLabels = new LinkedList() {
       {
         add(new Label().setName(pstrLabel));
