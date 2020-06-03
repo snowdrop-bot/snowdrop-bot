@@ -7,7 +7,9 @@ import java.util.stream.Collectors;
 
 import io.snowdrop.reporting.MarkdownHelper;
 import io.snowdrop.reporting.ReportConstants;
+import io.snowdrop.reporting.model.Associate;
 import io.snowdrop.reporting.model.Issue;
+import io.snowdrop.reporting.model.IssueSource;
 import net.steppschuh.markdowngenerator.MarkdownSerializationException;
 import net.steppschuh.markdowngenerator.link.Link;
 import net.steppschuh.markdowngenerator.list.UnorderedList;
@@ -57,17 +59,18 @@ public class WeeklyDevelopmentReportImpl {
    *
    * @return
    */
-  public String buildWeeklyReport() {
-    StringBuilder sb = new StringBuilder();
+  public String buildWeeklyReport(String reportName) {
+    StringBuilder sb = new StringBuilder(MarkdownHelper.addHeadingTitle(reportName, 1)).append(ReportConstants.CR);
     ZonedDateTime now = ZonedDateTime.now();
     ZonedDateTime twoWeeksAgo = now.minusWeeks(2);
     ZonedDateTime oneMonthAgo = now.minusMonths(1);
     String repoName = ReportConstants.WEEK_DEV_REPO_OWNER + "/" + ReportConstants.WEEK_DEV_REPO_NAME;
     Issue.findByIssuesForWeeklyDevelopmentReport(repoName, startDate, endDate).list().stream()
-        .collect(Collectors.groupingBy(Issue::getAssignee, Collectors.toSet()))
-        .entrySet().forEach(eachAssignee -> {
+    .collect(Collectors.groupingBy(Issue::getAssignee, Collectors.toSet()))
+    .entrySet().forEach(eachAssignee -> {
       String assignee = eachAssignee.getKey();
-      sb.append(ReportConstants.CR).append(ReportConstants.CR).append(MarkdownHelper.addHeadingTitle(assignee, 2)).append(ReportConstants.CR);
+      String associateName = Associate.getAssociateName(assignee, IssueSource.GITHUB);
+      sb.append(ReportConstants.CR).append(ReportConstants.CR).append(MarkdownHelper.addHeadingTitle(associateName, 2)).append(ReportConstants.CR);
       UnorderedList labelUnorderedList = new UnorderedList();
       eachAssignee.getValue().stream().collect(Collectors.groupingBy(Issue::getLabel, Collectors.toSet())).entrySet().forEach(eachLabel -> {
         String label = eachLabel.getKey();
@@ -76,18 +79,23 @@ public class WeeklyDevelopmentReportImpl {
         eachLabel.getValue().stream().forEach(eachIssue -> {
           TextBuilder issueTextB = new TextBuilder();
           Date dateCreatedAt = eachIssue.getCreatedAt();
-          String strMdColor = "gray";
-          if(eachIssue.isOpen()) {
+//          String strMdColor = "gray";
+          String strMdColor = " ![#a9a9a9](https://via.placeholder.com/15/a9a9a9/000000?text=+) ";
+          if (eachIssue.isOpen()) {
             if (dateCreatedAt.toInstant().isBefore(oneMonthAgo.toInstant())) {
-              strMdColor = "red";
+//              strMdColor = "red";
+              strMdColor = " ![#ff0000](https://via.placeholder.com/15/ff0000/000000?text=+) ";
             } else if (dateCreatedAt.toInstant().isBefore(twoWeeksAgo.toInstant())) {
-              strMdColor = "orange";
+//              strMdColor = "orange";
+              strMdColor = " ![#ffaa00](https://via.placeholder.com/15/ffaa00/000000?text=+) ";
             } else {
-              strMdColor = "green";
+//              strMdColor = "green";
+              strMdColor = " ![#00ff00](https://via.placeholder.com/15/00ff00/000000?text=+) ";
             }
           }
-          issueTextB.append(new Text("<span style=\"color:" + strMdColor + "\">[")).append(eachIssue.getStatus())
-              .append("]</span> ").append(eachIssue.getTitle()).append(" - ").append(new Link(eachIssue.getUrl()));
+//          issueTextB.append(new Text("<span style=\"color:" + strMdColor + "\">[")).append(eachIssue.getStatus())
+//          .append("]</span> ").append(eachIssue.getTitle()).append(" - ").append(new Link(eachIssue.getUrl()));
+          issueTextB.append(new Text( strMdColor )).append("[`").append(eachIssue.getStatus()).append("`] ").append(eachIssue.getTitle()).append(" - ").append(new Link(eachIssue.getUrl()));
           issueUnorderedList.getItems().add(issueTextB);
         });
         labelUnorderedList.getItems().add(issueUnorderedList);
