@@ -106,22 +106,24 @@ public class WeeklyDevelopmentReportImpl {
         String label = eachLabel.getKey();
         labelUnorderedList.getItems().add(label);
         UnorderedList issueUnorderedList = new UnorderedList();
-        eachLabel.getValue().stream().forEach(eachIssue -> {
-          TextBuilder issueTextB = new TextBuilder();
-          Date dateCreatedAt = eachIssue.getCreatedAt();
-          String strMdColor = mdClosedFormat;
-          if (eachIssue.isOpen()) {
-            strMdColor = mdOpenFormat;
-            if (dateCreatedAt.toInstant().isBefore(oneMonthAgo.toInstant())) {
-              strMdColor = mdAncientFormat;
-            } else if (dateCreatedAt.toInstant().isBefore(twoWeeksAgo.toInstant())) {
-              strMdColor = mdOldFormat;
+        eachLabel.getValue().stream().collect(Collectors.groupingBy(Issue::getStatus, TreeMap::new, Collectors.toSet())).entrySet().forEach(eachStatus -> {
+          eachStatus.getValue().stream().forEach(eachIssue -> {
+            TextBuilder issueTextB = new TextBuilder();
+            Date dateCreatedAt = eachIssue.getCreatedAt();
+            String strMdColor = mdClosedFormat;
+            if (eachIssue.isOpen()) {
+              strMdColor = mdOpenFormat;
+              if (dateCreatedAt.toInstant().isBefore(oneMonthAgo.toInstant())) {
+                strMdColor = mdAncientFormat;
+              } else if (dateCreatedAt.toInstant().isBefore(twoWeeksAgo.toInstant())) {
+                strMdColor = mdOldFormat;
+              }
             }
-          }
-          issueTextB.append(new Text(" ")).append(strMdColor).append(" [`").append(eachIssue.getStatus()).append("`] ").append(eachIssue.getTitle())
-          .append(" - ")
-          .append(new Link(eachIssue.getUrl()));
-          issueUnorderedList.getItems().add(issueTextB);
+            issueTextB.append(new Text(" ")).append(strMdColor).append(" [`").append(eachIssue.getStatus()).append("`] ").append(eachIssue.getTitle())
+            .append(" - ")
+            .append(new Link(eachIssue.getUrl()));
+            issueUnorderedList.getItems().add(issueTextB);
+          });
         });
         labelUnorderedList.getItems().add(issueUnorderedList);
       });
@@ -134,16 +136,16 @@ public class WeeklyDevelopmentReportImpl {
     sb.append(ReportConstants.CR).append(ReportConstants.CR).append(MarkdownHelper.addHeadingTitle("Legend", 2)).append(ReportConstants.CR);
     UnorderedList legendUnorderedList = new UnorderedList();
     TextBuilder legendTextB = new TextBuilder();
-    legendTextB.append(new Text(" ")).append(mdOpenFormat).append(" : OPEN, with creation date less than 2 weeks");
+    legendTextB.append(new Text(" ")).append(mdOpenFormat).append(" : Open but age <= 2 weeks");
     legendUnorderedList.getItems().add(legendTextB);
     legendTextB = new TextBuilder();
-    legendTextB.append(new Text(" ")).append(mdOldFormat).append(" : OPEN, with creation date between 2 weeks and 1 month");
+    legendTextB.append(new Text(" ")).append(mdOldFormat).append(" : Open but age is >= 2 weeks & <  1month");
     legendUnorderedList.getItems().add(legendTextB);
     legendTextB = new TextBuilder();
-    legendTextB.append(new Text(" ")).append(mdAncientFormat).append(" : OPEN, with creation date older 1 month");
+    legendTextB.append(new Text(" ")).append(mdAncientFormat).append(" : Open but age > 1 month");
     legendUnorderedList.getItems().add(legendTextB);
     legendTextB = new TextBuilder();
-    legendTextB.append(new Text(" ")).append(mdClosedFormat).append(" : CLOSED");
+    legendTextB.append(new Text(" ")).append(mdClosedFormat).append(" : Close");
     legendUnorderedList.getItems().add(legendTextB);
     try {
       sb.append(legendUnorderedList.serialize());
