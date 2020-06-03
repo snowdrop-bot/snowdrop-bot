@@ -131,6 +131,25 @@ public class WeeklyDevelopmentReportImpl {
         pE.printStackTrace();
       }
     });
+    sb.append(ReportConstants.CR).append(ReportConstants.CR).append(MarkdownHelper.addHeadingTitle("Legend", 2)).append(ReportConstants.CR);
+    UnorderedList legendUnorderedList = new UnorderedList();
+    TextBuilder legendTextB = new TextBuilder();
+    legendTextB.append(new Text(" ")).append(mdOpenFormat).append(" : OPEN, with creation date less than 2 weeks");
+    legendUnorderedList.getItems().add(legendTextB);
+    legendTextB = new TextBuilder();
+    legendTextB.append(new Text(" ")).append(mdOldFormat).append(" : OPEN, with creation date between 2 weeks and 1 month");
+    legendUnorderedList.getItems().add(legendTextB);
+    legendTextB = new TextBuilder();
+    legendTextB.append(new Text(" ")).append(mdAncientFormat).append(" : OPEN, with creation date older 1 month");
+    legendUnorderedList.getItems().add(legendTextB);
+    legendTextB = new TextBuilder();
+    legendTextB.append(new Text(" ")).append(mdClosedFormat).append(" : CLOSED");
+    legendUnorderedList.getItems().add(legendTextB);
+    try {
+      sb.append(legendUnorderedList.serialize());
+    } catch (MarkdownSerializationException pE) {
+      pE.printStackTrace();
+    }
     return sb.toString();
   }
 
