@@ -60,6 +60,18 @@ public class WeekReportEndpoint {
   @ConfigProperty(name = "github.reporting.target.repository")
   String repoName;
 
+  @ConfigProperty(name = "report.state.closed")
+  String mdClosedFormat;
+
+  @ConfigProperty(name = "report.state.open")
+  String mdOpenFormat;
+
+  @ConfigProperty(name = "report.state.old")
+  String mdOldFormat;
+
+  @ConfigProperty(name = "report.state.ancient")
+  String mdAncientFormat;
+
   @Inject
   GitHubClient client;
 
@@ -86,7 +98,8 @@ public class WeekReportEndpoint {
 
   private String generateReport(final Date startTime, final Date endTime, String reportName) {
     populate(startTime, endTime);
-    final String mdText = WeeklyDevelopmentReportImpl.build(startTime, endTime, users).buildWeeklyReport(reportName);
+    final String mdText = WeeklyDevelopmentReportImpl.build(startTime, endTime, users, mdOpenFormat, mdOldFormat, mdAncientFormat, mdClosedFormat)
+    .buildWeeklyReport(reportName);
     LOGGER.info("{}: {}", reportName, mdText);
     return mdText;
   }
@@ -106,15 +119,6 @@ public class WeekReportEndpoint {
       LOGGER.debug("week number: {}", weekNumber);
       final String reportName = String.format(reportNameTemplate, weekNumber);
       return generateReport(startTime, endTime, reportName);
-      //      Date startTime = startTimeString != null ? DF.parse(startTimeString) : Date.from(service.getPullRequestCollector().getStartTime().toInstant());
-      //      Date endTime = endTimeString != null ? DF.parse(endTimeString) : Date.from(service.getPullRequestCollector().getEndTime().toInstant());
-      //      weekNumber = WEEK_YEAR_FORMAT.format(endTime);
-      //      LOGGER.debug("week number: {}", weekNumber);
-      //      final String reportName = String.format(reportNameTemplate, weekNumber);
-      //      populate(startTime, endTime);
-      //      mdText = WeeklyDevelopmentReportImpl.build(startTime, endTime, users).buildWeeklyReport(reportName);
-      //      LOGGER.info("{}}: {}", reportName, mdText);
-      //      return mdText;
     } catch (Exception e) {
       LOGGER.error(e.getMessage(), e);
       throw BotException.launderThrowable(e);

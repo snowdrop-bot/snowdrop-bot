@@ -6,6 +6,9 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.snowdrop.reporting.MarkdownHelper;
 import io.snowdrop.reporting.ReportConstants;
 import io.snowdrop.reporting.model.Associate;
@@ -30,6 +33,8 @@ import net.steppschuh.markdowngenerator.text.TextBuilder;
  */
 public class WeeklyDevelopmentReportImpl {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(WeeklyDevelopmentReportImpl.class);
+
   /**
    * <p>Users to which the report will be applied</p>
    */
@@ -45,14 +50,38 @@ public class WeeklyDevelopmentReportImpl {
    */
   protected Date endDate = null;
 
-  public WeeklyDevelopmentReportImpl(final Date pStartDate, final Date pEndDate, final Set<String> pusers) {
-    users = pusers;
-    startDate = pStartDate;
-    endDate = pEndDate;
+  String mdClosedFormat = null;
+
+  String mdOpenFormat = null;
+
+  String mdOldFormat = null;
+
+  String mdAncientFormat = null;
+
+  public WeeklyDevelopmentReportImpl(
+  final Date startDate,
+  final Date endDate,
+  final Set<String> users,
+  final String mdOpenFormat,
+  final String mdOldFormat,
+  final String mdAncientFormat,
+  final String mdClosedFormat) {
+    this.users = users;
+    this.startDate = startDate;
+    this.endDate = endDate;
+    this.mdAncientFormat = mdAncientFormat;
+    this.mdClosedFormat = mdClosedFormat;
+    this.mdOldFormat = mdOldFormat;
+    this.mdOpenFormat = mdOpenFormat;
   }
 
-  public static WeeklyDevelopmentReportImpl build(final Date pStartDate, final Date pEndDate, final Set<String> pusers) {
-    return new WeeklyDevelopmentReportImpl(pStartDate, pEndDate, pusers);
+  public static WeeklyDevelopmentReportImpl build(
+  final Date startDate, final Date endDate, final Set<String> users,
+  final String mdOpenFormat,
+  final String mdOldFormat,
+  final String mdAncientFormat,
+  final String mdClosedFormat) {
+    return new WeeklyDevelopmentReportImpl(startDate, endDate, users, mdOpenFormat, mdOldFormat, mdAncientFormat, mdClosedFormat);
   }
 
   /**
@@ -80,17 +109,18 @@ public class WeeklyDevelopmentReportImpl {
         eachLabel.getValue().stream().forEach(eachIssue -> {
           TextBuilder issueTextB = new TextBuilder();
           Date dateCreatedAt = eachIssue.getCreatedAt();
-          String strMdColor = " ![#a9a9a9](https://via.placeholder.com/15/a9a9a9/000000?text=+) ";
+          String strMdColor = mdClosedFormat;
           if (eachIssue.isOpen()) {
+            strMdColor = mdOpenFormat;
             if (dateCreatedAt.toInstant().isBefore(oneMonthAgo.toInstant())) {
-              strMdColor = " ![#ff0000](https://via.placeholder.com/15/ff0000/000000?text=+) ";
+              strMdColor = mdAncientFormat;
             } else if (dateCreatedAt.toInstant().isBefore(twoWeeksAgo.toInstant())) {
-              strMdColor = " ![#ffaa00](https://via.placeholder.com/15/ffaa00/000000?text=+) ";
-            } else {
-              strMdColor = " ![#00ff00](https://via.placeholder.com/15/00ff00/000000?text=+) ";
+              strMdColor = mdOldFormat;
             }
           }
-          issueTextB.append(new Text( strMdColor )).append("[`").append(eachIssue.getStatus()).append("`] ").append(eachIssue.getTitle()).append(" - ").append(new Link(eachIssue.getUrl()));
+          issueTextB.append(new Text(" ")).append(strMdColor).append(" [`").append(eachIssue.getStatus()).append("`] ").append(eachIssue.getTitle())
+          .append(" - ")
+          .append(new Link(eachIssue.getUrl()));
           issueUnorderedList.getItems().add(issueTextB);
         });
         labelUnorderedList.getItems().add(issueUnorderedList);

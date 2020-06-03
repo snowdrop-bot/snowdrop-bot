@@ -31,7 +31,7 @@ A bot for automating snowdrop related tasks
 
 ## Installation
 
-To prevent adding personal information to github, create an alternate resources folder at `src/main/local-resources` and copy the `src/main/resources/application.properties` 
+To prevent adding personal information to github, create an alternate resources folder at `src/main/local-resources` and copy the `src/main/resources/application.properties`
 file into it. All changes should be made to this file. This folder is excluded in `.gitignore`.
 
 ### Database
@@ -49,7 +49,7 @@ The application will need to access github. So you are going to need an access
 token.
 
 The token can be configured either via `github.token` property or `GITHUB_TOKEN`
-environment variable. 
+environment variable.
 
 > NOTE: The `github.token` property is configured to have it's value filled with the [Maven Rsource plugin Filter capabilities](https://maven.apache.org/plugins/maven-resources-plugin/examples/filter.html).
 > It can be easilly filled by adding -Dgithub.token=<the token> to the maven compilation statement.
@@ -89,8 +89,8 @@ To run the bot you can just build:
 
 If using resource filtering use build it this way instead:
 
-    ./mvnw -Dgithub.token=<the token> clean package 
-    
+    ./mvnw -Dgithub.token=<the token> clean package
+
 and then run with:
 
     java -jar target/snowdrop-bot-0.1-SNAPSHOT-runner.jar
@@ -99,7 +99,7 @@ and then run with:
 `application.properites` or create an environment variable for it.
 
 ### Default Profile
-To avoid unnecessary trafic on the github API (which is subject of rate
+To avoid unnecessary traffic on the github API (which is subject of rate
 limiting) the default profile has the core features (e.g. bridge and reporting disabled).
 
 You can enable them selectively through the UI, or use a different profile (e.g.
@@ -125,7 +125,7 @@ The criteria for selecting issues are the following:
 
 - exist in repositories of configured organizations (`github.reporting.organizations`)
 - assigned to configured users (`github.users`)
-- the assigned user has forked the repository 
+- the assigned user has forked the repository
 - were open within the configured time frame (the week bounded by `github.reporting.day-of-week` & `github.reporting.hours`)
 
 Those issues, can be exported in csv, excel or pdf.
@@ -142,7 +142,7 @@ The criteria for selecting issues are the following:
 
 - exist in repositories of configured organizations (`github.reporting.organizations`)
 - assigned to configured users (`github.users`)
-- the assigned user has forked the repository 
+- the assigned user has forked the repository
 - were open within the configured time frame (the week bounded by `github.reporting.day-of-week` & `github.reporting.hours`)
 
 ![pull request screen](./img/pull-requests.png "Pull Requests Screen")
@@ -158,7 +158,7 @@ When working across multiple different organizations owned by different teams
 with variable access levels, its important to be able to have an aggregated view
 of the pending issues. This is important for things like:
 
-- tracking 
+- tracking
 - scheduling
 - reporting
 
