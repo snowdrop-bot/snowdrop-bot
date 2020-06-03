@@ -3,6 +3,7 @@ package io.snowdrop.reporting.weekreport;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import io.snowdrop.reporting.MarkdownHelper;
@@ -66,35 +67,29 @@ public class WeeklyDevelopmentReportImpl {
     ZonedDateTime oneMonthAgo = now.minusMonths(1);
     String repoName = ReportConstants.WEEK_DEV_REPO_OWNER + "/" + ReportConstants.WEEK_DEV_REPO_NAME;
     Issue.findByIssuesForWeeklyDevelopmentReport(repoName, startDate, endDate).list().stream()
-    .collect(Collectors.groupingBy(Issue::getAssignee, Collectors.toSet()))
+    .collect(Collectors.groupingBy(Issue::getAssignee, TreeMap::new, Collectors.toSet()))
     .entrySet().forEach(eachAssignee -> {
       String assignee = eachAssignee.getKey();
       String associateName = Associate.getAssociateName(assignee, IssueSource.GITHUB);
       sb.append(ReportConstants.CR).append(ReportConstants.CR).append(MarkdownHelper.addHeadingTitle(associateName, 2)).append(ReportConstants.CR);
       UnorderedList labelUnorderedList = new UnorderedList();
-      eachAssignee.getValue().stream().collect(Collectors.groupingBy(Issue::getLabel, Collectors.toSet())).entrySet().forEach(eachLabel -> {
+      eachAssignee.getValue().stream().collect(Collectors.groupingBy(Issue::getLabel, TreeMap::new, Collectors.toSet())).entrySet().forEach(eachLabel -> {
         String label = eachLabel.getKey();
         labelUnorderedList.getItems().add(label);
         UnorderedList issueUnorderedList = new UnorderedList();
         eachLabel.getValue().stream().forEach(eachIssue -> {
           TextBuilder issueTextB = new TextBuilder();
           Date dateCreatedAt = eachIssue.getCreatedAt();
-//          String strMdColor = "gray";
           String strMdColor = " ![#a9a9a9](https://via.placeholder.com/15/a9a9a9/000000?text=+) ";
           if (eachIssue.isOpen()) {
             if (dateCreatedAt.toInstant().isBefore(oneMonthAgo.toInstant())) {
-//              strMdColor = "red";
               strMdColor = " ![#ff0000](https://via.placeholder.com/15/ff0000/000000?text=+) ";
             } else if (dateCreatedAt.toInstant().isBefore(twoWeeksAgo.toInstant())) {
-//              strMdColor = "orange";
               strMdColor = " ![#ffaa00](https://via.placeholder.com/15/ffaa00/000000?text=+) ";
             } else {
-//              strMdColor = "green";
               strMdColor = " ![#00ff00](https://via.placeholder.com/15/00ff00/000000?text=+) ";
             }
           }
-//          issueTextB.append(new Text("<span style=\"color:" + strMdColor + "\">[")).append(eachIssue.getStatus())
-//          .append("]</span> ").append(eachIssue.getTitle()).append(" - ").append(new Link(eachIssue.getUrl()));
           issueTextB.append(new Text( strMdColor )).append("[`").append(eachIssue.getStatus()).append("`] ").append(eachIssue.getTitle()).append(" - ").append(new Link(eachIssue.getUrl()));
           issueUnorderedList.getItems().add(issueTextB);
         });
