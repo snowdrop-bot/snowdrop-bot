@@ -118,6 +118,20 @@ configured under `/data/snowdrop-bot` which which is a volume friendlier path
 #### Persistence and configuration (production)
 The production profile uses /data/snowdrop-bot as the root for configuration and database files.
 
+## Associate list
+
+The associate table can be maintained with the following REST services:
+
+```bash
+$ curl -X PUT -d associate=<github-id> -d alias=<bot-alias> -d source=[GITHUB,JIRA,...] -d name="<Associante Name>" localhost:8080/associate/create
+```
+
+A list of the associates can be obtained using the list service.
+
+```bash
+$ curl -X GET localhost:8080/associate/list
+```
+
 ## Issue tracking
 
 Provides a unified view of all `active` issues across multiple repositories.
