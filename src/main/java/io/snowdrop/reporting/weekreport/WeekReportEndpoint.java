@@ -1,6 +1,7 @@
 package io.snowdrop.reporting.weekreport;
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
@@ -48,6 +49,8 @@ public class WeekReportEndpoint {
   private static final String REPO_DEV_PREFIX = "";
   private static final String REPO_WEEK_DEV_PREFIX = "";
 
+  private final String reportNameTemplate = "Weekly Report - %s";
+
   @ConfigProperty(name = "github.users")
   Set<String> users;
 
@@ -56,6 +59,18 @@ public class WeekReportEndpoint {
 
   @ConfigProperty(name = "github.reporting.target.repository")
   String repoName;
+
+  @ConfigProperty(name = "report.state.closed")
+  String mdClosedFormat;
+
+  @ConfigProperty(name = "report.state.open")
+  String mdOpenFormat;
+
+  @ConfigProperty(name = "report.state.old")
+  String mdOldFormat;
+
+  @ConfigProperty(name = "report.state.ancient")
+  String mdAncientFormat;
 
   @Inject
   GitHubClient client;
@@ -81,6 +96,14 @@ public class WeekReportEndpoint {
     }).collect(Collectors.toSet());
   }
 
+  private String generateReport(final Date startTime, final Date endTime, String reportName) {
+    populate(startTime, endTime);
+    final String mdText = WeeklyDevelopmentReportImpl.build(startTime, endTime, users, mdOpenFormat, mdOldFormat, mdAncientFormat, mdClosedFormat)
+    .buildWeeklyReport(reportName);
+    LOGGER.info("{}: {}", reportName, mdText);
+    return mdText;
+  }
+
   @GET
   @Path("/generate")
   @Produces(MediaType.TEXT_PLAIN)
@@ -88,22 +111,22 @@ public class WeekReportEndpoint {
   public String createReport(
   @QueryParam("startTime") String startTimeString,
   @QueryParam("endTime") String endTimeString) {
-    String mdText;
-    String weekNumber;
     IssueService issueService = new IssueService(client);
     try {
-      Date startTime = startTimeString != null ? DF.parse(startTimeString) : Date.from(service.getPullRequestCollector().getStartTime().toInstant());
-      Date endTime = endTimeString != null ? DF.parse(endTimeString) : Date.from(service.getPullRequestCollector().getEndTime().toInstant());
-      weekNumber = WEEK_YEAR_FORMAT.format(endTime);
+      final Date startTime = parseDate(startTimeString);
+      final Date endTime = parseDate(endTimeString);
+      final String weekNumber = WEEK_YEAR_FORMAT.format(endTime);
       LOGGER.debug("week number: {}", weekNumber);
-      populate(startTime, endTime);
-      mdText = WeeklyDevelopmentReportImpl.build(startTime, endTime, users).buildWeeklyReport();
-      LOGGER.info("weekly_development: {}", mdText);
-      return mdText;
+      final String reportName = String.format(reportNameTemplate, weekNumber);
+      return generateReport(startTime, endTime, reportName);
     } catch (Exception e) {
       LOGGER.error(e.getMessage(), e);
       throw BotException.launderThrowable(e);
     }
+  }
+
+  private Date parseDate(final String timeString) throws ParseException {
+    return timeString != null ? DF.parse(timeString) : Date.from(service.getPullRequestCollector().getStartTime().toInstant());
   }
 
   @GET
@@ -113,18 +136,15 @@ public class WeekReportEndpoint {
   public String publishReport(
   @QueryParam("startTime") String startTimeString,
   @QueryParam("endTime") String endTimeString) {
-    String mdText;
-    String weekNumber;
     IssueService issueService = new IssueService(client);
     try {
-      Date startTime = startTimeString != null ? DF.parse(startTimeString) : Date.from(service.getPullRequestCollector().getStartTime().toInstant());
-      Date endTime = endTimeString != null ? DF.parse(endTimeString) : Date.from(service.getPullRequestCollector().getEndTime().toInstant());
-      weekNumber = WEEK_YEAR_FORMAT.format(endTime);
+      final Date startTime = parseDate(startTimeString);
+      final Date endTime = parseDate(endTimeString);
+      final String weekNumber = WEEK_YEAR_FORMAT.format(endTime);
       LOGGER.debug("week number: {}", weekNumber);
-      populate(startTime, endTime);
-      mdText = WeeklyDevelopmentReportImpl.build(startTime, endTime, users).buildWeeklyReport();
-      LOGGER.info("weekly_development: {}", mdText);
-      updateGithubIssue(mdText, "weekly_development_" + weekNumber, "report", issueService, repoOrganization, repoName);
+      final String reportName = String.format(reportNameTemplate, weekNumber);
+      final String mdText = generateReport(startTime, endTime, reportName);
+      updateGithubIssue(mdText, reportName, "report", issueService, repoOrganization, repoName);
       return mdText;
     } catch (Exception e) {
       LOGGER.error(e.getMessage(), e);
