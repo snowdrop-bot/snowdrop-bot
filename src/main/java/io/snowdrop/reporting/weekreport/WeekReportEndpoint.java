@@ -3,6 +3,7 @@ package io.snowdrop.reporting.weekreport;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
@@ -46,8 +47,6 @@ public class WeekReportEndpoint {
   private static final Logger LOGGER = LoggerFactory.getLogger(WeekReportEndpoint.class);
   private static final SimpleDateFormat DF = new SimpleDateFormat("dd/MM/yyyy");
   private static final SimpleDateFormat WEEK_YEAR_FORMAT = new SimpleDateFormat("w");
-  private static final String REPO_DEV_PREFIX = "";
-  private static final String REPO_WEEK_DEV_PREFIX = "";
 
   private final String reportNameTemplate = "Weekly Report - %s";
 
@@ -97,6 +96,7 @@ public class WeekReportEndpoint {
   }
 
   private String generateReport(final Date startTime, final Date endTime, String reportName) {
+    LOGGER.info("{}: {}", startTime, endTime);
     populate(startTime, endTime);
     final String mdText = WeeklyDevelopmentReportImpl.build(startTime, endTime, users, mdOpenFormat, mdOldFormat, mdAncientFormat, mdClosedFormat)
     .buildWeeklyReport(reportName);
@@ -111,10 +111,19 @@ public class WeekReportEndpoint {
   public String createReport(
   @QueryParam("startTime") String startTimeString,
   @QueryParam("endTime") String endTimeString) {
+    LOGGER.info("{}: {}", startTimeString, endTimeString);
     IssueService issueService = new IssueService(client);
     try {
-      final Date startTime = parseDate(startTimeString);
-      final Date endTime = parseDate(endTimeString);
+      Date startTime = parseDate(startTimeString);
+      Calendar cal = Calendar.getInstance(); // creates calendar
+      cal.setTime(startTime); // sets calendar time/date
+      cal.add(Calendar.HOUR_OF_DAY, 12); // adds one hour
+      startTime = cal.getTime();
+      Date endTime = parseDate(endTimeString);
+      cal = Calendar.getInstance(); // creates calendar
+      cal.setTime(endTime); // sets calendar time/date
+      cal.add(Calendar.HOUR_OF_DAY, 12); // adds one hour
+      endTime = cal.getTime();
       final String weekNumber = WEEK_YEAR_FORMAT.format(endTime);
       LOGGER.debug("week number: {}", weekNumber);
       final String reportName = String.format(reportNameTemplate, weekNumber);
@@ -138,8 +147,16 @@ public class WeekReportEndpoint {
   @QueryParam("endTime") String endTimeString) {
     IssueService issueService = new IssueService(client);
     try {
-      final Date startTime = parseDate(startTimeString);
-      final Date endTime = parseDate(endTimeString);
+      Date startTime = parseDate(startTimeString);
+      Calendar cal = Calendar.getInstance(); // creates calendar
+      cal.setTime(startTime); // sets calendar time/date
+      cal.add(Calendar.HOUR_OF_DAY, 12); // adds one hour
+      startTime = cal.getTime();
+      Date endTime = parseDate(endTimeString);
+      cal = Calendar.getInstance(); // creates calendar
+      cal.setTime(endTime); // sets calendar time/date
+      cal.add(Calendar.HOUR_OF_DAY, 12); // adds one hour
+      endTime = cal.getTime();
       final String weekNumber = WEEK_YEAR_FORMAT.format(endTime);
       LOGGER.debug("week number: {}", weekNumber);
       final String reportName = String.format(reportNameTemplate, weekNumber);

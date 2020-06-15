@@ -24,8 +24,8 @@ import net.steppschuh.markdowngenerator.text.TextBuilder;
  * <p>Generates the Weekly Development report.</p>
  * <p>This report consists of all the Issue existing in the weekly development repository that have the following characteristics:
  * <ul>
- *     <li>Have been modified in the specified date range or are still open</li>
- *     <li>Are not labeled report or have no label at all</li>
+ * <li>Have been modified in the specified date range or are still open</li>
+ * <li>Are not labeled report or have no label at all</li>
  * </ul>
  * </p>
  * <p>The SQL sentence used is the following: <pre>repository = ?1 AND ((updatedAt >= ?2 AND updatedAt <= ?3) OR open = true) AND (label != 'report' or label is null)</pre></p>
@@ -59,13 +59,13 @@ public class WeeklyDevelopmentReportImpl {
   String mdAncientFormat = null;
 
   public WeeklyDevelopmentReportImpl(
-  final Date startDate,
-  final Date endDate,
-  final Set<String> users,
-  final String mdOpenFormat,
-  final String mdOldFormat,
-  final String mdAncientFormat,
-  final String mdClosedFormat) {
+      final Date startDate,
+      final Date endDate,
+      final Set<String> users,
+      final String mdOpenFormat,
+      final String mdOldFormat,
+      final String mdAncientFormat,
+      final String mdClosedFormat) {
     this.users = users;
     this.startDate = startDate;
     this.endDate = endDate;
@@ -76,11 +76,11 @@ public class WeeklyDevelopmentReportImpl {
   }
 
   public static WeeklyDevelopmentReportImpl build(
-  final Date startDate, final Date endDate, final Set<String> users,
-  final String mdOpenFormat,
-  final String mdOldFormat,
-  final String mdAncientFormat,
-  final String mdClosedFormat) {
+      final Date startDate, final Date endDate, final Set<String> users,
+      final String mdOpenFormat,
+      final String mdOldFormat,
+      final String mdAncientFormat,
+      final String mdClosedFormat) {
     return new WeeklyDevelopmentReportImpl(startDate, endDate, users, mdOpenFormat, mdOldFormat, mdAncientFormat, mdClosedFormat);
   }
 
@@ -92,12 +92,10 @@ public class WeeklyDevelopmentReportImpl {
   public String buildWeeklyReport(String reportName) {
     StringBuilder sb = new StringBuilder(MarkdownHelper.addHeadingTitle(reportName, 1)).append(ReportConstants.CR);
     ZonedDateTime now = ZonedDateTime.now();
-    ZonedDateTime twoWeeksAgo = now.minusWeeks(2);
-    ZonedDateTime oneMonthAgo = now.minusMonths(1);
     String repoName = ReportConstants.WEEK_DEV_REPO_OWNER + "/" + ReportConstants.WEEK_DEV_REPO_NAME;
     Issue.findByIssuesForWeeklyDevelopmentReport(repoName, startDate, endDate).list().stream()
-    .collect(Collectors.groupingBy(Issue::getAssignee, TreeMap::new, Collectors.toSet()))
-    .entrySet().forEach(eachAssignee -> {
+        .collect(Collectors.groupingBy(Issue::getAssignee, TreeMap::new, Collectors.toSet()))
+        .entrySet().forEach(eachAssignee -> {
       String assignee = eachAssignee.getKey();
       String associateName = Associate.getAssociateName(assignee, IssueSource.GITHUB);
       sb.append(ReportConstants.CR).append(ReportConstants.CR).append(MarkdownHelper.addHeadingTitle(associateName, 2)).append(ReportConstants.CR);
@@ -106,25 +104,25 @@ public class WeeklyDevelopmentReportImpl {
         String label = eachLabel.getKey();
         labelUnorderedList.getItems().add(label);
         UnorderedList issueUnorderedList = new UnorderedList();
-        eachLabel.getValue().stream().collect(Collectors.groupingBy(Issue::getStatus, TreeMap::new, Collectors.toSet())).entrySet().forEach(eachStatus -> {
-          eachStatus.getValue().stream().forEach(eachIssue -> {
-            TextBuilder issueTextB = new TextBuilder();
-            Date dateCreatedAt = eachIssue.getCreatedAt();
-            String strMdColor = mdClosedFormat;
-            if (eachIssue.isOpen()) {
-              strMdColor = mdOpenFormat;
-              if (dateCreatedAt.toInstant().isBefore(oneMonthAgo.toInstant())) {
-                strMdColor = mdAncientFormat;
-              } else if (dateCreatedAt.toInstant().isBefore(twoWeeksAgo.toInstant())) {
+        eachLabel.getValue().stream().collect(Collectors.groupingBy(Issue::getStatusAge, TreeMap::new, Collectors.toSet())).entrySet()
+            .forEach(eachStatusAge -> {
+              String strMdColor = mdClosedFormat;
+              if (eachStatusAge.getKey() == 0) {
+                strMdColor = mdOpenFormat;
+              } else if (eachStatusAge.getKey() == 1) {
                 strMdColor = mdOldFormat;
+              } else if (eachStatusAge.getKey() == 2) {
+                strMdColor = mdAncientFormat;
               }
-            }
-            issueTextB.append(new Text(" ")).append(strMdColor).append(" [`").append(eachIssue.getStatus()).append("`] ").append(eachIssue.getTitle())
-            .append(" - ")
-            .append(new Link(eachIssue.getUrl()));
-            issueUnorderedList.getItems().add(issueTextB);
-          });
-        });
+              String finalStrMdColor = strMdColor;
+              eachStatusAge.getValue().stream().forEach(eachIssue -> {
+                TextBuilder issueTextB = new TextBuilder();
+                issueTextB.append(new Text(" ")).append(finalStrMdColor).append(" [`").append(eachIssue.getStatus()).append("`] ").append(eachIssue.getTitle())
+                    .append(" - ")
+                    .append(new Link(eachIssue.getUrl()));
+                issueUnorderedList.getItems().add(issueTextB);
+              });
+            });
         labelUnorderedList.getItems().add(issueUnorderedList);
       });
       try {
@@ -139,13 +137,13 @@ public class WeeklyDevelopmentReportImpl {
     legendTextB.append(new Text(" ")).append(mdOpenFormat).append(" : Open but age <= 2 weeks");
     legendUnorderedList.getItems().add(legendTextB);
     legendTextB = new TextBuilder();
-    legendTextB.append(new Text(" ")).append(mdOldFormat).append(" : Open but age is >= 2 weeks & <  1month");
+    legendTextB.append(new Text(" ")).append(mdOldFormat).append(" : Open but age is >= 2 weeks & <  1 month");
     legendUnorderedList.getItems().add(legendTextB);
     legendTextB = new TextBuilder();
     legendTextB.append(new Text(" ")).append(mdAncientFormat).append(" : Open but age > 1 month");
     legendUnorderedList.getItems().add(legendTextB);
     legendTextB = new TextBuilder();
-    legendTextB.append(new Text(" ")).append(mdClosedFormat).append(" : Close");
+    legendTextB.append(new Text(" ")).append(mdClosedFormat).append(" : Closed");
     legendUnorderedList.getItems().add(legendTextB);
     try {
       sb.append(legendUnorderedList.serialize());
