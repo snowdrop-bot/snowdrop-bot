@@ -1,19 +1,19 @@
 package io.snowdrop.reporting.model;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
-import javax.persistence.Entity;
-import javax.persistence.Id;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Sort;
 import io.snowdrop.github.reporting.model.WithDates;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Transient;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.ZonedDateTime;
+import java.util.Date;
 
 @Entity
 public class Issue extends PanacheEntityBase implements WithDates {
@@ -40,42 +40,56 @@ public class Issue extends PanacheEntityBase implements WithDates {
   String affectedVersion;
   String fixVersion;
 
+  /**
+   * <p>Age of the issue:
+   * <ul>
+   * <li>0: Open with age <= 2 weeks</li>
+   * <li>1: Open with age between 2 weeks & 1 month</li>
+   * <li>2: Open with age > 1 month</li>
+   * <li>3: Closed</li>
+   * </ul>
+   * </p>
+   */
+  @Transient
+  Integer statusAge;
+
   public Issue() {
   }
 
   public Issue(
-  final String pUrl,
-  final String pRepository,
-  final int pNumber,
-  final String pTitle,
-  final String pCreator,
-  final String pAssignee,
-  final boolean pOpen,
-  final Date pCreatedAt,
-  final Date pUpdatedAt,
-  final Date pClosedAt,
-  final String pSource,
-  final String pStatus,
-  final String pLabel,
-  final String pIssueGroup,
-  final String pAffectedVersion,
-  final String pFixVersion) {
-    url = pUrl;
-    repository = pRepository;
-    number = pNumber;
-    title = pTitle;
-    creator = pCreator;
-    assignee = pAssignee;
-    open = pOpen;
-    createdAt = pCreatedAt;
-    updatedAt = pUpdatedAt;
-    closedAt = pClosedAt;
-    source = pSource;
-    status = pStatus;
-    label = pLabel;
-    issueGroup = pIssueGroup;
-    affectedVersion = pAffectedVersion;
-    fixVersion = pFixVersion;
+  String url,
+  String repository,
+  int number,
+  String title,
+  String creator,
+  String assignee,
+  boolean open,
+  Date createdAt,
+  Date updatedAt,
+  Date closedAt,
+  String source,
+  String status,
+  String label,
+  String issueGroup,
+  String affectedVersion,
+  String fixVersion) {
+    this.url = url;
+    this.repository = repository;
+    this.number = number;
+    this.title = title;
+    this.creator = creator;
+    this.assignee = assignee;
+    this.open = open;
+    this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
+    this.closedAt = closedAt;
+    this.source = source;
+    this.status = status;
+    this.label = label;
+    this.issueGroup = issueGroup;
+    this.affectedVersion = affectedVersion;
+    this.fixVersion = fixVersion;
+    updateStatusAge();
   }
 
   public static Issue create(String repository, org.eclipse.egit.github.core.Issue issue) {
@@ -102,7 +116,9 @@ public class Issue extends PanacheEntityBase implements WithDates {
     , issue.getReporter().getAccountId(), issue.getAssignee() != null ? issue.getAssignee().getName() : null, issue.getResolution() == null,
     issue.getCreationDate().toDate(), issue.getUpdateDate().toDate(), resolutionDate, IssueSource.JIRA.name(), issue.getStatus().getName(),
     ((issue.getLabels() != null && issue.getLabels().size() > 0) ? issue.getLabels().iterator().next() : null), null,
-    issue.getAffectedVersions() != null && issue.getAffectedVersions().iterator().hasNext() ? issue.getAffectedVersions().iterator().next().getName() : null,
+    issue.getAffectedVersions() != null && issue.getAffectedVersions().iterator().hasNext() ?
+    issue.getAffectedVersions().iterator().next().getName() :
+    null,
     issue.getFixVersions() != null && issue.getFixVersions().iterator().hasNext() ? issue.getFixVersions().iterator().next().getName() : null);
   }
 
@@ -127,7 +143,7 @@ public class Issue extends PanacheEntityBase implements WithDates {
    */
   public static PanacheQuery<Issue> findByIssuesForWeeklyDevelopmentReport(final String prepository, final Date pdateFrom, final Date pdateTo) {
     return Issue.find(
-    "((repository != ?1 AND updatedAt >= ?2 AND updatedAt <= ?3) OR (repository = ?1 AND ((updatedAt >= ?2 AND updatedAt <= ?3) OR open = true))) AND (label != 'report' or label is null) AND assignee is not null and source = ?4",
+    "( (repository != ?1 AND ((updatedAt >= ?2 AND updatedAt <= ?3) OR (createdAt >= ?2 AND createdAt <= ?3) ) ) OR (repository = ?1 AND ( (updatedAt >= ?2 AND updatedAt <= ?3) OR (createdAt >= ?2 AND createdAt <= ?3) OR open = true))) AND (label != 'report' or label is null) AND assignee is not null and source = ?4",
     Sort.ascending("assignee", "label", "updatedAt"), prepository, pdateFrom, pdateTo, IssueSource.GITHUB.name());
   }
 
@@ -204,6 +220,7 @@ public class Issue extends PanacheEntityBase implements WithDates {
 
   public void setCreatedAt(Date createdAt) {
     this.createdAt = createdAt;
+    updateStatusAge();
   }
 
   public Date getUpdatedAt() {
@@ -228,6 +245,7 @@ public class Issue extends PanacheEntityBase implements WithDates {
 
   public void setOpen(boolean open) {
     this.open = open;
+    updateStatusAge();
   }
 
   public String getSource() {
@@ -276,6 +294,32 @@ public class Issue extends PanacheEntityBase implements WithDates {
 
   public void setFixVersion(final String pFixVersion) {
     fixVersion = pFixVersion;
+  }
+
+  public Integer getStatusAge() {
+    updateStatusAge();
+    return statusAge;
+  }
+
+  public void setStatusAge(Integer statusAge) {
+    this.statusAge = statusAge;
+  }
+
+  private void updateStatusAge() {
+    if (createdAt != null) {
+      ZonedDateTime now = ZonedDateTime.now();
+      ZonedDateTime twoWeeksAgo = now.minusWeeks(2);
+      ZonedDateTime oneMonthAgo = now.minusMonths(1);
+      statusAge = 3;
+      if (open) {
+        statusAge = 0;
+        if (createdAt.toInstant().isBefore(oneMonthAgo.toInstant())) {
+          statusAge = 2;
+        } else if (createdAt.toInstant().isBefore(twoWeeksAgo.toInstant())) {
+          statusAge = 1;
+        }
+      }
+    }
   }
 
   @Override
