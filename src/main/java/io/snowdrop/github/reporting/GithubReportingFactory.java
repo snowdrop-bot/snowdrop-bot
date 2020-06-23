@@ -31,6 +31,12 @@ public class GithubReportingFactory {
   @ConfigProperty(name = "github.reporting.additional.repositories")
   Set<String> additionalRepositories;
 
+  /**
+   * <p>Will also use bridge source repositories as source for report repositories.</p>
+   */
+  @ConfigProperty(name = "github.bridge.source-repos")
+  Set<String> bridgedRepositories;
+
   @ConfigProperty(name = "github.reporting.day-of-week", defaultValue = "4")
   int reportingDayOfWeek;
 
@@ -62,6 +68,7 @@ public class GithubReportingFactory {
 
   @Produces
   public RepositoryCollector createRepositoryCollector() {
+    additionalRepositories.addAll(bridgedRepositories);
     return new RepositoryCollector(client, new StatusLogger("forks", forks), new StatusLogger("repositories", repositories), users, organizations, additionalRepositories);
   }
 
