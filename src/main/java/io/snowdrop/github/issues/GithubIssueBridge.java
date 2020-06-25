@@ -1,16 +1,7 @@
 package io.snowdrop.github.issues;
 
-import java.io.IOException;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
+import io.snowdrop.BotException;
+import io.snowdrop.github.Github;
 import org.eclipse.egit.github.core.Issue;
 import org.eclipse.egit.github.core.Label;
 import org.eclipse.egit.github.core.User;
@@ -22,8 +13,10 @@ import org.eclipse.egit.github.core.service.LabelService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.snowdrop.BotException;
-import io.snowdrop.github.Github;
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class GithubIssueBridge {
 
@@ -265,7 +258,7 @@ public class GithubIssueBridge {
   /**
    * Mark an issue as closed.
    *
-   * @param upstream the issue to clone.
+   * @param issue the issue to clone.
    * @param repo     the target repository.
    */
   private Issue markIssueAsClosed(Issue issue, String repo) {
@@ -273,8 +266,12 @@ public class GithubIssueBridge {
       try {
         LOGGER.info("Closing issue {} to repository: {}.", issue.getNumber(), repo);
         List<Label> labels = new ArrayList<>(issue.getLabels());
-        labels.add(getLabel(repo, terminalLabelName));
-        issue.setLabels(labels);
+        try {
+          labels.add(getLabel(repo, terminalLabelName));
+          issue.setLabels(labels);
+        } catch (BotException e) {
+          LOGGER.warn("missing label {}", terminalLabelName);
+        }
         return issueService.editIssue(Github.user(repo), Github.repo(repo), issue);
       } catch (IOException e) {
         throw BotException.launderThrowable(e);
