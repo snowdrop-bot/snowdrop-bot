@@ -30,9 +30,9 @@ import org.slf4j.LoggerFactory;
 import io.snowdrop.BotException;
 import io.snowdrop.github.Github;
 import io.snowdrop.github.reporting.GithubReportingService;
-import io.snowdrop.reporting.model.Issue;
 import io.snowdrop.github.reporting.model.PullRequest;
 import io.snowdrop.google.dsl.ContentBuilder;
+import io.snowdrop.reporting.model.Issue;
 
 @Path("/docs")
 public class GoogleDocsEndpoint {
