@@ -70,14 +70,14 @@ This information can be provided either by the application.properties file or en
 `application.properties`:
 
 ```properties
-jira.user=my-jira-user
+jira.username=my-jira-username
 jira.password=my-jira-password
 ```
 
 Environment variables:
 
 ```bash
-$ export JIRA_USERNAME=my-jira-user
+$ export JIRA_USERNAME=my-jira-username
 $ export JIRA_PASSWORD=my-jira-password
 ```
 
@@ -94,9 +94,18 @@ If using resource filtering use build it this way instead:
 and then run with:
 
     java -jar target/snowdrop-bot-0.1-SNAPSHOT-runner.jar
+    
+Another option is to pass it when launching the application
 
-*NOTE:* The `github.token` is required, so either set it in
-`application.properites` or create an environment variable for it.
+    java -Dgithub.token=<the token> clean package -jar target/snowdrop-bot-0.1-SNAPSHOT-runner.jar
+
+> NOTE:* The `github.token` is required and there are several possibilities of informing it:
+>  * `application.properites`
+>  * environment variable
+>  * system properties 
+> 
+> More information at [QUARKUS - CONFIGURING YOUR APPLICATION](https://quarkus.io/guides/config#using-configproperties)
+
 
 ### Default Profile
 To avoid unnecessary traffic on the github API (which is subject of rate
@@ -118,12 +127,50 @@ configured under `/data/snowdrop-bot` which which is a volume friendlier path
 #### Persistence and configuration (production)
 The production profile uses /data/snowdrop-bot as the root for configuration and database files.
 
-## Associate list
+## Services
+
+### Users
+
+User management is done by REST API.
+
+The default admin user is `admin` and the password is also `admin`.
+
+#### Operations
+
+All user operations exist under the `/security/user` URL.
+
+**Create user:**
+* `/create`
+  * Parameters:
+    * `username`:
+    * `password`:
+    * `role`: [admin,user] 
+
+**List users:**
+* `/list`: Returns the existing users
+
+**Delete user:**
+* `/delete`: Deletes a user
+  * Parameters:
+    * `username`:
+  * Comments:
+    * A user cannot remove himself
+
+**Change password:**
+* `/changepw`: Changes the password of the authenticated user
+  * Parameters:
+    * `password`:
+
+### Associate list
+
+Relation between user id of eath issue source (GITHUB, JIRA) and the name to be shown in the report.
 
 The associate table can be maintained with the following REST services:
 
+#### Operations
+
 ```bash
-$ curl -X PUT -d associate=<github-id> -d alias=<bot-alias> -d source=[GITHUB,JIRA,...] -d name="<Associante Name>" localhost:8080/associate/create
+$ curl -X POST -d associate=<github-id> -d alias=<bot-alias> -d source=[GITHUB,JIRA,...] -d name="<Associante Name>" localhost:8080/associate/create
 ```
 
 A list of the associates can be obtained using the list service.
@@ -139,7 +186,7 @@ The criteria for selecting issues are the following:
 
 - exist in repositories of configured organizations (`github.reporting.organizations`)
 - assigned to configured users (`github.users`)
-- the assigned user has forked the repository
+- the assigned username has forked the repository
 - were open within the configured time frame (the week bounded by `github.reporting.day-of-week` & `github.reporting.hours`)
 
 Those issues, can be exported in csv, excel or pdf.
@@ -156,7 +203,7 @@ The criteria for selecting issues are the following:
 
 - exist in repositories of configured organizations (`github.reporting.organizations`)
 - assigned to configured users (`github.users`)
-- the assigned user has forked the repository
+- the assigned username has forked the repository
 - were open within the configured time frame (the week bounded by `github.reporting.day-of-week` & `github.reporting.hours`)
 
 ![pull request screen](./img/pull-requests.png "Pull Requests Screen")

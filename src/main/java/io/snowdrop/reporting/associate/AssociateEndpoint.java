@@ -2,6 +2,7 @@ package io.snowdrop.reporting.associate;
 
 import java.util.List;
 
+import javax.annotation.security.RolesAllowed;
 import javax.transaction.Transactional;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
@@ -30,7 +31,7 @@ public class AssociateEndpoint {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AssociateEndpoint.class);
 
-  @PUT
+  @POST
   @Path("/create")
   @Produces(MediaType.TEXT_PLAIN)
   @Transactional
