@@ -21,9 +21,8 @@ import io.snowdrop.security.model.BotUserRepository;
 
 /**
  * <p>
- * Manages associates.
+ * API for managing users.
  * </p>
- * curl -X PUT http://localhost:8080/associate/create?alias=jacobdotcosta
  */
 @Path("/security/user")
 public class UserMgmtEndpoint {
@@ -41,8 +40,8 @@ public class UserMgmtEndpoint {
       @FormParam("username") String username,
       @FormParam("password") String password,
       @FormParam("role") String role) {
-    if (LOGGER.isInfoEnabled()) {
-      LOGGER.info("#createUser(String,String,String) - {},{}", username, role);
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("#createUser(String,String,String) - {},{}", username, role);
     }
     BotUser storedBotUser = repoBotUser.findByUsername(username);
     if (storedBotUser == null) {
@@ -65,8 +64,8 @@ public class UserMgmtEndpoint {
   @Produces(MediaType.APPLICATION_JSON)
   @Transactional
   public Response delete(@Context SecurityContext sec, @FormParam("username") String username) {
-    if (LOGGER.isInfoEnabled()) {
-      LOGGER.info("#delete(String) - {}", username);
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("#delete(String) - {}", username);
     }
     if (sec != null && sec.getUserPrincipal() != null) {
       if (!username.equals(sec.getUserPrincipal().getName())) {
@@ -85,8 +84,8 @@ public class UserMgmtEndpoint {
   @Produces(MediaType.APPLICATION_JSON)
   @Transactional
   public Response changePassword(@Context SecurityContext sec, @FormParam("password") String password) {
-    if (LOGGER.isInfoEnabled()) {
-      LOGGER.info("#changePassword(String) {}", sec.getUserPrincipal().getName());
+    if (LOGGER.isDebugEnabled()) {
+      LOGGER.debug("#changePassword(String) {}", sec.getUserPrincipal().getName());
     }
     BotUser storedBotUser = repoBotUser.findByUsername(sec.getUserPrincipal().getName());
     if (storedBotUser != null) {

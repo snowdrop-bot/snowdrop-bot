@@ -21,8 +21,6 @@
     <quarkus.platform.group-id>io.quarkus</quarkus.platform.group-id>
     <quarkus.platform.version>1.4.2.Final</quarkus.platform.version>
     <quarkus-plugin.version>1.4.2.Final</quarkus-plugin.version>
-    <!-- <quarkus.platform.version>999-SNAPSHOT</quarkus.platform.version> -->
-    <!-- <quarkus-plugin.version>999-SNAPSHOT</quarkus-plugin.version> -->
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <surefire-plugin.version>2.22.1</surefire-plugin.version>
     <dekorate.version>1.0.0</dekorate.version>
@@ -145,11 +143,6 @@
       <artifactId>rest-assured</artifactId>
       <scope>test</scope>
     </dependency>
-    <!--<dependency>-->
-      <!--<groupId>io.quarkus</groupId>-->
-      <!--<artifactId>quarkus-panache-mock</artifactId>-->
-      <!--<scope>test</scope>-->
-    <!--</dependency>-->
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-hibernate-orm-panache</artifactId>
