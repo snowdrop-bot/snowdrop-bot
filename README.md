@@ -285,8 +285,8 @@ mvn clean package -Dquarkus.kubernetes.deploy=true
 
 The project is configured to use `Openshift` out of the box.
 To use `Kubernetes` you may need to set
-`quarkus.kubernetes.deployment-target=kuberentes` to `application.properties`
-and also add container-image-docker or container-image-jib dependencies to your pom.
+`quarkus.kubernetes.deployment-target=kubernetes` to `application.properties`
+and also add `container-image-docker` or `container-image-jib` dependencies to your pom.
 
 ## Appendix
 
