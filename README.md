@@ -94,7 +94,7 @@ If using resource filtering use build it this way instead:
 and then run with:
 
     java -jar target/snowdrop-bot-0.1-SNAPSHOT-runner.jar
-    
+
 Another option is to pass it when launching the application
 
     java -Dgithub.token=<the token> clean package -jar target/snowdrop-bot-0.1-SNAPSHOT-runner.jar
@@ -102,8 +102,8 @@ Another option is to pass it when launching the application
 > NOTE:* The `github.token` is required and there are several possibilities of informing it:
 >  * `application.properites`
 >  * environment variable
->  * system properties 
-> 
+>  * system properties
+>
 > More information at [QUARKUS - CONFIGURING YOUR APPLICATION](https://quarkus.io/guides/config#using-configproperties)
 
 
@@ -144,7 +144,7 @@ All user operations exist under the `/security/user` URL.
   * Parameters:
     * `username`:
     * `password`:
-    * `role`: [admin,user] 
+    * `role`: [admin,user]
 
 **List users:**
 * `/list`: Returns the existing users
@@ -259,7 +259,7 @@ Before these resources can be applied, some preparation is required.
 2. Create a secret with the github token.
 
 ``` sh
-kubectl create secret generic dev-db-secret --from-literal=GITHUB_TOKEN=<your github token here>
+kubectl create secret generic snowdrop-github --from-literal=GITHUB_TOKEN=<your github token here>
 ```
 
 Since the snowdrop team is using a shared `password-store` for handling
@@ -267,17 +267,10 @@ credentials, the following would work:
 
 ``` sh
 export GITHUB_TOKEN=`pass show snowdrop/github.com/snowdrop-bot/token`
-kubectl create secret generic dev-db-secret --from-literal=GITHUB_TOKEN=$GITHUB_TOKEN
+kubectl create secret generic snowdrop-github --from-literal=GITHUB_TOKEN=$GITHUB_TOKEN
 ```
 
-`
-3. Create a secret with the googledocs `credentials.json` file
-
-``` sh
-kubectl create secret generic snowdrop-googledocs --from-file=credentials.json=/path/to/credentials.json
-```
-
-4. Build the container and apply the manifests.
+3. Build the container and apply the manifests.
 
 ``` sh
 mvn clean package -Dquarkus.kubernetes.deploy=true
