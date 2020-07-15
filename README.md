@@ -251,11 +251,11 @@ The id of the target document can be specified using `google.docs.report.documen
 
 ## Kubernetes / Openshift deployment
 
-During compilation resources for Kubernetes and Openshift are generated.
+During compilation resources for Kubernetes and OpenShift are generated.
 
 Before these resources can be applied, some preparation is required.
 
-1. Create a PV with name `snowdrop-db-claim`
+1. Create a PVC with name `snowdrop-db-claim` and verify that it is bound to a `PV - PersistentVolume`
 2. Create a secret with the github token.
 
 ``` sh
