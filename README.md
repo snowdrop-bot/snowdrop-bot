@@ -1,22 +1,29 @@
 # Table of Contents
 
-   * [Snowdrop Bot](#snowdrop-bot)
-      * [Features](#features)
-      * [Installation](#installation)
-         * [Database](#database)
-         * [Github](#github)
-         * [Google APIS](#google-apis)
-         * [Jira](#jira)
-      * [Running](#running)
-         * [Default Profile](#default-profile)
-            * [Persistence and configuration (defalut)](#persistence-and-configuration-defalut)
-         * [Production Profile](#production-profile)
-            * [Persistence and configuration (production)](#persistence-and-configuration-production)
-      * [Issue tracking](#issue-tracking)
-      * [Pull Request tracking](#pull-request-tracking)
-      * [Forked repository issue bridging](#forked-repository-issue-bridging)
-      * [Google Docs Report Generation](#google-docs-report-generation)
-      * [Kubernetes / Openshift deployment](#kubernetes--openshift-deployment)
+  * [Snowdrop Bot](#snowdrop-bot)
+       * [Features](#features)
+       * [Installation](#installation)
+          * [Database](#database)
+          * [Github](#github)
+          * [Google APIS](#google-apis)
+          * [Jira](#jira)
+       * [Running](#running)
+          * [Default Profile](#default-profile)
+             * [Persistence and configuration (defalut)](#persistence-and-configuration-defalut)
+          * [Production Profile](#production-profile)
+             * [Persistence and configuration (production)](#persistence-and-configuration-production)
+       * [Services](#services)
+          * [Users](#users)
+             * [Operations](#operations)
+          * [Associate list](#associate-list)
+             * [Operations](#operations-1)
+       * [Issue tracking](#issue-tracking)
+       * [Pull Request tracking](#pull-request-tracking)
+       * [Forked repository issue bridging](#forked-repository-issue-bridging)
+       * [Google Docs Report Generation](#google-docs-report-generation)
+       * [Kubernetes / Openshift deployment](#kubernetes--openshift-deployment)
+       * [Appendix](#appendix)
+
 
 
 # Snowdrop Bot
@@ -255,7 +262,7 @@ During compilation resources for Kubernetes and OpenShift are generated.
 
 Before these resources can be applied, some preparation is required.
 
-1. Create a PVC with name `snowdrop-db-claim` and verify that it is bound to a `PV - PersistentVolume`
+1. Create a PVC with name `snowdrop-db-claim` and verify that it is bound to a `PV - PersistentVolume`. See [appendix](#appendix) to create a PV/PVC.
 2. Create a secret with the github token.
 
 ``` sh
@@ -280,3 +287,40 @@ The project is configured to use `Openshift` out of the box.
 To use `Kubernetes` you may need to set
 `quarkus.kubernetes.deployment-target=kuberentes` to `application.properties`
 and also add container-image-docker or container-image-jib dependencies to your pom.
+
+## Appendix
+
+A PV/PVC could be created using the following `kubectl` commands
+
+```bash
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv001
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 2Gi
+  hostPath:
+    path: /tmp/pv001
+    type: ""
+  persistentVolumeReclaimPolicy: Recycle
+  volumeMode: Filesystem
+EOF
+
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: snowdrop-db-claim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  volumeMode: Filesystem
+EOF
+```
