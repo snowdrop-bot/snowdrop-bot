@@ -94,6 +94,10 @@ To run the bot you can just build:
 
     ./mvnw clean package
 
+or run it using the quarkus:dev goal:
+
+    ./mvnw compile quarkus:dev
+
 If using resource filtering use build it this way instead:
 
     ./mvnw -Dgithub.token=<the token> clean package
@@ -121,7 +125,7 @@ limiting) the default profile has the core features (e.g. bridge and reporting d
 You can enable them selectively through the UI, or use a different profile (e.g.
 production).
 
-#### Persistence and configuration (defalut)
+#### Persistence and configuration (default)
 The default profile uses /data/snowdrop-bot as the root for configuration and database files.
 
 
@@ -256,7 +260,7 @@ This requires the setup mentioned in [Google APIS](#google-apis).
 The id of the target document can be specified using `google.docs.report.document-id`.
 
 
-## Kubernetes / Openshift deployment
+## Kubernetes / OpenShift deployment
 
 During compilation resources for Kubernetes and OpenShift are generated.
 
