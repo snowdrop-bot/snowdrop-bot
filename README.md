@@ -282,7 +282,7 @@ kubectl create secret generic snowdrop-github --from-literal=GITHUB_TOKEN=$GITHU
 ``` sh
 mvn clean package -Dquarkus.kubernetes.deploy=true
 ```
-**WARNING**: To build the container image, use `-Pdocker` or `-Pjib` depending which tool you prefer to use to built the image.
+**WARNING**: To build the container image, use `-Pdocker` or `-Pjib` profile depending which tool you prefer to use to build the image.
 
 The project is configured to use `Openshift` out of the box.
 To use `Kubernetes` you may need to set
