@@ -277,7 +277,27 @@ export GITHUB_TOKEN=`pass show snowdrop/github.com/snowdrop-bot/token`
 kubectl create secret generic snowdrop-github --from-literal=GITHUB_TOKEN=$GITHUB_TOKEN
 ```
 
-3. Build the container and apply the manifests.
+3. Do the same for the `jira.username`, `jira.password` and `jira.users`
+
+``` sh
+kubectl create secret generic snowdrop-jira \
+    --from-literal=jira.username=<your jira username> \
+    --from-literal=jira.password=<your jira password \
+    --from-literal=jira.users=<the jira users>
+```
+
+If the information is shared using `password-store`
+``` sh
+export jira_users=cmoulliard
+export jira_username=snowdrop-jirabot
+export jira_password=`pass show snowdrop/rh/snowdrop-jirabot`
+kubectl create secret generic snowdrop-jira \
+    --from-literal=jira.username=$jira_username \
+    --from-literal=jira.password=$jira_password \
+    --from-literal=jira.users=$jira_users
+```
+
+4. Build the container and apply the manifests.
 
 ``` sh
 mvn clean package -Dquarkus.kubernetes.deploy=true
