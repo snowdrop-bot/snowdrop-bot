@@ -14,7 +14,7 @@
 # docker run -i --rm -p 8080:8080 quarkus/snowdrop-bot-jvm
 #
 ###
-FROM fabric8/java-alpine-openjdk8-jre:1.6.5
+FROM fabric8/java-alpine-openjdk11-jre:1.8
 ENV JAVA_OPTIONS="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
 ENV AB_ENABLED=jmx_exporter
 
