@@ -56,13 +56,29 @@ public class Issue extends PanacheEntityBase implements WithDates {
   public Issue() {
   }
 
-  public Issue(String url, String repository, int number, String title, String creator, String assignee, boolean open, Date createdAt, Date updatedAt, Date closedAt, String source, String status, String label, String issueGroup, String affectedVersion, String fixVersion) {
+  public Issue(
+  String url,
+  String repository,
+  int number,
+  String title,
+  String creator,
+  String assignee,
+  boolean open,
+  Date createdAt,
+  Date updatedAt,
+  Date closedAt,
+  String source,
+  String status,
+  String label,
+  String issueGroup,
+  String affectedVersion,
+  String fixVersion) {
     this.url = url;
     this.repository = repository;
     this.number = number;
     this.title = title;
-    if (this.title.length() > 255) {
-      this.title = this.title.substring(0, 254);
+    if (this.title.length()>255) {
+      this.title = this.title.substring(0,254);
     }
     this.creator = creator;
     this.assignee = assignee;
@@ -81,10 +97,9 @@ public class Issue extends PanacheEntityBase implements WithDates {
 
   public static Issue create(String repository, org.eclipse.egit.github.core.Issue issue) {
     return new Issue(issue.getHtmlUrl(), repository, issue.getNumber(), issue.getTitle(), issue.getUser().getLogin(),
-        issue.getAssignee() != null ? issue.getAssignee().getLogin() : null, IssueOpen.isOpen(issue.getState()),
-        issue.getCreatedAt(), issue.getUpdatedAt(), issue.getClosedAt(), IssueSource.GITHUB.name(), issue.getState(),
-        ((issue.getLabels() != null && issue.getLabels().size() > 0) ? issue.getLabels().get(0).getName() : null), null,
-        null, null);
+    issue.getAssignee() != null ? issue.getAssignee().getLogin() : null, IssueOpen.isOpen(issue.getState()),
+    issue.getCreatedAt(), issue.getUpdatedAt(), issue.getClosedAt(), IssueSource.GITHUB.name(), issue.getState(),
+    ((issue.getLabels() != null && issue.getLabels().size() > 0) ? issue.getLabels().get(0).getName() : null), null, null, null);
   }
 
   public static Issue create(String repository, com.atlassian.jira.rest.client.api.domain.Issue issue) {
@@ -100,15 +115,14 @@ public class Issue extends PanacheEntityBase implements WithDates {
         LOGGER.warn(e.getMessage(), e);
       }
     }
-    return new Issue("https://issues.redhat.com/browse/" + issue.getKey(), repository,
-        Integer.valueOf(issue.getKey().split("-")[1]), issue.getSummary(), issue.getReporter().getAccountId(),
-        issue.getAssignee() != null ? issue.getAssignee().getName() : null, issue.getResolution() == null,
-        issue.getCreationDate().toDate(), issue.getUpdateDate().toDate(), resolutionDate, IssueSource.JIRA.name(),
-        issue.getStatus().getName(),
-        ((issue.getLabels() != null && issue.getLabels().size() > 0) ? issue.getLabels().iterator().next() : null),
-        null,
-        issue.getAffectedVersions() != null && issue.getAffectedVersions().iterator().hasNext() ? issue.getAffectedVersions().iterator().next().getName() : null,
-        issue.getFixVersions() != null && issue.getFixVersions().iterator().hasNext() ? issue.getFixVersions().iterator().next().getName() : null);
+    return new Issue("https://issues.redhat.com/browse/" + issue.getKey(), repository, Integer.valueOf(issue.getKey().split("-")[1]), issue.getSummary()
+    , issue.getReporter().getAccountId(), issue.getAssignee() != null ? issue.getAssignee().getName() : null, issue.getResolution() == null,
+    issue.getCreationDate().toDate(), issue.getUpdateDate().toDate(), resolutionDate, IssueSource.JIRA.name(), issue.getStatus().getName(),
+    ((issue.getLabels() != null && issue.getLabels().size() > 0) ? issue.getLabels().iterator().next() : null), null,
+    issue.getAffectedVersions() != null && issue.getAffectedVersions().iterator().hasNext() ?
+    issue.getAffectedVersions().iterator().next().getName() :
+    null,
+    issue.getFixVersions() != null && issue.getFixVersions().iterator().hasNext() ? issue.getFixVersions().iterator().next().getName() : null);
   }
 
   /**
@@ -132,8 +146,8 @@ public class Issue extends PanacheEntityBase implements WithDates {
    */
   public static PanacheQuery<Issue> findByIssuesForWeeklyDevelopmentReport(final String prepository, final Date pdateFrom, final Date pdateTo) {
     return Issue.find(
-        "( (repository != ?1 AND ((updatedAt >= ?2 AND updatedAt <= ?3) OR (createdAt >= ?2 AND createdAt <= ?3) ) ) OR (repository = ?1 AND ( (updatedAt >= ?2 AND updatedAt <= ?3) OR (createdAt >= ?2 AND createdAt <= ?3) OR open = true))) AND (label != 'report' or label is null) AND assignee is not null and source = ?4",
-        Sort.ascending("assignee", "label", "updatedAt"), prepository, pdateFrom, pdateTo, IssueSource.GITHUB.name());
+    "( (repository != ?1 AND ((updatedAt >= ?2 AND updatedAt <= ?3) OR (createdAt >= ?2 AND createdAt <= ?3) ) ) OR (repository = ?1 AND ( (updatedAt >= ?2 AND updatedAt <= ?3) OR (createdAt >= ?2 AND createdAt <= ?3) OR open = true))) AND (label != 'report' or label is null) AND assignee is not null and source = ?4",
+    Sort.ascending("assignee", "label", "updatedAt"), prepository, pdateFrom, pdateTo, IssueSource.GITHUB.name());
   }
 
   /**
@@ -145,9 +159,14 @@ public class Issue extends PanacheEntityBase implements WithDates {
    * @param pdateTo
    * @return
    */
-  public static PanacheQuery<Issue> findByRepoAssigneeAndModifiedDate(final String prepository, final String pasignee, final Date pdateFrom, final Date pdateTo) {
-    return Issue.find("repository = ?1 AND assignee = ?2 AND updatedAt >= ?3 AND updatedAt <= ?4 ",
-        Sort.ascending("updatedAt"), prepository, pasignee, pdateFrom, pdateTo);
+  public static PanacheQuery<Issue> findByRepoAssigneeAndModifiedDate(
+  final String prepository,
+  final String pasignee,
+  final Date pdateFrom,
+  final Date pdateTo) {
+    return Issue
+    .find("repository = ?1 AND assignee = ?2 AND updatedAt >= ?3 AND updatedAt <= ?4 ", Sort.ascending("updatedAt"), prepository, pasignee,
+    pdateFrom, pdateTo);
   }
 
   public String getUrl() {
@@ -316,13 +335,18 @@ public class Issue extends PanacheEntityBase implements WithDates {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj) return true;
-    if (obj == null) return false;
-    if (getClass() != obj.getClass()) return false;
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
     Issue other = (Issue) obj;
     if (url == null) {
-      if (other.url != null) return false;
-    } else if (!url.equals(other.url)) return false;
+      if (other.url != null)
+        return false;
+    } else if (!url.equals(other.url))
+      return false;
     return true;
   }
 }
