@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    app.quarkus.io/vcs-url: https://github.com/snowdrop-bot/snowdrop-bot.git
+    app.quarkus.io/build-timestamp: 2020-07-16 - 15:21:55 +0000
+    app.quarkus.io/commit-id: f0de40ca9532974f51d1a23edaa04a5ca79dee25
+  labels:
+    app.kubernetes.io/name: snowdrop-bot
+    app.kubernetes.io/part-of: snowdrop-bot
+    app.kubernetes.io/version: 0.1-SNAPSHOT
+  name: snowdrop-bot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: snowdrop-bot
+      app.kubernetes.io/part-of: snowdrop-bot
+      app.kubernetes.io/version: 0.1-SNAPSHOT
+  template:
+    metadata:
+      annotations:
+        app.quarkus.io/vcs-url: https://github.com/snowdrop-bot/snowdrop-bot.git
+        app.quarkus.io/build-timestamp: 2020-07-16 - 15:21:55 +0000
+        app.quarkus.io/commit-id: f0de40ca9532974f51d1a23edaa04a5ca79dee25
+      labels:
+        app.kubernetes.io/name: snowdrop-bot
+        app.kubernetes.io/part-of: snowdrop-bot
+        app.kubernetes.io/version: 0.1-SNAPSHOT
+    spec:
+      containers:
+        - env:
+            - name: KUBERNETES_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          envFrom:
+            - secretRef:
+                name: snowdrop-github
+            - secretRef:
+                name: snowdrop-jira
+          image: quay.io/snowdrop/snowdrop-bot:0.1-SNAPSHOT
+          imagePullPolicy: Always
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health/live
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 0
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 10
+          name: snowdrop-bot
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health/ready
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 0
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 10
+          volumeMounts:
+            - mountPath: /z/var/snowdrop-bot/data/prod
+              name: snowdrop-db
+              readOnly: false
+              subPath: ""
+      serviceAccount: snowdrop-bot
+      volumes:
+        - name: snowdrop-db
+          persistentVolumeClaim:
+            claimName: snowdrop-db-claim
+            readOnly: false

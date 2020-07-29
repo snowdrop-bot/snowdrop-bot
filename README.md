@@ -357,8 +357,13 @@ Once the application is compiled and packaged, to crete the image with buildah a
 Build the image
 
 ```bash
-$ buildah bud 
+$ buildah bud -f src/main/docker/Dockerfile.jvm -t quarkus/snowdrop-bot-jvm .
 ```
+
+> **NOTE**: Before pushing the image it can actually be tested, for instance using podman:
+> ```bash
+> $ podman run --rm --name snowdrop-bot -e github.token=$(pass show github.com/snowdrop-bot/token) -e jira.username=${JIRA_USERNAME} -e jira.password=${JIRA_PASSWORD} -d localhost/quarkus/snowdrop-bot:latest
+> ```
 
 Login to quay
 
@@ -372,4 +377,18 @@ Push the image
 
 ```bash
 $ buildah push localhost/quarkus/snowdrop-bot:latest docker://quay.io/snowdrop/snowdrop-bot:latest
+```
+
+Once updated, update the k8s deployment configuration with the new version (if not latest).
+
+```bash
+$ kubectl set image -n bot deployment/snowdrop-bot snowdrop-bot=quay.io/snowdrop/snowdrop-bot:0.2-SNAPSHOT
+```
+
+And scale down and up the pod.
+
+```bash
+$ kubectl scale --replicas=0 deployment snowdrop-bot -n bot
+$ watch kubectl get pod -n bot
+$ kubectl scale --replicas=1 deployment snowdrop-bot -n bot
 ```
