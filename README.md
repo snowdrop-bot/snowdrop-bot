@@ -9,7 +9,7 @@
           * [Jira](#jira)
        * [Running](#running)
           * [Default Profile](#default-profile)
-             * [Persistence and configuration (defalut)](#persistence-and-configuration-defalut)
+            * [Persistence and configuration (default)](#persistence-and-configuration-default)
           * [Production Profile](#production-profile)
              * [Persistence and configuration (production)](#persistence-and-configuration-production)
        * [Services](#services)
@@ -21,10 +21,9 @@
        * [Pull Request tracking](#pull-request-tracking)
        * [Forked repository issue bridging](#forked-repository-issue-bridging)
        * [Google Docs Report Generation](#google-docs-report-generation)
-       * [Kubernetes / Openshift deployment](#kubernetes--openshift-deployment)
+      * [Kubernetes / OpenShift deployment](#kubernetes--openshift-deployment)
        * [Appendix](#appendix)
-
-
+         * [Building and publishing the image to quay with buildah](#building-and-publishing-the-image-to-quay-with-buildah)
 
 # Snowdrop Bot
 A bot for automating snowdrop related tasks
@@ -314,6 +313,8 @@ To use `Kubernetes` you may need to set
 
 ## Appendix
 
+###
+
 A PV/PVC could be created using the following `kubectl` commands
 
 ```bash
@@ -347,4 +348,28 @@ spec:
       storage: 2Gi
   volumeMode: Filesystem
 EOF
+```
+
+### Building and publishing the image to quay with buildah
+
+Once the application is compiled and packaged, to crete the image with buildah and publish it to Quay follow these steps.
+
+Build the image
+
+```bash
+$ buildah bud 
+```
+
+Login to quay
+
+```bash
+$ buildah login quay.io
+Username: xxx
+Password: ***
+Login Succeeded!
+```
+Push the image
+
+```bash
+$ buildah push localhost/quarkus/snowdrop-bot:latest docker://quay.io/snowdrop/snowdrop-bot:latest
 ```
