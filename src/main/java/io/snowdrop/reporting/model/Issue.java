@@ -77,6 +77,9 @@ public class Issue extends PanacheEntityBase implements WithDates {
     this.repository = repository;
     this.number = number;
     this.title = title;
+    if (this.title.length()>255) {
+      this.title = this.title.substring(0,254);
+    }
     this.creator = creator;
     this.assignee = assignee;
     this.open = open;
