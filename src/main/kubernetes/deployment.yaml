@@ -1,0 +1,121 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: snowdrop-bot
+  namespace: bot
+  selfLink: /apis/apps/v1/namespaces/bot/deployments/snowdrop-bot
+  uid: 1e6a0f60-c77e-11ea-bd75-7085c2fdc6e8
+  resourceVersion: '47111687'
+  generation: 6
+  creationTimestamp: '2020-07-16T16:05:07Z'
+  labels:
+    app.kubernetes.io/name: snowdrop-bot
+    app.kubernetes.io/part-of: snowdrop-bot
+    app.kubernetes.io/version: 0.1-SNAPSHOT
+  annotations:
+    app.quarkus.io/build-timestamp: '2020-07-16 - 15:21:55 +0000'
+    app.quarkus.io/commit-id: f0de40ca9532974f51d1a23edaa04a5ca79dee25
+    app.quarkus.io/vcs-url: 'https://github.com/snowdrop-bot/snowdrop-bot.git'
+    deployment.kubernetes.io/revision: '2'
+    kubectl.kubernetes.io/last-applied-configuration: >
+      {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{"app.quarkus.io/build-timestamp":"2020-07-16
+      - 15:21:55
+      +0000","app.quarkus.io/commit-id":"f0de40ca9532974f51d1a23edaa04a5ca79dee25","app.quarkus.io/vcs-url":"https://github.com/snowdrop-bot/snowdrop-bot.git"},"labels":{"app.kubernetes.io/name":"snowdrop-bot","app.kubernetes.io/part-of":"snowdrop-bot","app.kubernetes.io/version":"0.1-SNAPSHOT"},"name":"snowdrop-bot","namespace":"bot"},"spec":{"replicas":1,"selector":{"matchLabels":{"app.kubernetes.io/name":"snowdrop-bot","app.kubernetes.io/part-of":"snowdrop-bot","app.kubernetes.io/version":"0.1-SNAPSHOT"}},"template":{"metadata":{"annotations":{"app.quarkus.io/build-timestamp":"2020-07-16
+      - 15:21:55
+      +0000","app.quarkus.io/commit-id":"f0de40ca9532974f51d1a23edaa04a5ca79dee25","app.quarkus.io/vcs-url":"https://github.com/snowdrop-bot/snowdrop-bot.git"},"labels":{"app.kubernetes.io/name":"snowdrop-bot","app.kubernetes.io/part-of":"snowdrop-bot","app.kubernetes.io/version":"0.1-SNAPSHOT"}},"spec":{"containers":[{"env":[{"name":"KUBERNETES_NAMESPACE","valueFrom":{"fieldRef":{"fieldPath":"metadata.namespace"}}}],"envFrom":[{"secretRef":{"name":"snowdrop-github"}},{"secretRef":{"name":"snowdrop-jira"}}],"image":"quay.io/snowdrop/snowdrop-bot:0.1-SNAPSHOT","imagePullPolicy":"Always","livenessProbe":{"failureThreshold":3,"httpGet":{"path":"/health/live","port":8080,"scheme":"HTTP"},"initialDelaySeconds":0,"periodSeconds":30,"successThreshold":1,"timeoutSeconds":10},"name":"snowdrop-bot","ports":[{"containerPort":8080,"name":"http","protocol":"TCP"}],"readinessProbe":{"failureThreshold":3,"httpGet":{"path":"/health/ready","port":8080,"scheme":"HTTP"},"initialDelaySeconds":0,"periodSeconds":30,"successThreshold":1,"timeoutSeconds":10},"volumeMounts":[{"mountPath":"/z/var/snowdrop-bot/data/prod","name":"snowdrop-db","readOnly":false,"subPath":""}]}],"serviceAccount":"snowdrop-bot","volumes":[{"name":"snowdrop-db","persistentVolumeClaim":{"claimName":"snowdrop-db-claim","readOnly":false}}]}}}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: snowdrop-bot
+      app.kubernetes.io/part-of: snowdrop-bot
+      app.kubernetes.io/version: 0.1-SNAPSHOT
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app.kubernetes.io/name: snowdrop-bot
+        app.kubernetes.io/part-of: snowdrop-bot
+        app.kubernetes.io/version: 0.1-SNAPSHOT
+      annotations:
+        app.quarkus.io/build-timestamp: '2020-07-16 - 15:21:55 +0000'
+        app.quarkus.io/commit-id: f0de40ca9532974f51d1a23edaa04a5ca79dee25
+        app.quarkus.io/vcs-url: 'https://github.com/snowdrop-bot/snowdrop-bot.git'
+    spec:
+      volumes:
+        - name: snowdrop-db
+          persistentVolumeClaim:
+            claimName: snowdrop-db-claim
+      containers:
+        - name: snowdrop-bot
+          image: 'quay.io/snowdrop/snowdrop-bot:latest'
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          envFrom:
+            - secretRef:
+                name: snowdrop-github
+            - secretRef:
+                name: snowdrop-jira
+          env:
+            - name: KUBERNETES_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+          resources: {}
+          volumeMounts:
+            - name: snowdrop-db
+              mountPath: /z/var/snowdrop-bot/data/prod
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8080
+              scheme: HTTP
+            timeoutSeconds: 10
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+              scheme: HTTP
+            timeoutSeconds: 10
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 3
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: Always
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      serviceAccountName: snowdrop-bot
+      serviceAccount: snowdrop-bot
+      securityContext: {}
+      schedulerName: default-scheduler
+  strategy:
+    type: Recreate
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+status:
+  observedGeneration: 6
+  replicas: 1
+  updatedReplicas: 1
+  readyReplicas: 1
+  availableReplicas: 1
+  conditions:
+    - type: Progressing
+      status: 'True'
+      lastUpdateTime: '2020-07-29T09:04:06Z'
+      lastTransitionTime: '2020-07-29T09:04:06Z'
+      reason: NewReplicaSetAvailable
+      message: ReplicaSet "snowdrop-bot-5b8ddf4bf" has successfully progressed.
+    - type: Available
+      status: 'True'
+      lastUpdateTime: '2020-07-29T09:16:17Z'
+      lastTransitionTime: '2020-07-29T09:16:17Z'
+      reason: MinimumReplicasAvailable
+      message: Deployment has minimum availability.

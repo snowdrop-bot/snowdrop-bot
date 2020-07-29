@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    app.quarkus.io/vcs-url: https://github.com/snowdrop-bot/snowdrop-bot.git
+    app.quarkus.io/build-timestamp: 2020-07-16 - 15:21:55 +0000
+    app.quarkus.io/commit-id: f0de40ca9532974f51d1a23edaa04a5ca79dee25
+  labels:
+    app.kubernetes.io/name: snowdrop-bot
+    app.kubernetes.io/part-of: snowdrop-bot
+    app.kubernetes.io/version: 0.1-SNAPSHOT
+  name: snowdrop-bot
+spec:
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+  selector:
+    app.kubernetes.io/name: snowdrop-bot
+    app.kubernetes.io/part-of: snowdrop-bot
+    app.kubernetes.io/version: 0.1-SNAPSHOT
+  type: ClusterIP
