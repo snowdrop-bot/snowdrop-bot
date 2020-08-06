@@ -17,6 +17,11 @@
 FROM fabric8/java-alpine-openjdk11-jre:1.8
 ENV JAVA_OPTIONS="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
 ENV AB_ENABLED=jmx_exporter
+ENV TZ=Europe/Madrid
+
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN mkdir -p /z/var/snowdrop-bot
 
 RUN mkdir -p /z/var/snowdrop-bot
 
