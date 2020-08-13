@@ -43,7 +43,7 @@ public class WeekReportService {
       cal.add(Calendar.DAY_OF_MONTH, -7);
       final Date startTime = cal.getTime();
       try {
-        weekReportEp.executeReport(startTime, endTime, false);
+        weekReportEp.executeReport(startTime, endTime, true);
       } catch (IOException e) {
         LOGGER.error(e.getMessage(), e);
         throw BotException.launderThrowable(e);
