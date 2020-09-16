@@ -62,11 +62,6 @@ public class PullRequestCollector {
     this.users = users;
     this.organizations = organizations;
 
-//    this.endTime = ZonedDateTime.now().with(DayOfWeek.of(reportingDay)).withHour(reportingHour);
-//    this.startTime = endTime.minusWeeks(1);
-
-//    this.minStartTime = Date.from(startTime.minusMonths(6).toInstant());
-//    this.minEndTime = Date.from(endTime.toInstant());
     init(Optional.of(reportingDay),Optional.of(reportingHour));
   }
 
