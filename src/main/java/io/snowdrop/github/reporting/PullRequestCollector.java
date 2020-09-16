@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -41,12 +42,12 @@ public class PullRequestCollector {
   private final Set<String> organizations;
 
   // These dates represent current reporting period
-  private final ZonedDateTime startTime;
-  private final ZonedDateTime endTime;
+  private ZonedDateTime startTime;
+  private ZonedDateTime endTime;
 
   // These represent the oldest reporting period possible
-  private final Date minStartTime;
-  private final Date minEndTime;
+  private Date minStartTime;
+  private Date minEndTime;
 
   private final Map<String, Set<Repository>> repositories = new HashMap<>();
 
@@ -61,15 +62,23 @@ public class PullRequestCollector {
     this.users = users;
     this.organizations = organizations;
 
-    this.endTime = ZonedDateTime.now().with(DayOfWeek.of(reportingDay)).withHour(reportingHour);
-    this.startTime = endTime.minusWeeks(1);
+//    this.endTime = ZonedDateTime.now().with(DayOfWeek.of(reportingDay)).withHour(reportingHour);
+//    this.startTime = endTime.minusWeeks(1);
 
-    this.minStartTime = Date.from(startTime.minusMonths(6).toInstant());
-    this.minEndTime = Date.from(endTime.toInstant());
-    init();
+//    this.minStartTime = Date.from(startTime.minusMonths(6).toInstant());
+//    this.minEndTime = Date.from(endTime.toInstant());
+    init(Optional.of(reportingDay),Optional.of(reportingHour));
   }
 
-  public void init() {
+  public void init(final Optional<Integer> reportingDay, final Optional<Integer> reportingHour) {
+    if (reportingDay.isPresent() && reportingHour.isPresent()) {
+      this.endTime = ZonedDateTime.now().with(DayOfWeek.of(reportingDay.get())).withHour(reportingHour.get());
+    } else {
+      this.endTime = ZonedDateTime.now();
+    }
+    this.startTime = endTime.minusWeeks(1);
+    this.minStartTime = Date.from(startTime.minusMonths(6).toInstant());
+    this.minEndTime = Date.from(endTime.toInstant());
     users.stream().forEach(u -> {
       repositories.put(u, new HashSet<>());
     });
@@ -81,11 +90,13 @@ public class PullRequestCollector {
   }
 
   public Map<String, Set<PullRequest>> collectPullRequests() {
+    init(Optional.empty(), Optional.empty());
     return streamPullRequests()
       .collect(Collectors.groupingBy(PullRequest::getCreator, Collectors.toSet()));
   }
 
   public Stream<PullRequest> streamPullRequests() {
+    init(Optional.empty(), Optional.empty());
     long total = Repository.<Repository>streamAll()
       .map(r -> Parent.NONE.equals(r.getParent()) ? r.getOwner() + "/" + r.getName() : r.getParent())
       .distinct().count();
