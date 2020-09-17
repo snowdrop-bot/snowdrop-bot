@@ -8,7 +8,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -21,10 +20,10 @@ import org.slf4j.LoggerFactory;
 
 import io.snowdrop.BotException;
 import io.snowdrop.StatusLogger;
-import io.snowdrop.reporting.model.Issue;
 import io.snowdrop.github.reporting.model.Parent;
 import io.snowdrop.github.reporting.model.PullRequest;
 import io.snowdrop.github.reporting.model.Repository;
+import io.snowdrop.reporting.model.Issue;
 
 public class PullRequestCollector {
 
