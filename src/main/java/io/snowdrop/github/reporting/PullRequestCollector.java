@@ -61,11 +61,18 @@ public class PullRequestCollector {
     this.reportingHour = reportingHour;
     this.users = users;
     this.organizations = organizations;
-
-    init(Optional.of(reportingDay),Optional.of(reportingHour));
+    init();
+    setDates(Optional.of(reportingDay),Optional.of(reportingHour));
   }
 
-  public void init(final Optional<Integer> reportingDay, final Optional<Integer> reportingHour) {
+  public void init() {
+    users.stream().forEach(u -> {
+      repositories.put(u, new HashSet<>());
+    });
+  }
+
+
+  public void setDates(final Optional<Integer> reportingDay, final Optional<Integer> reportingHour) {
     if (reportingDay.isPresent() && reportingHour.isPresent()) {
       this.endTime = ZonedDateTime.now().with(DayOfWeek.of(reportingDay.get())).withHour(reportingHour.get());
     } else {
@@ -85,13 +92,12 @@ public class PullRequestCollector {
   }
 
   public Map<String, Set<PullRequest>> collectPullRequests() {
-    init(Optional.empty(), Optional.empty());
     return streamPullRequests()
       .collect(Collectors.groupingBy(PullRequest::getCreator, Collectors.toSet()));
   }
 
   public Stream<PullRequest> streamPullRequests() {
-    init(Optional.empty(), Optional.empty());
+    setDates(Optional.empty(), Optional.empty());
     long total = Repository.<Repository>streamAll()
       .map(r -> Parent.NONE.equals(r.getParent()) ? r.getOwner() + "/" + r.getName() : r.getParent())
       .distinct().count();

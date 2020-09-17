@@ -52,10 +52,10 @@ public class IssueCollector {
     this.issueService = new IssueService(client);
     this.users = users;
     this.organizations = organizations;
-    init(Optional.of(reportingDay), Optional.of(reportingHour));
+    setDates(Optional.of(reportingDay), Optional.of(reportingHour));
   }
 
-  public void init(final Optional<Integer> reportingDay, final Optional<Integer> reportingHour) {
+  public void setDates(final Optional<Integer> reportingDay, final Optional<Integer> reportingHour) {
     if (reportingDay.isPresent() && reportingHour.isPresent()) {
       this.endTime = ZonedDateTime.now().with(DayOfWeek.of(reportingDay.get())).withHour(reportingHour.get());
     } else {
@@ -72,13 +72,11 @@ public class IssueCollector {
   }
 
   public Map<String, Set<Issue>> collectIssues() {
-    init(Optional.empty(), Optional.empty());
-    LOGGER.info("Collecting issues: {}-{}, {}-{}", startTime, endTime, minStartTime, minEndTime);
     return streamIssues().collect(Collectors.groupingBy(Issue::getAssignee, Collectors.toSet()));
   }
 
   public Stream<Issue> streamIssues() {
-    init(Optional.empty(), Optional.empty());
+    setDates(Optional.empty(), Optional.empty());
     LOGGER.info("Streaming issues: {}-{}, {}-{}", startTime, endTime, minStartTime, minEndTime);
     long total = Repository.<Repository>streamAll()
         .map(r -> Parent.NONE.equals(r.getParent()) ? r.getOwner() + "/" + r.getName() : r.getParent())
