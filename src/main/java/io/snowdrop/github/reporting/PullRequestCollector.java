@@ -62,7 +62,7 @@ public class PullRequestCollector {
     this.users = users;
     this.organizations = organizations;
     init();
-    setDates(Optional.of(reportingDay),Optional.of(reportingHour));
+    setDates();
   }
 
   public void init() {
@@ -71,13 +71,8 @@ public class PullRequestCollector {
     });
   }
 
-
-  public void setDates(final Optional<Integer> reportingDay, final Optional<Integer> reportingHour) {
-    if (reportingDay.isPresent() && reportingHour.isPresent()) {
-      this.endTime = ZonedDateTime.now().with(DayOfWeek.of(reportingDay.get())).withHour(reportingHour.get());
-    } else {
-      this.endTime = ZonedDateTime.now();
-    }
+  public void setDates() {
+    this.endTime = ZonedDateTime.now().with(DayOfWeek.of(reportingDay)).withHour(reportingHour);
     this.startTime = endTime.minusWeeks(1);
     this.minStartTime = Date.from(startTime.minusMonths(6).toInstant());
     this.minEndTime = Date.from(endTime.toInstant());
@@ -97,7 +92,8 @@ public class PullRequestCollector {
   }
 
   public Stream<PullRequest> streamPullRequests() {
-    setDates(Optional.empty(), Optional.empty());
+    setDates();
+    LOGGER.info("Streaming Pull Requests: {}-{}, {}-{}", startTime, endTime, minStartTime, minEndTime);
     long total = Repository.<Repository>streamAll()
       .map(r -> Parent.NONE.equals(r.getParent()) ? r.getOwner() + "/" + r.getName() : r.getParent())
       .distinct().count();

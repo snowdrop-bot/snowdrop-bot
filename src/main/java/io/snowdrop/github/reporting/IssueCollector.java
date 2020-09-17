@@ -44,6 +44,9 @@ public class IssueCollector {
   private Date minStartTime;
   private Date minEndTime;
 
+  private int reportingDay;
+  private int reportingHour;
+
   public IssueCollector(
       GitHubClient client, StatusLogger status, int reportingDay, int reportingHour, Set<String> users,
       Set<String> organizations) {
@@ -52,15 +55,13 @@ public class IssueCollector {
     this.issueService = new IssueService(client);
     this.users = users;
     this.organizations = organizations;
-    setDates(Optional.of(reportingDay), Optional.of(reportingHour));
+    this.reportingDay = reportingDay;
+    this.reportingHour = reportingHour;
+    setDates();
   }
 
-  public void setDates(final Optional<Integer> reportingDay, final Optional<Integer> reportingHour) {
-    if (reportingDay.isPresent() && reportingHour.isPresent()) {
-      this.endTime = ZonedDateTime.now().with(DayOfWeek.of(reportingDay.get())).withHour(reportingHour.get());
-    } else {
-      this.endTime = ZonedDateTime.now();
-    }
+  public void setDates() {
+    this.endTime = ZonedDateTime.now().with(DayOfWeek.of(reportingDay)).withHour(reportingHour);
     this.startTime = endTime.minusWeeks(1);
     this.minStartTime = Date.from(startTime.minusMonths(6).toInstant());
     this.minEndTime = Date.from(endTime.toInstant());
@@ -76,7 +77,7 @@ public class IssueCollector {
   }
 
   public Stream<Issue> streamIssues() {
-    setDates(Optional.empty(), Optional.empty());
+    setDates();
     LOGGER.info("Streaming issues: {}-{}, {}-{}", startTime, endTime, minStartTime, minEndTime);
     long total = Repository.<Repository>streamAll()
         .map(r -> Parent.NONE.equals(r.getParent()) ? r.getOwner() + "/" + r.getName() : r.getParent())
