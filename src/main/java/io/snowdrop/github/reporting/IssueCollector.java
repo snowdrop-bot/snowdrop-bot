@@ -18,9 +18,9 @@ import org.slf4j.LoggerFactory;
 import io.snowdrop.BotException;
 import io.snowdrop.StatusLogger;
 import io.snowdrop.github.Github;
-import io.snowdrop.reporting.model.Issue;
 import io.snowdrop.github.reporting.model.Parent;
 import io.snowdrop.github.reporting.model.Repository;
+import io.snowdrop.reporting.model.Issue;
 
 public class IssueCollector {
 
@@ -36,30 +36,34 @@ public class IssueCollector {
   private final Set<String> organizations;
 
   // These dates represent current reporting period
-  private final ZonedDateTime startTime;
-  private final ZonedDateTime endTime;
+  private ZonedDateTime startTime;
+  private ZonedDateTime endTime;
 
   // These represent the oldest reporting period possible
-  private final Date minStartTime;
-  private final Date minEndTime;
+  private Date minStartTime;
+  private Date minEndTime;
 
-  public IssueCollector(GitHubClient client, StatusLogger status, int reportingDay, int reportingHour, Set<String> users,
+  private int reportingDay;
+  private int reportingHour;
+
+  public IssueCollector(
+      GitHubClient client, StatusLogger status, int reportingDay, int reportingHour, Set<String> users,
       Set<String> organizations) {
     this.client = client;
     this.status = status;
     this.issueService = new IssueService(client);
     this.users = users;
     this.organizations = organizations;
-
-    this.endTime = ZonedDateTime.now().with(DayOfWeek.of(reportingDay)).withHour(reportingHour);
-    this.startTime = endTime.minusWeeks(1);
-
-    this.minStartTime = Date.from(startTime.minusMonths(6).toInstant());
-    this.minEndTime = Date.from(endTime.toInstant());
-    init();
+    this.reportingDay = reportingDay;
+    this.reportingHour = reportingHour;
+    setDates();
   }
 
-  public void init() {
+  public void setDates() {
+    this.endTime = ZonedDateTime.now().with(DayOfWeek.of(reportingDay)).withHour(reportingHour);
+    this.startTime = endTime.minusWeeks(1);
+    this.minStartTime = Date.from(startTime.minusMonths(6).toInstant());
+    this.minEndTime = Date.from(endTime.toInstant());
   }
 
   public void refresh() {
@@ -70,23 +74,26 @@ public class IssueCollector {
   public Map<String, Set<Issue>> collectIssues() {
     return streamIssues().collect(Collectors.groupingBy(Issue::getAssignee, Collectors.toSet()));
   }
+
   public Stream<Issue> streamIssues() {
+    setDates();
+    LOGGER.info("Streaming issues: {}-{}, {}-{}", startTime, endTime, minStartTime, minEndTime);
     long total = Repository.<Repository>streamAll()
-      .map(r -> Parent.NONE.equals(r.getParent()) ? r.getOwner() + "/" + r.getName() : r.getParent())
-      .distinct()
-      .count();
+        .map(r -> Parent.NONE.equals(r.getParent()) ? r.getOwner() + "/" + r.getName() : r.getParent())
+        .distinct()
+        .count();
 
     return Repository.<Repository>streamAll()
-      .map(r -> Parent.NONE.equals(r.getParent()) ? r.getOwner() + "/" + r.getName() : r.getParent())
-      .distinct()
-      .sorted()
-      .map(status.<String>log(total, "Collecting issues from repository %s."))
-      .flatMap(i -> teamIssueStream(i, "all"));
+        .map(r -> Parent.NONE.equals(r.getParent()) ? r.getOwner() + "/" + r.getName() : r.getParent())
+        .distinct()
+        .sorted()
+        .map(status.<String>log(total, "Collecting issues from repository %s."))
+        .flatMap(i -> teamIssueStream(i, "all"));
   }
 
   public Set<Issue> userIssues(String user, Repository repository, String state) {
     return streamUserIssues(user, repository, state)
-          .collect(Collectors.toSet());
+        .collect(Collectors.toSet());
   }
 
   public Stream<Issue> streamUserIssues(String user, Repository repository, String state) {
@@ -94,12 +101,13 @@ public class IssueCollector {
 
       try {
         String id = repository.isFork() ? repository.getParent() : repository.getOwner() + "/" + repository.getName();
-        LOGGER.info("Getting {} issues for repository: {}/{} during: {} - {}.", state, Github.user(id), Github.repo(id), DF.format(minStartTime), DF.format(minEndTime));
+        LOGGER.info("Getting {} issues for repository: {}/{} during: {} - {}.", state, Github.user(id), Github.repo(id), DF.format(minStartTime),
+            DF.format(minEndTime));
         return issueService.getIssues(Github.user(id), Github.repo(id), Github.params().state(state).build())
-          .stream()
-          .map(i -> Issue.create(id, i))
-          .filter(i -> i.isActiveDuring(minStartTime, minEndTime))
-          .map(IssueCollector::log);
+            .stream()
+            .map(i -> Issue.create(id, i))
+            .filter(i -> i.isActiveDuring(minStartTime, minEndTime))
+            .map(IssueCollector::log);
       } catch (IOException e) {
         throw BotException.launderThrowable(e);
       }
@@ -109,7 +117,7 @@ public class IssueCollector {
   private Stream<Issue> teamIssueStream(String repository, String state) {
     synchronized (client) {
       try {
-        LOGGER.info("Getting {} issues for repository: {}", state, repository);
+        LOGGER.info("Getting {} team issues for repository: {}", state, repository);
         return issueService
             .getIssues(Github.user(repository), Github.repo(repository), Github.params().state(state).build()).stream()
             .filter(i -> i.getAssignee() != null && users.contains(i.getAssignee().getLogin()))
@@ -127,8 +135,8 @@ public class IssueCollector {
    */
   private static Issue log(Issue issue) {
     LOGGER.info("{}: {}. {} - {} - {}.", issue.getNumber(), issue.getTitle(), DF.format(issue.getCreatedAt()),
-                issue.getUpdatedAt() != null ? DF.format(issue.getUpdatedAt()) : null,
-                issue.getClosedAt() != null ? DF.format(issue.getClosedAt()) : null);
+        issue.getUpdatedAt() != null ? DF.format(issue.getUpdatedAt()) : null,
+        issue.getClosedAt() != null ? DF.format(issue.getClosedAt()) : null);
     return issue;
   }
 

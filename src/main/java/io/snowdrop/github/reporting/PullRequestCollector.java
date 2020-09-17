@@ -20,10 +20,10 @@ import org.slf4j.LoggerFactory;
 
 import io.snowdrop.BotException;
 import io.snowdrop.StatusLogger;
-import io.snowdrop.reporting.model.Issue;
 import io.snowdrop.github.reporting.model.Parent;
 import io.snowdrop.github.reporting.model.PullRequest;
 import io.snowdrop.github.reporting.model.Repository;
+import io.snowdrop.reporting.model.Issue;
 
 public class PullRequestCollector {
 
@@ -41,12 +41,12 @@ public class PullRequestCollector {
   private final Set<String> organizations;
 
   // These dates represent current reporting period
-  private final ZonedDateTime startTime;
-  private final ZonedDateTime endTime;
+  private ZonedDateTime startTime;
+  private ZonedDateTime endTime;
 
   // These represent the oldest reporting period possible
-  private final Date minStartTime;
-  private final Date minEndTime;
+  private Date minStartTime;
+  private Date minEndTime;
 
   private final Map<String, Set<Repository>> repositories = new HashMap<>();
 
@@ -60,16 +60,21 @@ public class PullRequestCollector {
     this.reportingHour = reportingHour;
     this.users = users;
     this.organizations = organizations;
-
-    this.endTime = ZonedDateTime.now().with(DayOfWeek.of(reportingDay)).withHour(reportingHour);
-    this.startTime = endTime.minusWeeks(1);
-
-    this.minStartTime = Date.from(startTime.minusMonths(6).toInstant());
-    this.minEndTime = Date.from(endTime.toInstant());
     init();
+    setDates();
   }
 
   public void init() {
+    users.stream().forEach(u -> {
+      repositories.put(u, new HashSet<>());
+    });
+  }
+
+  public void setDates() {
+    this.endTime = ZonedDateTime.now().with(DayOfWeek.of(reportingDay)).withHour(reportingHour);
+    this.startTime = endTime.minusWeeks(1);
+    this.minStartTime = Date.from(startTime.minusMonths(6).toInstant());
+    this.minEndTime = Date.from(endTime.toInstant());
     users.stream().forEach(u -> {
       repositories.put(u, new HashSet<>());
     });
@@ -86,6 +91,8 @@ public class PullRequestCollector {
   }
 
   public Stream<PullRequest> streamPullRequests() {
+    setDates();
+    LOGGER.info("Streaming Pull Requests: {}-{}, {}-{}", startTime, endTime, minStartTime, minEndTime);
     long total = Repository.<Repository>streamAll()
       .map(r -> Parent.NONE.equals(r.getParent()) ? r.getOwner() + "/" + r.getName() : r.getParent())
       .distinct().count();
