@@ -77,6 +77,11 @@ public class GithubIssueBridge {
 
   public void refresh() {
     LOGGER.info("Refershing bridge: {} -> {}.", sourceRepository, targetRepository);
+
+    openIssues.clear();
+    closedIssues.clear();
+    downstreamIssues.clear();
+
     downstreamOpenIssues().stream().forEach(i -> downstreamIssues.put(i.getNumber(), i));
     LOGGER.info("Downstream issue count: {} -> {}.", targetRepository, downstreamIssues.size());
 
