@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.snowdrop</groupId>
   <artifactId>snowdrop-bot</artifactId>
-  <version>0.8</version>
+  <version>0.9-SNAPSHOT</version>
   <properties>
     <dekorate.version>1.0.0</dekorate.version>
     <egit-github.version>2.1.5</egit-github.version>
