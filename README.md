@@ -103,11 +103,11 @@ If using resource filtering use build it this way instead:
 
 and then run with:
 
-    java -jar target/snowdrop-bot-0.1-SNAPSHOT-runner.jar
+    java -jar target/snowdrop-bot-$(xpath -q -e  "/project/version/text()" pom.xml)-runner.jar
 
 Another option is to pass it when launching the application
 
-    java -Dgithub.token=<the token> clean package -jar target/snowdrop-bot-0.1-SNAPSHOT-runner.jar
+    java -Dgithub.token=<the token> clean package -jar target/snowdrop-bot-$(xpath -q -e  "/project/version/text()" pom.xml)-runner.jar
 
 > NOTE:* The `github.token` is required and there are several possibilities of informing it:
 >  * `application.properites`
@@ -357,7 +357,7 @@ Once the application is compiled and packaged, to crete the image with buildah a
 Build the image
 
 ```bash
-$ buildah bud -f src/main/docker/Dockerfile.jvm -t quarkus/snowdrop-bot-jvm .
+$ buildah bud -f src/main/docker/Dockerfile.jvm -t quarkus/snowdrop-bot:$(xpath -q -e  "/project/version/text()" pom.xml) .
 ```
 
 > **NOTE**: Before pushing the image it can actually be tested, for instance using podman:
@@ -376,7 +376,8 @@ Login Succeeded!
 Push the image
 
 ```bash
-$ buildah push localhost/quarkus/snowdrop-bot:latest docker://quay.io/snowdrop/snowdrop-bot:latest
+$ buildah push localhost/quarkus/snowdrop-bot:$(xpath -q -e "/project/version/text()" pom.xml) docker://quay.io/snowdrop/snowdrop-bot:$(xpath -q -e "/project/version/text()" pom.xml)
+$ buildah push localhost/quarkus/snowdrop-bot:$(xpath -q -e "/project/version/text()" pom.xml) docker://quay.io/snowdrop/snowdrop-bot:latest
 ```
 
 Once updated, update the k8s deployment configuration with the new version (if not latest).
