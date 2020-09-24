@@ -254,11 +254,12 @@ public class GithubIssueBridge {
   private Issue labelIssue(Issue issue, String repo, String labelName, String labelDescription, String labelColor) {
     synchronized (client) {
       try {
+        Issue updated = issueService.getIssue(issue.getUser().getLogin(), repo, issue.getNumber());
         LOGGER.info("Labeleing issue {} with: {}.", issue.getNumber(), labelName);
-        List<Label> labels = new ArrayList<>(issue.getLabels());
+        List<Label> labels = new ArrayList<>(updated.getLabels());
         labels.add(getOrCreateLabel(repo, labelName, labelDescription, labelColor));
-        issue.setLabels(labels);
-        return issueService.editIssue(Github.user(repo), Github.repo(repo), issue);
+        updated.setLabels(labels);
+        return issueService.editIssue(Github.user(repo), Github.repo(repo), updated);
       } catch (IOException e) {
         throw BotException.launderThrowable(e);
       }
