@@ -106,8 +106,9 @@ public class GithubIssueBridge {
   public List<Issue> labelTeamIssues() {
     LOGGER.info("Labeling team issues in {}.", targetRepository);
     return downstreamOpenIssues().stream()
-    .map(i -> labelIssue(i, targetRepository, autoLabelName, autoLabelDescription, autoLabelColor))
-    .collect(Collectors.toList());
+      .filter(i -> "open".equals(i.getState()))
+      .map(i -> labelIssue(i, targetRepository, autoLabelName, autoLabelDescription, autoLabelColor))
+      .collect(Collectors.toList());
   }
 
 
