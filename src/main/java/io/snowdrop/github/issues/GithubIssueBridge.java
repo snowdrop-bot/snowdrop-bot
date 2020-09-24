@@ -106,8 +106,9 @@ public class GithubIssueBridge {
   public List<Issue> labelTeamIssues() {
     LOGGER.info("Labeling team issues in {}.", targetRepository);
     return downstreamOpenIssues().stream()
-    .map(i -> labelIssue(i, targetRepository, autoLabelName, autoLabelDescription, autoLabelColor))
-    .collect(Collectors.toList());
+      .filter(i -> "open".equals(i.getState()))
+      .map(i -> labelIssue(i, targetRepository, autoLabelName, autoLabelDescription, autoLabelColor))
+      .collect(Collectors.toList());
   }
 
 
@@ -254,11 +255,17 @@ public class GithubIssueBridge {
   private Issue labelIssue(Issue issue, String repo, String labelName, String labelDescription, String labelColor) {
     synchronized (client) {
       try {
+        Issue updated = issueService.getIssue(issue.getUser().getLogin(), repo, issue.getNumber());
         LOGGER.info("Labeleing issue {} with: {}.", issue.getNumber(), labelName);
-        List<Label> labels = new ArrayList<>(issue.getLabels());
+        List<Label> labels = new ArrayList<>(updated.getLabels());
+        Optional<Label> found = labels.stream().filter(l -> l.getName().equals(labelName)).findAny();
+        if (found.isPresent()) {
+          LOGGER.info("Issue {} already labeled with: {}.", issue.getNumber(), labelName);
+          return updated;
+        }
         labels.add(getOrCreateLabel(repo, labelName, labelDescription, labelColor));
-        issue.setLabels(labels);
-        return issueService.editIssue(Github.user(repo), Github.repo(repo), issue);
+        updated.setLabels(labels);
+        return issueService.editIssue(Github.user(repo), Github.repo(repo), updated);
       } catch (IOException e) {
         throw BotException.launderThrowable(e);
       }
