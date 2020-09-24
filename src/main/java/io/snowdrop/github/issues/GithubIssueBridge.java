@@ -257,6 +257,11 @@ public class GithubIssueBridge {
         Issue updated = issueService.getIssue(issue.getUser().getLogin(), repo, issue.getNumber());
         LOGGER.info("Labeleing issue {} with: {}.", issue.getNumber(), labelName);
         List<Label> labels = new ArrayList<>(updated.getLabels());
+        Optional<Label> found = labels.stream().filter(l -> l.getName().equals(labelName)).findAny();
+        if (found.isPresent()) {
+          LOGGER.info("Issue {} already labeled with: {}.", issue.getNumber(), labelName);
+          return updated;
+        }
         labels.add(getOrCreateLabel(repo, labelName, labelDescription, labelColor));
         updated.setLabels(labels);
         return issueService.editIssue(Github.user(repo), Github.repo(repo), updated);
