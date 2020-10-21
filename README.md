@@ -350,6 +350,39 @@ spec:
 EOF
 ```
 
+### Create secrets
+
+#### Associate list
+
+Encode the associate list in *base64*.
+
+```bash
+$ printf "%s" "git-user-1,git-user-2,git-user-3,git-user-4,git-user-5,git-user-6,..." | base64 --wrap=0
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+Create a copy of the `src/main/kubernetes/snowdrop-associates.yaml.template` file and replace the text `<base64 list of the associates>`
+with the *base64* string obtained in the previous step.
+
+For the sake of the example it will be named `target/kubernetes/snowdrop-associates.yaml`, and should be something like this:
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: snowdrop-associates
+  namespace: bot
+data:
+  github.users: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+type: Opaque
+``` 
+
+Finally push the configuration file to kubernetes.
+
+```bash
+$ kubectl -n bot apply -f target/kubernetes/snowdrop-associates.yaml
+```
+
 ### Building and publishing the image to quay with buildah
 
 Once the application is compiled and packaged, to crete the image with buildah and publish it to Quay follow these steps.
@@ -373,6 +406,7 @@ Username: xxx
 Password: ***
 Login Succeeded!
 ```
+
 Push the image
 
 ```bash
@@ -390,6 +424,23 @@ And scale down and up the pod.
 
 ```bash
 $ kubectl scale --replicas=0 deployment snowdrop-bot -n bot
-$ watch kubectl get pod -n bot
+$ kubectl -n bot delete -f target/kubernetes/kubernetes.yml
+$ kubectl -n bot apply -f target/kubernetes/kubernetes.yml
 $ kubectl scale --replicas=1 deployment snowdrop-bot -n bot
+```
+
+Watch the status of the pod.
+
+```bash
+$ watch kubectl get pod -n bot
+Every 2,0s: kubectl get pod -n bot
+
+NAME                           READY   STATUS    RESTARTS   AGE
+snowdrop-bot-xxxxxxxxx-xxxxx   1/1     Running   0          11h
+```
+
+Check the logs.
+
+```bash
+$ kubectl -n bot logs -f snowdrop-bot-xxxxxxxxx-xxxxx
 ```
