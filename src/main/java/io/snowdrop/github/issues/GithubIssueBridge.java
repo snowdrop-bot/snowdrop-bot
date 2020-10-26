@@ -255,7 +255,7 @@ public class GithubIssueBridge {
   private Issue labelIssue(Issue issue, String repo, String labelName, String labelDescription, String labelColor) {
     synchronized (client) {
       try {
-        Issue updated = issueService.getIssue(issue.getUser().getLogin(), repo, issue.getNumber());
+        Issue updated = issueService.getIssue(Github.user(repo), Github.repo(repo), issue.getNumber());
         LOGGER.info("Labeleing issue {} with: {}.", issue.getNumber(), labelName);
         List<Label> labels = new ArrayList<>(updated.getLabels());
         Optional<Label> found = labels.stream().filter(l -> l.getName().equals(labelName)).findAny();
