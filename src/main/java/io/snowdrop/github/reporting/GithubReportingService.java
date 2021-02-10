@@ -100,7 +100,7 @@ public class GithubReportingService implements IssueReportingService {
   void onStart(@Observes StartupEvent ev) {
   }
 
-  @Scheduled(every = "3h")
+  @Scheduled(cron = "{github.reporting.collector.cron.expr}")
   public void executeIfEnabled() {
     if (enabled) {
       execute();
