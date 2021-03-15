@@ -1,6 +1,8 @@
 package io.snowdrop.github.reporting;
 
+import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
@@ -8,11 +10,7 @@ import javax.inject.Inject;
 
 import org.eclipse.egit.github.core.client.GitHubClient;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.reactive.messaging.Incoming;
-import org.eclipse.microprofile.reactive.messaging.Outgoing;
-import org.reactivestreams.Subscriber;
 
-import io.smallrye.reactive.messaging.annotations.Broadcast;
 import io.smallrye.reactive.messaging.annotations.Channel;
 import io.smallrye.reactive.messaging.annotations.Emitter;
 import io.smallrye.reactive.messaging.annotations.OnOverflow;
@@ -30,6 +28,9 @@ public class GithubReportingFactory {
 
   @ConfigProperty(name = "github.reporting.additional.repositories")
   Set<String> additionalRepositories;
+
+  @ConfigProperty(name = "github.bridge.target-organization")
+  String targetOrganization;
 
   /**
    * <p>Will also use bridge source repositories as source for report repositories.</p>
@@ -68,13 +69,24 @@ public class GithubReportingFactory {
 
   @Produces
   public RepositoryCollector createRepositoryCollector() {
-    additionalRepositories.addAll(bridgedRepositories);
+    additionalRepositories.addAll(snowdropZenRepositories());
     return new RepositoryCollector(client, new StatusLogger("forks", forks), new StatusLogger("repositories", repositories), users, organizations, additionalRepositories);
+  }
+
+  private Set<String> snowdropZenRepositories(){
+    Set<String> bridgetRepositoriesMirrors = new HashSet<>(bridgedRepositories.size());
+    bridgetRepositoriesMirrors.addAll(bridgedRepositories.stream().map(repo -> {
+      String[] repoOwnerAndName = repo.split("/");
+      String repoName = repoOwnerAndName[1];
+      return targetOrganization + "/" + repoName;
+    }).collect(Collectors.toSet()));
+    return  bridgetRepositoriesMirrors;
+
   }
 
   @Produces
   public IssueCollector createIssueCollector() {
-    return new IssueCollector(client, new StatusLogger("issues", issues), reportingDayOfWeek, reportingHours, users, organizations);
+    return new IssueCollector(client, new StatusLogger("issues", issues), reportingDayOfWeek, reportingHours, users, organizations, targetOrganization);
   }
 
   @Produces

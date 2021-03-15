@@ -4,14 +4,13 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.time.DayOfWeek;
 import java.time.ZonedDateTime;
-import java.util.Date;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eclipse.egit.github.core.client.GitHubClient;
 import org.eclipse.egit.github.core.service.IssueService;
+import org.eclipse.egit.github.core.service.RepositoryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,9 +30,14 @@ public class IssueCollector {
 
   private final GitHubClient client;
   private final IssueService issueService;
+  private final RepositoryService repositoryService;
+
 
   private final Set<String> users;
   private final Set<String> organizations;
+//  private final Set<String> snowdropZenRepositories;
+
+  private final String targetOrganization;
 
   // These dates represent current reporting period
   private ZonedDateTime startTime;
@@ -48,14 +52,17 @@ public class IssueCollector {
 
   public IssueCollector(
       GitHubClient client, StatusLogger status, int reportingDay, int reportingHour, Set<String> users,
-      Set<String> organizations) {
+      Set<String> organizations, String targetOrganization) {
     this.client = client;
     this.status = status;
     this.issueService = new IssueService(client);
+    this.repositoryService = new RepositoryService(client);
     this.users = users;
     this.organizations = organizations;
+//    this.snowdropZenRepositories = snowdropZenRepositories;
     this.reportingDay = reportingDay;
     this.reportingHour = reportingHour;
+    this.targetOrganization = targetOrganization;
     setDates();
   }
 
@@ -78,17 +85,56 @@ public class IssueCollector {
   public Stream<Issue> streamIssues() {
     setDates();
     LOGGER.info("Streaming issues: {}-{}, {}-{}", startTime, endTime, minStartTime, minEndTime);
+    Set<String> snowdropZenRepositories = userForks(targetOrganization).map(repository -> repository.getName()).collect(Collectors.toSet());
     long total = Repository.<Repository>streamAll()
-        .map(r -> Parent.NONE.equals(r.getParent()) ? r.getOwner() + "/" + r.getName() : r.getParent())
+        .filter(repository -> !(snowdropZenRepositories.contains(repository.getName()) && !repository.getOwner().equals(targetOrganization)))
+        .map(r -> {
+          if(Parent.NONE.equals(r.getParent()) || targetOrganization.equals(r.getOwner()))
+            return r.getOwner() + "/" + r.getName();
+          return r.getParent();
+        })
         .distinct()
         .count();
 
-    return Repository.<Repository>streamAll()
-        .map(r -> Parent.NONE.equals(r.getParent()) ? r.getOwner() + "/" + r.getName() : r.getParent())
-        .distinct()
-        .sorted()
+    List<String> sorted = Repository.<Repository>streamAll()
+    .filter(repository -> !(snowdropZenRepositories.contains(repository.getName()) && !repository.getOwner().equals(targetOrganization)))
+    .map(r -> {
+      if (Parent.NONE.equals(r.getParent()) || targetOrganization.equals(r.getOwner()))
+        return r.getOwner() + "/" + r.getName();
+      return r.getParent();
+    })
+    .distinct()
+    .sorted().collect(Collectors.toList());
+    return sorted.stream()
         .map(status.<String>log(total, "Collecting issues from repository %s."))
         .flatMap(i -> teamIssueStream(i, "all"));
+  }
+
+  /**
+   * Stream all the repositories of the specified user.
+   * @param user The user
+   * @return A stream of {@link Repository}.
+   */
+  public Stream<Repository> userForks(final String user) {
+    synchronized (client) {
+      try {
+        return repositoryService.getRepositories(user).stream().filter(r -> r.isFork())
+        .map(r ->repository(user, r.getName()))
+        .filter(r -> organizations.contains(r.getParent().getOwner().getLogin())).map(Repository::create);
+      } catch (final IOException e) {
+        throw BotException.launderThrowable(e);
+      }
+    }
+  }
+
+  private org.eclipse.egit.github.core.Repository repository(String user, String name) {
+    synchronized (client) {
+      try {
+        return repositoryService.getRepository(user, name);
+      } catch (IOException e) {
+        throw BotException.launderThrowable("Error reading repository:" + user + "/" + name, e);
+      }
+    }
   }
 
   public Set<Issue> userIssues(String user, Repository repository, String state) {
@@ -158,5 +204,9 @@ public class IssueCollector {
 
   public ZonedDateTime getEndTime() {
     return endTime;
+  }
+
+  public String getTargetOrganization() {
+    return targetOrganization;
   }
 }
