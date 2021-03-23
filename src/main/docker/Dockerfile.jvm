@@ -7,11 +7,11 @@
 #
 # Then, build the image with:
 #
-# docker build -f src/main/docker/Dockerfile.jvm -t quarkus/snowdrop-bot-jvm .
+# docker build -f src/main/docker/Dockerfile.jvm -t snowdrop/snowdrop-bot-jvm .
 #
 # Then run the container using:
 #
-# docker run -i --rm -p 8080:8080 quarkus/snowdrop-bot-jvm
+# docker run -i --rm -p 8080:8080 -e github.token=$(pass show github.com/snowdrop-bot/token) -e jira.username=xxx -e jira.password=xxx -e jira.users=xxx snowdrop/snowdrop-bot-jvm
 #
 ###
 FROM fabric8/java-alpine-openjdk11-jre:1.8
@@ -33,8 +33,11 @@ RUN adduser -G root --no-create-home --disabled-password 1001 \
   && chown -R 1001:root /z \
   && chmod -R "g+rwX" /z
 
-COPY target/lib/* /deployments/lib/
-COPY target/*-runner.jar /deployments/app.jar
+COPY --chown=1001 target/quarkus-app/lib/ /deployments/lib/
+COPY --chown=1001 target/quarkus-app/*.jar /deployments/
+COPY --chown=1001 target/quarkus-app/app/ /deployments/app/
+COPY --chown=1001 target/quarkus-app/quarkus/ /deployments/quarkus/
+
 EXPOSE 8080
 
 # run with user 1001
