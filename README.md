@@ -378,7 +378,7 @@ metadata:
 data:
   github.users: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 type: Opaque
-``` 
+```
 
 Finally push the configuration file to kubernetes.
 
@@ -398,7 +398,7 @@ $ buildah bud -f src/main/docker/Dockerfile.jvm -t quarkus/snowdrop-bot:$(xpath 
 
 > **NOTE**: Before pushing the image it can actually be tested, for instance using podman:
 > ```bash
-> $ podman run --rm --name snowdrop-bot -e github.token=$(pass show github.com/snowdrop-bot/token) -e jira.username=${JIRA_USERNAME} -e jira.password=${JIRA_PASSWORD} -d localhost/quarkus/snowdrop-bot:latest
+> $ podman run --rm -p 8080:8080 --name snowdrop-bot -e github.token=$(pass show github.com/snowdrop-bot/token) -e jira.username=${JIRA_USERNAME} -e jira.password=${JIRA_PASSWORD} -e jira.users=${JIRA_USERS} -d localhost/quarkus/snowdrop-bot:latest
 > ```
 
 Login to quay
@@ -422,6 +422,7 @@ Once updated, update the k8s deployment configuration with the new version (if n
 ```bash
 $ kubectl set image -n bot deployment/snowdrop-bot snowdrop-bot=quay.io/snowdrop/snowdrop-bot:0.2-SNAPSHOT
 ```
+NOTE: replace the TAG with the one you want to use.
 
 And scale down and up the pod.
 
