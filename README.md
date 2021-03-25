@@ -261,6 +261,19 @@ This can be done by selecting the `Reporting` tab and clicking the `generate` bu
 This requires the setup mentioned in [Google APIS](#google-apis).
 The id of the target document can be specified using `google.docs.report.document-id`.
 
+## Release preparation
+
+Before deploying the application, we need modify the version in the pom file and tag the code on the github repository.
+
+Run the `mvn release:prepare` command in order to achieve this goal. You will be prompted for the versions to use, here you can find some values examples:
+
+| Release Version          | Tag or Label     | New development version                                      |
+| ------------------------ | ---------------- | ------------------------------------------------------------ |
+| 0.15                     | 0.15             | 0.16-SNAPSHOT                                                |
+
+These values should be adjusted for every release.
+
+
 
 ## Kubernetes / OpenShift deployment
 
@@ -313,6 +326,7 @@ mvn clean package -Dquarkus.kubernetes.deploy=true
 The project is configured to use `Openshift` out of the box.
 To use `Kubernetes` you may need to set
 `quarkus.kubernetes.deployment-target=kubernetes` to `application.properties.
+
 
 ## Appendix
 
