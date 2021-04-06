@@ -119,7 +119,7 @@ public class GithubIssueBridge {
   }
 
   /**
-   * Stream all the open issues of the source repository assigned to team mebmers.
+   * Stream all the open issues of the source repository assigned to team members.
    *
    * @return A stream of issues.
    */
@@ -136,6 +136,7 @@ public class GithubIssueBridge {
   public List<Issue> teamClosedIssues() {
     return source(Github.params().closed().build())
         .filter(i -> i.getAssignee() != null && users.contains(i.getAssignee().getLogin()))
+        .filter(issue -> issue.getHtmlUrl().contains("issue"))
         .collect(Collectors.toList());
   }
 
