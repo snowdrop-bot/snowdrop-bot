@@ -119,7 +119,7 @@ public class GithubIssueBridge {
   }
 
   /**
-   * Stream all the open issues of the source repository assigned to team mebmers.
+   * Stream all the open issues of the source repository assigned to team members.
    *
    * @return A stream of issues.
    */
@@ -287,6 +287,7 @@ public class GithubIssueBridge {
         try {
           labels.add(getLabel(repo, terminalLabelName));
           issue.setLabels(labels);
+          issue.setState("closed");
         } catch (BotException e) {
           LOGGER.warn("missing label {}", terminalLabelName);
         }
