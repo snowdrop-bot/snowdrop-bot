@@ -125,6 +125,7 @@ public class GithubIssueBridge {
    */
   public List<Issue> teamOpenIssues() {
     return source().filter(i -> i.getAssignee() != null && users.contains(i.getAssignee().getLogin()))
+        .filter(issue -> issue.getHtmlUrl().contains("issues"))
         .collect(Collectors.toList());
   }
 
@@ -136,7 +137,7 @@ public class GithubIssueBridge {
   public List<Issue> teamClosedIssues() {
     return source(Github.params().closed().build())
         .filter(i -> i.getAssignee() != null && users.contains(i.getAssignee().getLogin()))
-        .filter(issue -> issue.getHtmlUrl().contains("issue"))
+        .filter(issue -> issue.getHtmlUrl().contains("issues"))
         .collect(Collectors.toList());
   }
 
