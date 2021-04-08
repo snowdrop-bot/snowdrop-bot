@@ -22,6 +22,7 @@
       * [Pull Request tracking](#pull-request-tracking)
       * [Forked repository issue bridging](#forked-repository-issue-bridging)
       * [Google Docs Report Generation](#google-docs-report-generation)
+      * [Release preparation](#Release preparation)
       * [Kubernetes / OpenShift deployment](#kubernetes--openshift-deployment)
       * [Appendix](#appendix)
          * [Create secrets](#create-secrets)
@@ -229,7 +230,7 @@ other words, we do not filter out `stale` pull requests.
 ## Forked repository issue bridging
 
 When working across multiple different organizations owned by different teams
-with variable access levels, its important to be able to have an aggregated view
+with variable access levels, it's important to be able to have an aggregated view
 of the pending issues. This is important for things like:
 
 - tracking
@@ -250,6 +251,19 @@ options:
 - target organization (`github.bridge.target-organization`)
 - terminal label (the label to use to mark an issue as closed `github.bridge.terminal-label`)
 
+Once the user has forked a repository under the `target` organization, a few more things need to be done:
+- Enable issues in the forked repo:
+    1. On GitHub, navigate to the main page of the repository
+    1. Under your repository name, click Settings
+    1. Under Features, unselect the Issues checkbox.
+- Create the aforementioned terminal label:
+    1. On GitHub, navigate to the main page of the repository.
+    1. Under your repository name, click Issues or Pull requests.
+    1. Above the list of issues or pull requests, click Labels.
+    1. To the right of the search field, click New label.
+    1. Under "Label name", type `upstream/closed`.
+    1. Under "Label description", type `The issue has been closed in the upstream repository`.
+    1. Under "Label color", type `#078c64`.
 
 ## Google Docs Report Generation
 
@@ -412,8 +426,18 @@ $ buildah bud -f src/main/docker/Dockerfile.jvm -t quarkus/snowdrop-bot:$(xpath 
 
 > **NOTE**: Before pushing the image it can actually be tested, for instance using podman:
 > ```bash
-> $ podman run --rm -p 8080:8080 --name snowdrop-bot -e github.token=$(pass show github.com/snowdrop-bot/token) -e jira.username=${JIRA_USERNAME} -e jira.password=${JIRA_PASSWORD} -e jira.users=${JIRA_USERS} -d localhost/quarkus/snowdrop-bot:latest
+> $ podman run --rm -p 8080:8080 --name snowdrop-bot -e github.token=$(pass show github.com/snowdrop-bot/token) -e jira.username=${JIRA_USERNAME} -e jira.password=${JIRA_PASSWORD} -e jira.users=${JIRA_USERS} -d localhost/quarkus/snowdrop-bot:$TAG
 > ```
+NOTE: replace the TAG with the one you want to use.
+
+As you can see in the command above, the application needs the following environment variables:
+```
+JIRA_USERNAME
+JIRA_PASSWORD
+JIRA_USERS
+GITHUB_TOKEN
+```
+
 
 Login to quay
 
