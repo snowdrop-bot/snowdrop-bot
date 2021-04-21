@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.snowdrop</groupId>
   <artifactId>snowdrop-bot</artifactId>
-  <version>0.17-SNAPSHOT</version>
+  <version>0.17</version>
 
   <licenses>
     <license>
@@ -17,7 +17,7 @@
     <url>https://github.com/snowdrop-bot/snowdrop-bot</url>
     <connection>scm:git:git@github.com:snowdrop-bot/snowdrop-bot.git</connection>
     <developerConnection>scm:git:git@github.com:snowdrop-bot/snowdrop-bot.git</developerConnection>
-    <tag>${project.version}</tag>
+    <tag>0.17</tag>
   </scm>
 
   <properties>
