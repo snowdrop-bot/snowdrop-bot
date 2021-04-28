@@ -61,7 +61,7 @@ The token can be configured either via `github.token` property or `GITHUB_TOKEN`
 environment variable.
 
 > NOTE: The `github.token` property is configured to have it's value filled with the [Maven Rsource plugin Filter capabilities](https://maven.apache.org/plugins/maven-resources-plugin/examples/filter.html).
-> It can be easilly filled by adding -Dgithub.token=<the token> to the maven compilation statement.
+> It can be easily filled by adding -Dgithub.token=<the token> to the maven compilation statement.
 
 ### Google APIS
 
@@ -106,11 +106,11 @@ Then run it using maven
 
 or the jar file created
 
-    java -jar target/snowdrop-bot-$VERSION.jar
+    java -jar target/quarkus-app/quarkus-run.jar
 
 Another option is to pass it when launching the application
 
-    java -Dgithub.token=<the token> clean package -jar target/snowdrop-bot-$VERSION.jar
+    java -Dgithub.token=<the token> clean package -jar target/quarkus-app/quarkus-run.jar
 
 > NOTE:* The `github.token` is required and there are several possibilities of informing it:
 >  * `application.properites`
