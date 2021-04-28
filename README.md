@@ -286,39 +286,24 @@ Run the `mvn release:prepare` command in order to achieve this goal. You will be
 
 These values should be adjusted for every release.
 
-## Kubernetes / OpenShift deployment
+## Kubernetes deployment
 
-During compilation resources for Kubernetes and OpenShift are generated.
+Before to deploy the bot on a kubernetes cluster, it is needed to create some resources described here after the secrets containing the credentials used
 
-Before these resources can be applied, some preparation is required.
+1. Verify that PV volumes exist to bound the PVC of the bot with a volume of 2Gi. See [appendix](#appendix) to create a PV if needed.
+2. Create a secret for the github token using the key stored under the shared `password-store` (see github.com/snowdrop/pass).
 
-1. Create a PVC with name `snowdrop-db-claim` and verify that it is bound to a `PV - PersistentVolume`. See [appendix](#appendix) to create a PV/PVC.
-2. Create a secret with the github token.
+**REMARK**: Add the namespace parameter `-n` to specify where the secrets should be created
 
-``` sh
-kubectl create secret generic snowdrop-github --from-literal=GITHUB_TOKEN=<your github token here>
-```
-
-Since the snowdrop team is using a shared `password-store` for handling
-credentials, the following would work:
-
-``` sh
+```bash
 export GITHUB_TOKEN=`pass show snowdrop/github.com/snowdrop-bot/token`
 kubectl create secret generic snowdrop-github --from-literal=GITHUB_TOKEN=$GITHUB_TOKEN
 ```
 
 3. Do the same for the `jira.username`, `jira.password` and `jira.users`
 
-``` sh
-kubectl create secret generic snowdrop-jira \
-    --from-literal=jira.username=<your jira username> \
-    --from-literal=jira.password=<your jira password \
-    --from-literal=jira.users=<the jira users>
-```
-
-If the information is shared using `password-store`
-``` sh
-export jira_users=cmoulliard
+```bash
+export jira_users=<the jira users>
 export jira_username=snowdrop-jirabot
 export jira_password=`pass show snowdrop/rh/snowdrop-jirabot`
 kubectl create secret generic snowdrop-jira \
@@ -327,42 +312,25 @@ kubectl create secret generic snowdrop-jira \
     --from-literal=jira.users=$jira_users
 ```
 
-4. Build the container and apply the manifests.
+4. Create the secret containing tge list of the `github.users` (e.g.: )
 
-``` sh
-mvn clean package -Dquarkus.kubernetes.deploy=true
+```bash
+kubectl create secret generic snowdrop-associated \
+    --from-literal=github.users=git-user-1,git-user-2,git-user-3,...
 ```
-**WARNING**: To build the container image, use `-Pdocker` or `-Pjib` profile depending which tool you prefer to use to build the image.
 
-The project is configured to use `Openshift` out of the box.
-To use `Kubernetes` you may need to set
-`quarkus.kubernetes.deployment-target=kubernetes` to `application.properties.
-
+5. Deploy the Bot like the service and ingress resource
+```bash
+kubectl apply -f ./deploy/all.yml
+```
 
 ## Appendix
 
 ###
 
-A PV/PVC could be created using the following `kubectl` commands
+A PV could be created using the following `kubectl` command:
 
 ```bash
-cat << EOF | kubectl apply -f -
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: pv001
-spec:
-  accessModes:
-  - ReadWriteOnce
-  capacity:
-    storage: 2Gi
-  hostPath:
-    path: /tmp/pv001
-    type: ""
-  persistentVolumeReclaimPolicy: Recycle
-  volumeMode: Filesystem
-EOF
-
 cat << EOF | kubectl apply -f -
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -378,107 +346,3 @@ spec:
 EOF
 ```
 
-### Create secrets
-
-#### Associate list
-
-Encode the associate list in *base64*.
-
-```bash
-$ printf "%s" "git-user-1,git-user-2,git-user-3,git-user-4,git-user-5,git-user-6,..." | base64 --wrap=0
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-```
-
-Create a copy of the `src/main/kubernetes/snowdrop-associates.yaml.template` file and replace the text `<base64 list of the associates>`
-with the *base64* string obtained in the previous step.
-
-For the sake of the example it will be named `target/kubernetes/snowdrop-associates.yaml`, and should be something like this:
-
-```yaml
-kind: Secret
-apiVersion: v1
-metadata:
-  name: snowdrop-associates
-  namespace: bot
-data:
-  github.users: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-type: Opaque
-```
-
-Finally push the configuration file to kubernetes.
-
-```bash
-$ kubectl -n bot apply -f target/kubernetes/snowdrop-associates.yaml
-```
-
-### Building and publishing the image to quay with buildah
-
-Once the application is compiled and packaged, to crete the image with buildah and publish it to Quay follow these steps.
-
-Build the image
-
-```bash
-$ buildah bud -f src/main/docker/Dockerfile -t quarkus/snowdrop-bot:$(xpath -q -e  "/project/version/text()" pom.xml) .
-```
-
-> **NOTE**: Before pushing the image it can actually be tested, for instance using podman:
-> ```bash
-> $ podman run --rm -p 8080:8080 --name snowdrop-bot -e github.token=$(pass show github.com/snowdrop-bot/token) -e jira.username=${JIRA_USERNAME} -e jira.password=${JIRA_PASSWORD} -e jira.users=${JIRA_USERS} -d localhost/quarkus/snowdrop-bot:$TAG
-> ```
-NOTE: replace the TAG with the one you want to use.
-
-As you can see in the command above, the application needs the following environment variables:
-```
-JIRA_USERNAME
-JIRA_PASSWORD
-JIRA_USERS
-GITHUB_TOKEN
-```
-
-Login to quay
-
-```bash
-$ buildah login quay.io
-Username: xxx
-Password: ***
-Login Succeeded!
-```
-
-Push the image
-
-```bash
-$ buildah push localhost/quarkus/snowdrop-bot:$(xpath -q -e "/project/version/text()" pom.xml) docker://quay.io/snowdrop/snowdrop-bot:$(xpath -q -e "/project/version/text()" pom.xml)
-$ buildah push localhost/quarkus/snowdrop-bot:$(xpath -q -e "/project/version/text()" pom.xml) docker://quay.io/snowdrop/snowdrop-bot:latest
-```
-
-Once updated, update the k8s deployment configuration with the new version (if not latest).
-
-```bash
-$ kubectl set image -n bot deployment/snowdrop-bot snowdrop-bot=quay.io/snowdrop/snowdrop-bot:0.2-SNAPSHOT
-```
-NOTE: replace the TAG with the one you want to use.
-
-And scale down and up the pod.
-
-```bash
-$ kubectl scale --replicas=0 deployment snowdrop-bot -n bot
-$ kubectl -n bot delete -f target/kubernetes/kubernetes.yml
-$ kubectl -n bot apply -f target/kubernetes/kubernetes.yml
-$ kubectl scale --replicas=1 deployment snowdrop-bot -n bot
-```
-
-Watch the status of the pod.
-
-```bash
-$ watch kubectl get pod -n bot
-Every 2,0s: kubectl get pod -n bot
-
-NAME                           READY   STATUS    RESTARTS   AGE
-snowdrop-bot-xxxxxxxxx-xxxxx   1/1     Running   0          11h
-```
-
-Check the logs.
-
-```bash
-$ kubectl -n bot logs -f snowdrop-bot-xxxxxxxxx-xxxxx
-```
