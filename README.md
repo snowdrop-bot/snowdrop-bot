@@ -96,7 +96,7 @@ To build the bot application, execute the following command:
 
     ./mvnw clean package
 
-The parameters are passes using the argument `-D`
+The parameters are passed using the argument `-D`
 
     ./mvnw -Dgithub.token=<the token> clean package
 
