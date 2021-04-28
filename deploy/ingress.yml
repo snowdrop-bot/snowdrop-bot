@@ -8,7 +8,7 @@ metadata:
   name: snowdrop-bot
 spec:
   rules:
-    - host: ""
+    - host: "snowdrop-bot.195.201.87.126.nip.io"
       http:
         paths:
           - path: /
