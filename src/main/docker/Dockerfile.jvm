@@ -7,7 +7,7 @@
 #
 # Then, build the image with:
 #
-# docker build -f src/main/docker/Dockerfile.jvm -t snowdrop/snowdrop-bot-jvm .
+# docker build -f src/main/docker/Dockerfile -t snowdrop/snowdrop-bot-jvm .
 #
 # Then run the container using:
 #

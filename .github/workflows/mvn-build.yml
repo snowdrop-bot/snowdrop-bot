@@ -1,0 +1,90 @@
+name: "CI - JDK11 Maven and Container image build"
+
+on:
+    push:
+        branches: [ main ]
+        tags: ['*.*']
+    pull_request:
+        branches: [ main ]
+
+jobs:
+    build-jdk11:
+        name: "JDK 11 Maven Build"
+        runs-on: ubuntu-latest
+
+        steps:
+            -   uses: actions/checkout@v2
+            -   name: Setup AdoptOpenJDK
+                uses: joschi/setup-jdk@v2.3.0
+                with:
+                    java-version: 11
+
+            -   name: Build
+                run: ./mvnw clean package -X
+
+            -   name: Upload jar file created
+                uses: actions/upload-artifact@v2
+                with:
+                  name: snowdrop-bot-jar-files
+                  path: |
+                    ${{ github.workspace }}/target/quarkus-app/app
+                    ${{ github.workspace }}/target/quarkus-app/quarkus
+                    ${{ github.workspace }}/target/quarkus-app/lib
+                    ${{ github.workspace }}/target/quarkus-app/*.jar
+                  if-no-files-found: error
+
+    build-container:
+        name: "Build container image"
+        needs: build-jdk11
+        runs-on: ubuntu-latest
+        if: ${{ github.ref == 'refs/heads/main' }}
+        steps:
+            -   uses: actions/checkout@v2
+            -   name: Upload jar file built
+                uses: actions/download-artifact@v2
+                with:
+                  name: snowdrop-bot-jar-files
+                  path: target/
+
+            -   name: Display structure of downloaded files
+                run: ls -R
+
+            -   name: Container meta
+                id: container_meta
+                uses: crazy-max/ghaction-docker-meta@v2
+                with:
+                  # list of Docker images to use as base name for tags
+                  images: |
+                      quay.io/snowdrop/snowdrop-bot
+                  # generate Docker tags based on the following events/attributes
+                  tags: |
+                    type=semver,pattern={{version}}
+                    type=semver,pattern={{major}}.{{minor}}
+                    type=semver,pattern={{major}}
+                    type=sha
+                    type=ref,event=tag
+                  # Enable by default to tag the image with latest
+                  flavor: |
+                    latest=true
+
+            -   name: Login to DockerHub
+                uses: docker/login-action@v1
+                with:
+                  registry: quay.io
+                  username: ${{ secrets.QUAY_USERNAME }}
+                  password: ${{ secrets.QUAY_ROBOT_TOKEN }}
+
+            -   name: Build and push
+                id: container_build
+                uses: docker/build-push-action@v2
+                with:
+                  context: .
+                  file: ./ci/Dockerfile
+                  # tags: quay.io/snowdrop/snowdrop-bot:latest
+                  push: true
+                  tags: ${{ steps.container_meta.outputs.tags }}
+                  labels: ${{ steps.container_meta.outputs.labels }}
+
+            -   name: Image digest
+                run: echo ${{ steps.container_build.outputs.digest }}
+
