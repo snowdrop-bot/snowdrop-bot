@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  labels:
+    app.kubernetes.io/name: snowdrop-bot
+    app.kubernetes.io/part-of: snowdrop-bot
+    app.kubernetes.io/version: latest
+  name: snowdrop-bot
+spec:
+  rules:
+    - host: ""
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: snowdrop-bot
+                port:
+                  number: 8080

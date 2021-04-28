@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/name: snowdrop-bot
+    app.kubernetes.io/part-of: snowdrop-bot
+    app.kubernetes.io/version: latest
+  name: snowdrop-bot
+spec:
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+  selector:
+    app.kubernetes.io/name: snowdrop-bot
+    app.kubernetes.io/part-of: snowdrop-bot
+    app.kubernetes.io/version: latest
+  type: ClusterIP

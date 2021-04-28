@@ -1,0 +1,75 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/version: latest
+    app.kubernetes.io/name: snowdrop-bot
+    app.kubernetes.io/part-of: snowdrop-bot
+  name: snowdrop-bot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/version: latest
+      app.kubernetes.io/name: snowdrop-bot
+      app.kubernetes.io/part-of: snowdrop-bot
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/version: latest
+        app.kubernetes.io/name: snowdrop-bot
+        app.kubernetes.io/part-of: snowdrop-bot
+    spec:
+      containers:
+        - env:
+          - name: KUBERNETES_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: JAVA_OPTIONS
+            value: "-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager -Dquarkus.datasource.jdbc.url=jdbc:h2:file:/data/snowdrop-bot;DB_CLOSE_ON_EXIT=FALSE"
+          envFrom:
+          - secretRef:
+              name: snowdrop-jira
+          - secretRef:
+              name: snowdrop-github
+          - secretRef:
+              name: snowdrop-associates
+          image: quay.io/snowdrop/snowdrop-bot:latest
+          imagePullPolicy: Always
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /q/health/live
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 0
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 10
+          name: snowdrop-bot
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /q/health/ready
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 0
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 10
+          volumeMounts:
+          - name: snowdrop-bot-storage
+            mountPath: /data
+          securityContext:
+            runAsUser: 1001
+      volumes:
+        - name: snowdrop-bot-storage
+          persistentVolumeClaim:
+            claimName: snowdrop-bot-claim
+
