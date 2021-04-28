@@ -305,7 +305,7 @@ kubectl create secret generic snowdrop-github --from-literal=GITHUB_TOKEN=$GITHU
 ```bash
 export jira_users=<the jira users>
 export jira_username=snowdrop-jirabot
-export jira_password=`pass show snowdrop/rh/snowdrop-jirabot`
+export jira_password=`pass show snowdrop/rh/jira/snowdrop-jirabot`
 kubectl create secret generic snowdrop-jira \
     --from-literal=jira.username=$jira_username \
     --from-literal=jira.password=$jira_password \
