@@ -312,10 +312,10 @@ kubectl create secret generic snowdrop-jira \
     --from-literal=jira.users=$jira_users
 ```
 
-4. Create the secret containing tge list of the `github.users` (e.g.: )
+4. Create the secret containing the list of the `github.users` (e.g.: aureamunoz,cmoulliard,iocanel,geoand,metacosm,gytis,jacobdotcosta,BarDweller)
 
 ```bash
-kubectl create secret generic snowdrop-associated \
+kubectl create secret generic snowdrop-associates \
     --from-literal=github.users=git-user-1,git-user-2,git-user-3,...
 ```
 
