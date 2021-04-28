@@ -55,8 +55,7 @@ You can specify where h2 will store files by editing: `quarkus.datasource.url`.
 
 ### Github
 
-The application will need to access github. So you are going to need an access
-token.
+The application will need to access github. So you are going to need an access token.
 
 The token can be configured either via `github.token` property or `GITHUB_TOKEN`
 environment variable.
@@ -66,14 +65,14 @@ environment variable.
 
 ### Google APIS
 
-To upload generate reports to Google Documents, you will need to enable the
+To upload the generated reports to Google Documents, you will need to enable the
 Google Documents API. Once enabled, you will need to store the provided
 `credentials.json` file under `/.snowdrop-bot/google/credentials.json`.
 Again the location is configurable via `google.docs.credentials.file` property.
 
 ### Jira
 
-The application will need to access jira nd for that it will need the credentials.
+The application will need to access jira and for that it will need the credentials.
 
 This information can be provided either by the application.properties file or environment variables.
 
@@ -93,25 +92,25 @@ $ export JIRA_PASSWORD=my-jira-password
 
 ## Running
 
-To run the bot you can just build:
+To build the bot application, execute the following command:
 
     ./mvnw clean package
 
-or run it using the quarkus:dev goal:
-
-    ./mvnw compile quarkus:dev
-
-If using resource filtering use build it this way instead:
+The parameters are passes using the argument `-D`
 
     ./mvnw -Dgithub.token=<the token> clean package
 
-and then run with:
+Then run it using maven
 
-    java -jar target/snowdrop-bot-$(xpath -q -e  "/project/version/text()" pom.xml)-runner.jar
+    ./mvnw compile quarkus:dev
+
+or the jar file created
+
+    java -jar target/snowdrop-bot-$VERSION.jar
 
 Another option is to pass it when launching the application
 
-    java -Dgithub.token=<the token> clean package -jar target/snowdrop-bot-$(xpath -q -e  "/project/version/text()" pom.xml)-runner.jar
+    java -Dgithub.token=<the token> clean package -jar target/snowdrop-bot-$VERSION.jar
 
 > NOTE:* The `github.token` is required and there are several possibilities of informing it:
 >  * `application.properites`
@@ -135,11 +134,11 @@ The default profile uses /data/snowdrop-bot as the root for configuration and da
 ### Production Profile
 The production profile has all features enabled by default.
 Additionally, everything related to file persistence or file configuration is
-configured under `/data/snowdrop-bot` which which is a volume friendlier path
+configured under `/data/snowdrop-bot` which is a volume friendlier path
 (e.g. when running on Kubernetes).
 
 #### Persistence and configuration (production)
-The production profile uses /data/snowdrop-bot as the root for configuration and database files.
+The production profile uses `/data/snowdrop-bot` as the root for configuration and database files.
 
 ## Services
 
@@ -287,8 +286,6 @@ Run the `mvn release:prepare` command in order to achieve this goal. You will be
 
 These values should be adjusted for every release.
 
-
-
 ## Kubernetes / OpenShift deployment
 
 During compilation resources for Kubernetes and OpenShift are generated.
@@ -421,7 +418,7 @@ Once the application is compiled and packaged, to crete the image with buildah a
 Build the image
 
 ```bash
-$ buildah bud -f src/main/docker/Dockerfile.jvm -t quarkus/snowdrop-bot:$(xpath -q -e  "/project/version/text()" pom.xml) .
+$ buildah bud -f src/main/docker/Dockerfile -t quarkus/snowdrop-bot:$(xpath -q -e  "/project/version/text()" pom.xml) .
 ```
 
 > **NOTE**: Before pushing the image it can actually be tested, for instance using podman:
@@ -437,7 +434,6 @@ JIRA_PASSWORD
 JIRA_USERS
 GITHUB_TOKEN
 ```
-
 
 Login to quay
 
