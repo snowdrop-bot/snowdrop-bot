@@ -1,8 +1,0 @@
-kind: Secret
-apiVersion: v1
-metadata:
-  name: snowdrop-associates
-  namespace: bot
-data:
-  github.users: <base64 list of the associates>
-type: Opaque
