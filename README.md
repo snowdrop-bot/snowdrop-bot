@@ -330,7 +330,7 @@ helm install snowdrop-bot -n bot ./charts -f my-values.yml
 **NOTE**: If you would like to verify the resources generated before to deploy them on the cluster, render the templates using the following command:
 ```bash
 cd deploy
-helm template snowdrop-bot ./ --dry-run --output-dir ./charts/generated
+helm template snowdrop-bot ./charts --dry-run --output-dir ./charts/generated
 ```
 
 4. To uninstall the bot:
