@@ -288,7 +288,7 @@ These values should be adjusted for every release.
 
 ## Kubernetes deployment
 
-Before to deploy the bot on a kubernetes cluster, it is needed to perform the following steps:
+Before to deploy the bot on a kubernetes cluster using a [helm chart](Chart.md), it is needed to perform the following steps:
 
 1. Verify that a PV volume exist to bound the PVC of the bot with a volume of 2Gi. See [appendix](#appendix) to create a PV if needed.
 2. Create the needed values to populate the secrets containing the JIRA, GITHUB keys using the values as stored under the `password-store` (see github.com/snowdrop/pass).
