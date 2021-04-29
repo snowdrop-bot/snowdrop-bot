@@ -1,0 +1,18 @@
+---
+# Source: snowdrop-bot/templates/pvc.yml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: snowdrop-bot-claim
+  labels:
+    helm.sh/chart: snowdrop-bot-0.1.0
+    app.kubernetes.io/name: snowdrop-bot
+    app.kubernetes.io/instance: snowdrop-bot
+    app.kubernetes.io/managed-by: Helm
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  volumeMode: Filesystem

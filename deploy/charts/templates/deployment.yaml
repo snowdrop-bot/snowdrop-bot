@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "snowdrop-bot.fullname" . }}
+  labels:
+    {{- include "snowdrop-bot.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.deployment.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "snowdrop-bot.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.deployment.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "snowdrop-bot.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.deployment.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "snowdrop-bot.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.deployment.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          env:
+          {{- range .Values.deployment.env }}
+          - name: {{ .name | quote }}
+            value: {{ .value | quote }}
+          {{- end }}
+          envFrom:
+          - secretRef:
+              name: "{{ include "snowdrop-bot.name" . }}-jira"
+          - secretRef:
+              name: "{{ include "snowdrop-bot.name" . }}-github"
+          securityContext:
+            {{- toYaml .Values.deployment.securityContext | nindent 12 }}
+          image: "{{ .Values.deployment.image.repository }}:{{ .Values.deployment.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.deployment.containerPort }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /q/health/live
+              port: 8080
+              scheme: HTTP
+          readinessProbe:
+            httpGet:
+              path: /q/health/live
+              port: 8080
+              scheme: HTTP
+          resources:
+            {{- toYaml .Values.deployment.resources | nindent 12 }}
+          # TO BE REVIEWED AND MANAGE IT USING VALUES
+          volumeMounts:
+            - name: snowdrop-bot-storage
+              mountPath: /data
+      {{- with .Values.deployment.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.deployment.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.deployment.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      # TO BE REVIEWED AND MANAGE IT USING VALUES
+      volumes:
+      - name: snowdrop-bot-storage
+        persistentVolumeClaim:
+          claimName: {{ include "snowdrop-bot.pvcName" . }}
