@@ -1,11 +1,14 @@
+---
+# Source: snowdrop-bot/templates/ingress.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  labels:
-    app.kubernetes.io/name: snowdrop-bot
-    app.kubernetes.io/part-of: snowdrop-bot
-    app.kubernetes.io/version: latest
   name: snowdrop-bot
+  labels:
+    helm.sh/chart: snowdrop-bot-0.1.0
+    app.kubernetes.io/name: snowdrop-bot
+    app.kubernetes.io/instance: snowdrop-bot
+    app.kubernetes.io/managed-by: Helm
 spec:
   rules:
     - host: "snowdrop-bot.195.201.87.126.nip.io"

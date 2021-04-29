@@ -1,0 +1,102 @@
+# Default values for snowdrop-bot.
+
+#
+#  Section containing properties which can be used by the different resources
+#
+nameOverride: ""
+fullnameOverride: ""
+
+appVersion: "latest"
+
+# Deployment yml resource
+deployment:
+
+  env:
+    - name: JAVA_OPTIONS
+      value: "-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager -Dquarkus.datasource.jdbc.url=jdbc:h2:file:/data/snowdrop-bot;DB_CLOSE_ON_EXIT=FALSE"
+
+  replicaCount: 1
+
+  image:
+    repository: quay.io/snowdrop/snowdrop-bot
+    pullPolicy: Always
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "latest"
+
+  containerPort: 8080
+
+  imagePullSecrets: []
+  podAnnotations: {}
+  podSecurityContext: {}
+    # fsGroup: 2000
+
+  securityContext:
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    runAsUser: 1001
+
+  resources: {}
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: true
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: snowdrop-bot.195.201.87.126.nip.io
+      paths:
+        - path: "/"
+          pathType: Prefix
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+pvc:
+  # Specifies whether a pvc should be created
+  create: true
+
+  # The name of the pvc  to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: "snowdrop-bot-claim"
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+secret:
+  jira:
+    username:
+    password:
+    users: ""
+
+  github:
+    token:
+    associates: aureamunoz,cmoulliard,iocanel,geoand,metacosm,gytis,jacobdotcosta,BarDweller
+

@@ -288,40 +288,54 @@ These values should be adjusted for every release.
 
 ## Kubernetes deployment
 
-Before to deploy the bot on a kubernetes cluster, it is needed to create some resources described here after the secrets containing the credentials used
+Before to deploy the bot on a kubernetes cluster, it is needed to perform the following steps:
 
 1. Verify that PV volumes exist to bound the PVC of the bot with a volume of 2Gi. See [appendix](#appendix) to create a PV if needed.
-2. Create a secret for the github token using the key stored under the shared `password-store` (see github.com/snowdrop/pass).
+2. Create the needed values to populate the secrets containing the JIRA, GITHUB keys using the values as stored under the `password-store` (see github.com/snowdrop/pass).
 
-**REMARK**: Add the namespace parameter `-n` to specify where the secrets should be created
-
+**NOTE**: To simplify your life, create a `my-values.yml` file containing the keys:
 ```bash
-export GITHUB_TOKEN=`pass show snowdrop/github.com/snowdrop-bot/token`
-kubectl create secret generic snowdrop-github --from-literal=GITHUB_TOKEN=$GITHUB_TOKEN
+echo "
+secret:
+  jira:
+    username: snowdrop-bot
+    password: $(pass show rh/jira/snowdrop-jirabot)
+    users: cmoulliard
+
+  github:
+    token: $(pass show github.com/snowdrop-bot/token)
+    associates: aureamunoz,cmoulliard,iocanel,geoand,metacosm,gytis,jacobdotcosta,BarDweller
+" > deploy/my-values.yml
 ```
 
-3. Do the same for the `jira.username`, `jira.password` and `jira.users`
-
+**REMARK**: Don t forget to change the value of the `ingress host` if you plan to deploy the project locally ;-)
 ```bash
-export jira_users=<the jira users>
-export jira_username=snowdrop-jirabot
-export jira_password=`pass show snowdrop/rh/jira/snowdrop-jirabot`
-kubectl create secret generic snowdrop-jira \
-    --from-literal=jira.username=$jira_username \
-    --from-literal=jira.password=$jira_password \
-    --from-literal=jira.users=$jira_users
+echo "
+ingress:
+  enabled: true
+  hosts:
+    - host: snowdrop-bot.127.0.0.1.nip.io
+      paths:
+        - path: "/"
+          pathType: Prefix
+" >> deploy/my-values.yml
 ```
 
-4. Create the secret containing the list of the `github.users` (e.g.: aureamunoz,cmoulliard,iocanel,geoand,metacosm,gytis,jacobdotcosta,BarDweller)
-
+3. Deploy the Bot using the helm charts created under the folder `./deploy/charts`
 ```bash
-kubectl create secret generic snowdrop-associates \
-    --from-literal=github.users=git-user-1,git-user-2,git-user-3,...
+kubectl create ns bot
+helm install snowdrop-bot -n bot ./charts -f my-values.yml
 ```
 
-5. Deploy the Bot like the service and ingress resource
+**NOTE**: If you would like to verify the resources generated before to deploy them on the cluster, render the templates using the following command:
 ```bash
-kubectl apply -f ./deploy/all.yml
+cd deploy
+helm template snowdrop-bot ./charts --dry-run --output-dir ./charts/generated
+```
+
+4. To uninstall the bot:
+```bash
+helm uninstall -n bot snowdrop-bot
 ```
 
 ## Appendix

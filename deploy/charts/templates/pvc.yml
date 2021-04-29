@@ -1,7 +1,9 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: snowdrop-bot-claim
+  name: {{ include "snowdrop-bot.pvcName" . }}
+  labels:
+  {{- include "snowdrop-bot.labels" . | nindent 4 }}
 spec:
   accessModes:
     - ReadWriteOnce

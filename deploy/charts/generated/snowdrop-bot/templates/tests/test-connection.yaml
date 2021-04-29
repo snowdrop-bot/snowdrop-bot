@@ -1,0 +1,20 @@
+---
+# Source: snowdrop-bot/templates/tests/test-connection.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "snowdrop-bot-test-connection"
+  labels:
+    helm.sh/chart: snowdrop-bot-0.1.0
+    app.kubernetes.io/name: snowdrop-bot
+    app.kubernetes.io/instance: snowdrop-bot
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['snowdrop-bot:8080']
+  restartPolicy: Never
