@@ -290,7 +290,7 @@ These values should be adjusted for every release.
 
 Before to deploy the bot on a kubernetes cluster, it is needed to perform the following steps:
 
-1. Verify that PV volumes exist to bound the PVC of the bot with a volume of 2Gi. See [appendix](#appendix) to create a PV if needed.
+1. Verify that a PV volume exist to bound the PVC of the bot with a volume of 2Gi. See [appendix](#appendix) to create a PV if needed.
 2. Create the needed values to populate the secrets containing the JIRA, GITHUB keys using the values as stored under the `password-store` (see github.com/snowdrop/pass).
 
 **NOTE**: To simplify your life, create a `my-values.yml` file containing the keys:
@@ -308,7 +308,7 @@ secret:
 " > deploy/my-values.yml
 ```
 
-**REMARK**: Don t forget to change the value of the `ingress host` if you plan to deploy the project locally ;-)
+**REMARK**: Don t forget to change the value of the `ingress host` if you plan to deploy the project on a local kubernetes cluster ;-)
 ```bash
 echo "
 ingress:
@@ -347,16 +347,17 @@ A PV could be created using the following `kubectl` command:
 ```bash
 cat << EOF | kubectl apply -f -
 apiVersion: v1
-kind: PersistentVolumeClaim
+kind: PersistentVolume
 metadata:
-  name: snowdrop-db-claim
+  name: pv-bot
 spec:
   accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 2Gi
+  - ReadWriteOnce
+  capacity:
+    storage: 2Gi
+  hostPath:
+    path: /tmp/pv-bot
+  persistentVolumeReclaimPolicy: Recycle
   volumeMode: Filesystem
-EOF
 ```
 
