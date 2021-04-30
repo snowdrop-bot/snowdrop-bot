@@ -23,11 +23,8 @@
       * [Forked repository issue bridging](#forked-repository-issue-bridging)
       * [Google Docs Report Generation](#google-docs-report-generation)
       * [Release preparation](#Release preparation)
-      * [Kubernetes / OpenShift deployment](#kubernetes--openshift-deployment)
+      * [Kubernetes deployment](#kubernetes-deployment)
       * [Appendix](#appendix)
-         * [Create secrets](#create-secrets)
-            * [Associate list](#associate-list-1)
-         * [Building and publishing the image to quay with buildah](#building-and-publishing-the-image-to-quay-with-buildah)
 
 # Snowdrop Bot
 A bot for automating snowdrop related tasks
