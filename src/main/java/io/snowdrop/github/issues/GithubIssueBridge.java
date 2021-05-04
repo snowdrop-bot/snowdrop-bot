@@ -48,7 +48,7 @@ public class GithubIssueBridge {
   private final String terminalLabelColor;
   private final Set<String> users;
 
-  private final Map<String, Map<String, Label>> repoLables = new HashMap<>();
+  private final Map<String, Map<String, Label>> repoLabels = new HashMap<>();
 
   private final Map<Integer, Issue> openIssues = new HashMap<>();
   private final Map<Integer, Issue> closedIssues = new HashMap<>();
@@ -189,7 +189,7 @@ public class GithubIssueBridge {
 
   private Label getOrCreateLabel(String repo, String name, String description, String color) {
     synchronized (client) {
-      Map<String, Label> labelCache = repoLables.computeIfAbsent(repo, l -> new HashMap<String, Label>());
+      Map<String, Label> labelCache = repoLabels.computeIfAbsent(repo, l -> new HashMap<String, Label>());
       return labelCache.computeIfAbsent(name, l -> {
         try {
           Optional<Label> label = labelService.getLabels(Github.user(repo), Github.repo(repo))
@@ -199,6 +199,7 @@ public class GithubIssueBridge {
           if (label.isPresent()) {
             return label.get();
           }
+          LOGGER.debug("missing label {}", name);
           Label newLabel = new Label();
           newLabel.setName(name);
           newLabel.setColor(color);
@@ -210,19 +211,6 @@ public class GithubIssueBridge {
     }
   }
 
-
-  private Label getLabel(String repo, String label) {
-    synchronized (client) {
-      Map<String, Label> labelCache = repoLables.computeIfAbsent(repo, l -> new HashMap<String, Label>());
-      return labelCache.computeIfAbsent(label, l -> {
-        try {
-          return labelService.getLabel(Github.user(repo), Github.repo(repo), label);
-        } catch (IOException e) {
-          throw BotException.launderThrowable(e);
-        }
-      });
-    }
-  }
 
   /**
    * Creates an issue to the target repository.
@@ -285,7 +273,7 @@ public class GithubIssueBridge {
         LOGGER.info("Closing issue {} to repository: {}.", issue.getNumber(), repo);
         List<Label> labels = new ArrayList<>(issue.getLabels());
         try {
-          labels.add(getLabel(repo, terminalLabelName));
+          labels.add(getOrCreateLabel(repo, terminalLabelName,"The issue has been closed in the upstream repository","078c64"));
           issue.setLabels(labels);
           issue.setState("closed");
         } catch (BotException e) {
@@ -399,8 +387,8 @@ public class GithubIssueBridge {
     return users;
   }
 
-  public Map<String, Map<String, Label>> getRepoLables() {
-    return repoLables;
+  public Map<String, Map<String, Label>> getRepoLabels() {
+    return repoLabels;
   }
 
   public Map<Integer, Issue> getOpenIssues() {
