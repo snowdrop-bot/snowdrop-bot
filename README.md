@@ -44,7 +44,7 @@ file into it. All changes should be made to this file. This folder is excluded i
 ### Database
 
 For the persistence needs of this application `h2` has been used.
-The database is configured to store files under `~/.snowdrop-bot/db`.
+In prod and default profiles, the database is configured to store files under `/z/var/snowdrop-bot/data/env/h2-bot-db/bot.db`.
 So you will either need to create the folder and ensure that you have write
 access, or reconfigure the application to store files somewhere else.
 
@@ -215,7 +215,7 @@ The criteria for selecting issues are the following:
 - assigned to configured users (`github.users`)
 - the assigned username has forked the repository
 - were open within the configured time frame (the week bounded by `github.reporting.day-of-week` & `github.reporting.hours`)
-
+__
 ![pull request screen](./img/pull-requests.png "Pull Requests Screen")
 
 Those pull requests, can be exported in csv, excel or pdf.
