@@ -22,7 +22,7 @@
       * [Pull Request tracking](#pull-request-tracking)
       * [Forked repository issue bridging](#forked-repository-issue-bridging)
       * [Google Docs Report Generation](#google-docs-report-generation)
-      * [Release preparation](#Release preparation)
+      * [Release preparation](#release-preparation)
       * [Kubernetes deployment](#kubernetes-deployment)
       * [Appendix](#appendix)
 
@@ -297,7 +297,6 @@ secret:
   jira:
     username: snowdrop-bot
     password: $(pass show rh/jira/snowdrop-jirabot)
-    users: cmoulliard
 
   github:
     token: $(pass show github.com/snowdrop-bot/token)
