@@ -1,0 +1,13 @@
+project:
+  name: Snowdrop bot
+  shortName: bot
+  url: https://github.com/snowdrop-bot/snowdrop-bot
+  description: Tool populating markdown reports from issues
+  app: a Quarkus app
+chart:
+  name: snowdrop-bot
+  version: v0.1.0
+  values: "-- generate from values file --"
+  valuesExample: "-- generate from values file --"
+prerequisites:
+- "Kubernetes v1.18+"
