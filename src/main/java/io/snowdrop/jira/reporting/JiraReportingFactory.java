@@ -17,7 +17,7 @@ public class JiraReportingFactory {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(JiraReportingFactory.class);
 
-  @ConfigProperty(name = "jira.users")
+  @ConfigProperty(name = "jira.users", defaultValue = "snowdrop-bot")
   Set<String> users;
 
   @ConfigProperty(name = "jira.reporting.repos")

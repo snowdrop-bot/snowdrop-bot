@@ -78,7 +78,6 @@ The following table lists the configurable parameters of the `snowdrop-bot` char
 | secret.github.token | string | `nil` |  |
 | secret.jira.password | string | `nil` |  |
 | secret.jira.username | string | `nil` |  |
-| secret.jira.users | string | `""` |  |
 
 ### Service
 | Key | Type | Default | Description |
