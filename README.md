@@ -44,11 +44,11 @@ file into it. All changes should be made to this file. This folder is excluded i
 ### Database
 
 For the persistence needs of this application `h2` has been used.
-In prod and default profiles, the database is configured to store files under `/z/var/snowdrop-bot/data/env/h2-bot-db/bot.db`.
+In prod and default profiles, the database is configured to store files under `/data/snowdrop-bot/db/bot.db`.
 So you will either need to create the folder and ensure that you have write
 access, or reconfigure the application to store files somewhere else.
 
-You can specify where h2 will store files by editing: `quarkus.datasource.url`.
+You can specify where h2 will store files by editing: `quarkus.datasource.jdbc.url`.
 
 ### Github
 

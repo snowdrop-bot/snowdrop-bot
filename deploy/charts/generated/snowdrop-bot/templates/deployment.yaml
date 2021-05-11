@@ -28,7 +28,7 @@ spec:
         - name: snowdrop-bot
           env:
           - name: "JAVA_OPTIONS"
-            value: "-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager -Dquarkus.datasource.jdbc.url=jdbc:h2:file:/data/snowdrop-bot;DB_CLOSE_ON_EXIT=FALSE"
+            value: "-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
           envFrom:
           - secretRef:
               name: snowdrop-jira

@@ -42,7 +42,7 @@ The following table lists the configurable parameters of the `snowdrop-bot` char
 | deployment.affinity | object | `{}` |  |
 | deployment.containerPort | int | `8080` |  |
 | deployment.env[0].name | string | `"JAVA_OPTIONS"` |  |
-| deployment.env[0].value | string | `"-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager -Dquarkus.datasource.jdbc.url=jdbc:h2:file:/data/snowdrop-bot;DB_CLOSE_ON_EXIT=FALSE"` |  |
+| deployment.env[0].value | string | `"-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"` |  |
 | deployment.image.pullPolicy | string | `"Always"` |  |
 | deployment.image.repository | string | `"quay.io/snowdrop/snowdrop-bot"` |  |
 | deployment.image.tag | string | `"latest"` |  |

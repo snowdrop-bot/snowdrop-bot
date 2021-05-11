@@ -27,14 +27,10 @@ ARG JAVA_PACKAGE=java-11-openjdk-headless
 ARG RUN_JAVA_VERSION=1.3.8
 
 ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
-ENV AB_ENABLED=jmx_exporter
+
 ENV TZ=Europe/Madrid
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-
-RUN mkdir -p /z/var/snowdrop-bot
-
-RUN mkdir -p /z/var/snowdrop-bot
 
 # Install java and the run-java script
 # Also set up permissions for user `1001`
@@ -53,10 +49,10 @@ RUN microdnf install curl ca-certificates ${JAVA_PACKAGE} \
 # Configure the JAVA_OPTIONS, you can add -XshowSettings:vm to also display the heap size.
 ENV JAVA_OPTIONS="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
 # We make four distinct layers so if there are application changes the library layers can be re-used
-COPY --chown=1001 target/lib/ /deployments/lib/
-COPY --chown=1001 target/app/ /deployments/app/
-COPY --chown=1001 target/quarkus/ /deployments/quarkus/
-COPY --chown=1001 target/*.jar /deployments/
+COPY --chown=1001 target/quarkus-app/lib/ /deployments/lib/
+COPY --chown=1001 target/quarkus-app/*.jar /deployments/
+COPY --chown=1001 target/quarkus-app/app/ /deployments/app/
+COPY --chown=1001 target/quarkus-app/quarkus/ /deployments/quarkus/
 
 EXPOSE 8080
 USER 1001
