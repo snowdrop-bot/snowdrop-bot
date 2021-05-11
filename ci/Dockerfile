@@ -7,7 +7,7 @@
 #
 # Then, build the image with:
 #
-# docker build -f src/main/docker/Dockerfile.jvm -t quarkus/snowdrop-bot .
+# docker build -f src/main/docker/Dockerfile -t quarkus/snowdrop-bot .
 #
 # Then run the container using:
 #
@@ -27,6 +27,14 @@ ARG JAVA_PACKAGE=java-11-openjdk-headless
 ARG RUN_JAVA_VERSION=1.3.8
 
 ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
+ENV AB_ENABLED=jmx_exporter
+ENV TZ=Europe/Madrid
+
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN mkdir -p /z/var/snowdrop-bot
+
+RUN mkdir -p /z/var/snowdrop-bot
 
 # Install java and the run-java script
 # Also set up permissions for user `1001`
