@@ -43,7 +43,7 @@ file into it. All changes should be made to this file. This folder is excluded i
 
 ### Database
 
-For the persistence needs of this application `h2` has been used.
+For our application and persistence needs, `h2` has been used as Database.
 In prod and default profiles, the database is configured to store files under `/data/snowdrop-bot/db/bot.db`.
 In dev profile, the database is configured to use an in-memory store.
 So you will either need to create the folder and ensure that you have write
