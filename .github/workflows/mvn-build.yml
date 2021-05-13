@@ -22,9 +22,6 @@ jobs:
             -   name: Build
                 run: ./mvnw clean package -X
 
-            -   name: Display target/
-                run: ls target/ -R
-
             -   name: Upload jar file created
                 uses: actions/upload-artifact@v2
                 with:
@@ -50,7 +47,7 @@ jobs:
                   path: target/quarkus-app/
 
             -   name: Display structure of downloaded files
-                run: pwd && ls -R
+                run: ls -R
 
             -   name: Container meta
                 id: container_meta
