@@ -36,9 +36,6 @@ jobs:
                     ${{ github.workspace }}/target/quarkus-app/*.jar
                   if-no-files-found: error
 
-            -   name: Display structure of uploaded files
-                run: ls -R
-
     build-container:
         name: "Build container image"
         needs: build-jdk11
@@ -50,10 +47,10 @@ jobs:
                 uses: actions/download-artifact@v2
                 with:
                   name: snowdrop-bot-jar-files
-                  path: target/
+                  path: target/quarkus-app/
 
             -   name: Display structure of downloaded files
-                run: ls -R
+                run: pwd && ls -R
 
             -   name: Container meta
                 id: container_meta
