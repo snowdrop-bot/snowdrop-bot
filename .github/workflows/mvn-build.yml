@@ -32,6 +32,8 @@ jobs:
                     ${{ github.workspace }}/target/quarkus-app/lib
                     ${{ github.workspace }}/target/quarkus-app/*.jar
                   if-no-files-found: error
+            - name: Display structure of uploaded files
+                run: ls -R
 
     build-container:
         name: "Build container image"
