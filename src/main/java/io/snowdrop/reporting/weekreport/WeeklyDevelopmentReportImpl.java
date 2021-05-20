@@ -119,6 +119,12 @@ public class WeeklyDevelopmentReportImpl {
                 TextBuilder issueTextB = new TextBuilder();
                 issueTextB.append(new Text(" ")).append(finalStrMdColor).append(" [`").append(eachIssue.getStatus()).append("`] ").append(eachIssue.getTitle())
                     .append(" - ")
+                    .append("![")
+                    .append(eachIssue.getProgress())
+                    .append("%](https://progress-bar.dev/")
+                    .append(eachIssue.getProgress())
+                    .append(")")
+                    .append(" - ")
                     .append(new Link(eachIssue.getUrl()));
                 issueUnorderedList.getItems().add(issueTextB);
               });
