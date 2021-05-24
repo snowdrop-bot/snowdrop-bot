@@ -11,9 +11,9 @@ import javax.inject.Inject;
 import org.eclipse.egit.github.core.client.GitHubClient;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import io.smallrye.reactive.messaging.annotations.Channel;
-import io.smallrye.reactive.messaging.annotations.Emitter;
-import io.smallrye.reactive.messaging.annotations.OnOverflow;
+import org.eclipse.microprofile.reactive.messaging.Channel;
+import org.eclipse.microprofile.reactive.messaging.Emitter;
+import org.eclipse.microprofile.reactive.messaging.OnOverflow;
 import io.snowdrop.Status;
 import io.snowdrop.StatusLogger;
 
