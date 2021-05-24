@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import io.smallrye.reactive.messaging.annotations.Emitter;
+import org.eclipse.microprofile.reactive.messaging.Emitter;
 
 public class StatusLogger {
 
