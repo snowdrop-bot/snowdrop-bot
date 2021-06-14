@@ -4,6 +4,7 @@ import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Sort;
 import io.snowdrop.github.reporting.model.WithDates;
+import org.eclipse.egit.github.core.Label;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,6 +15,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
 import java.util.Date;
+import java.util.Optional;
 
 @Entity
 public class Issue extends PanacheEntityBase implements WithDates {
@@ -21,6 +23,8 @@ public class Issue extends PanacheEntityBase implements WithDates {
   private static final Logger LOGGER = LoggerFactory.getLogger(Issue.class);
 
   private static final SimpleDateFormat DF = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+  public static final String PROGRESS_LABEL_PREFIX = "progress:";
+  public static final String PROGRESS_LABEL_SUFFIX = "%";
 
   @Id
   String url;
@@ -39,6 +43,7 @@ public class Issue extends PanacheEntityBase implements WithDates {
   String issueGroup;
   String affectedVersion;
   String fixVersion;
+  int progress;
 
   /**
    * <p>Age of the issue:
@@ -72,7 +77,8 @@ public class Issue extends PanacheEntityBase implements WithDates {
   String label,
   String issueGroup,
   String affectedVersion,
-  String fixVersion) {
+  String fixVersion,
+  int progress) {
     this.url = url;
     this.repository = repository;
     this.number = number;
@@ -92,14 +98,35 @@ public class Issue extends PanacheEntityBase implements WithDates {
     this.issueGroup = issueGroup;
     this.affectedVersion = affectedVersion;
     this.fixVersion = fixVersion;
+    this.progress = progress;
     updateStatusAge();
   }
 
   public static Issue create(String repository, org.eclipse.egit.github.core.Issue issue) {
+    int progress = extractProgress(issue);
     return new Issue(issue.getHtmlUrl(), repository, issue.getNumber(), issue.getTitle(), issue.getUser().getLogin(),
     issue.getAssignee() != null ? issue.getAssignee().getLogin() : null, IssueOpen.isOpen(issue.getState()),
     issue.getCreatedAt(), issue.getUpdatedAt(), issue.getClosedAt(), IssueSource.GITHUB.name(), issue.getState(),
-    ((issue.getLabels() != null && issue.getLabels().size() > 0) ? issue.getLabels().get(0).getName() : null), null, null, null);
+    ((issue.getLabels() != null && issue.getLabels().size() > 0) ? issue.getLabels().get(0).getName() : null), null, null, null, progress);
+
+  }
+
+  private static int extractProgress(org.eclipse.egit.github.core.Issue issue) {
+    int progress = 0;
+    if (issue.getLabels() != null && issue.getLabels().size() > 0) {
+      Optional<Label> optProgressLabel = issue.getLabels().stream().filter(l -> l.getName().contains("progress")).findFirst();
+      if (optProgressLabel.isPresent()) {
+        Label progressLabel = optProgressLabel.get();
+        int start = progressLabel.getName().lastIndexOf(PROGRESS_LABEL_PREFIX);
+        int end = progressLabel.getName().lastIndexOf(PROGRESS_LABEL_SUFFIX);
+        if (end < start) {
+          throw new IllegalStateException("Issue: " + issue.getNumber() + ". Reference is malformed. No suffix found.");
+        }
+        progress = Integer.parseInt(progressLabel.getName().substring(start + PROGRESS_LABEL_PREFIX.length(), end));
+
+      }
+    }
+    return progress;
   }
 
   public static Issue create(String repository, com.atlassian.jira.rest.client.api.domain.Issue issue) {
@@ -122,7 +149,7 @@ public class Issue extends PanacheEntityBase implements WithDates {
     issue.getAffectedVersions() != null && issue.getAffectedVersions().iterator().hasNext() ?
     issue.getAffectedVersions().iterator().next().getName() :
     null,
-    issue.getFixVersions() != null && issue.getFixVersions().iterator().hasNext() ? issue.getFixVersions().iterator().next().getName() : null);
+    issue.getFixVersions() != null && issue.getFixVersions().iterator().hasNext() ? issue.getFixVersions().iterator().next().getName() : null,0);
   }
 
   /**
@@ -297,6 +324,14 @@ public class Issue extends PanacheEntityBase implements WithDates {
 
   public void setFixVersion(final String pFixVersion) {
     fixVersion = pFixVersion;
+  }
+
+  public int getProgress() {
+    return progress;
+  }
+
+  public void setProgress(int progress) {
+    this.progress = progress;
   }
 
   public Integer getStatusAge() {
